@@ -1,13 +1,15 @@
 #!c:\ce\trunk\sqlite\bin\powerscript.exe
 # Some imports
+import logging
 import os
-import traceback
-import time
 import random
+import time
+import traceback
 
 import requests
+
 from bench import Bench
-import logging
+
 logger = logging.getLogger(__name__)
 
 payload = os.urandom(100 * 1024)
@@ -15,7 +17,6 @@ payload = os.urandom(100 * 1024)
 
 class LoginBenchmark(Bench):
     def setUpClass(self):
-        logger.info("[LoginBenchmark]: test_login")
         # 5 attempts
         for _ in range(0, 5):
             try:
@@ -27,10 +28,10 @@ class LoginBenchmark(Bench):
         if not hasattr(self, "rsp"):
             logger.info("[LoginBenchmark]: No connection could be established")
 
-    def test_sending_requests(self):
+    def bench_sending_requests(self):
         if not hasattr(self, "rsp"):
             return
-        logger.info("[LoginBenchmark]: test_sending_requests")
+        logger.info("[LoginBenchmark]: bench_sending_requests")
         start_time = time.time()
         for _ in range(self.args["iterations"]):
             # 5 attempts

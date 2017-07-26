@@ -1,8 +1,9 @@
 #!c:\ce\trunk\sqlite\bin\powerscript.exe
-import json
 import importlib
+import json
 import logging.config
 import sys
+
 # bad practice?
 suite_file = 'benchsuite.json'
 output_file = 'benchmarkResults.json'
@@ -83,7 +84,7 @@ def start_bench_script(path, className, args):
         return
 
     # perform the benchmark
-    return bench_class().runTests(args)
+    return bench_class().run(args)
 
 
 if __name__ == "__main__":

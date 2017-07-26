@@ -1,10 +1,12 @@
 #!C:\ce\trunk\win32\release\img\python
 import hashlib
-import numpy as np
+import logging
 import sys
 import time
+
+import numpy as np
 from bench import Bench
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,16 +18,16 @@ class HardwareBenchmark(Bench):
     def setUp(self):
         pass
 
-    def test_cpu(self):
-        logger.info("[HardwareBenchmark]: test_cpu...")
+    def bench_cpu(self):
+        logger.info("[HardwareBenchmark]: bench_cpu...")
         start_time = time.time()
         dk = hashlib.pbkdf2_hmac('sha256', b'password', b'salt', self.args["iterations"])
         end_time = time.time()
         total = end_time - start_time
         return {"type": "time", "time": {"val": total, "unit": "seconds"}}
 
-    def test_mem(self):
-        logger.info("[HardwareBenchmark]: test_mem...")
+    def bench_mem(self):
+        logger.info("[HardwareBenchmark]: bench_mem...")
         matrix = np.random.rand(self.args["matrix-size"], self.args["matrix-size"])
         start_time = time.time()
         np.linalg.inv(matrix)
@@ -33,8 +35,8 @@ class HardwareBenchmark(Bench):
         total = end_time - start_time
         return {"type": "time", "time": {"val": total, "unit": "seconds"}}
 
-    def test_disk_speed(self):
-        logger.info("[HardwareBenchmark]: test_disk_speed...")
+    def bench_disk_speed(self):
+        logger.info("[HardwareBenchmark]: bench_disk_speed...")
         blocksize = self.args["blocksize"]
         chunk = b'\xff' * 10000
         with open("test.file", "wb") as f:

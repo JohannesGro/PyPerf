@@ -1,11 +1,12 @@
 #!c:\ce\trunk\sqlite\bin\powerscript.exe
-from cdb import sqlapi
-
+import logging
+import time
 from random import choice
 from string import lowercase
-import time
-import logging
+
 from bench import Bench
+from cdb import sqlapi
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,8 +34,8 @@ class SqlApiBenchmark(Bench):
             string_val = "".join(choice(lowercase) for i in range(str_len))
             yield (string_val, i)
 
-    def test_insert(self):
-        logger.info("[SqlApiBenchmark]: test_insert")
+    def bench_insert(self):
+        logger.info("[SqlApiBenchmark]: bench_insert")
 
         total = []
         for i in self.insert_generator(self.args['rows']):
@@ -45,8 +46,8 @@ class SqlApiBenchmark(Bench):
 
         return {"type": "time series", "time": {"val": total, "unit": "seconds"}}
 
-    def test_update(self):
-        logger.info("[SqlApiBenchmark]: test_update")
+    def bench_update(self):
+        logger.info("[SqlApiBenchmark]: bench_update")
 
         for i in self.insert_generator(self.args['rows']):
             sqlapi.SQL_nova("insert into benchmark_table (bench_string, bench_num) values " + str(i))

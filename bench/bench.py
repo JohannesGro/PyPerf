@@ -27,7 +27,7 @@ class Bench(object):
         """
         pass
 
-    def runTests(self, args):
+    def run(self, args):
         """
         This method calls every test in this class. Test are indentified by the prefix 'test_'.
         The setUp-method is called immediately before each test and the tearDown-method is
@@ -37,7 +37,7 @@ class Bench(object):
         results = []
         self.setUpClass()
         for test, val in self.__class__.__dict__.iteritems():
-            if test.find('test_') == 0:
+            if test.find('bench_') == 0:
                 test_method = getattr(self, test)
                 self.setUp()
                 # each test need to return [val, unit]
