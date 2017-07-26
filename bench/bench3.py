@@ -10,7 +10,7 @@ import requests
 
 from bench import Bench
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("[" + __name__ + " - LoginBenchmark]")
 
 payload = os.urandom(100 * 1024)
 
@@ -26,12 +26,12 @@ class LoginBenchmark(Bench):
             except:
                 continue
         if not hasattr(self, "rsp"):
-            logger.info("[LoginBenchmark]: No connection could be established")
+            logger.info("No connection could be established")
 
     def bench_sending_requests(self):
         if not hasattr(self, "rsp"):
             return
-        logger.info("[LoginBenchmark]: bench_sending_requests")
+        logger.info("bench_sending_requests")
         start_time = time.time()
         for _ in range(self.args["iterations"]):
             # 5 attempts
@@ -57,10 +57,10 @@ class LoginBenchmark(Bench):
 
     def tearDownClass(self):
         if hasattr(self, "rsp"):
-            logger.info("[LoginBenchmark]:  Logging out...")
+            logger.info(" Logging out...")
             requests.get("http://%s/server/__quit__" % self.args["server"], cookies=self.rsp.cookies)
 
 
 # Guard importing as main module
 if __name__ == "__main__":
-    LoginBenchmark().runTests({})
+    LoginBenchmark().run({})

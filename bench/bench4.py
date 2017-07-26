@@ -7,7 +7,7 @@ import time
 import numpy as np
 from bench import Bench
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("[" + __name__ + " - HardwareBenchmark]")
 
 
 class HardwareBenchmark(Bench):
@@ -19,7 +19,7 @@ class HardwareBenchmark(Bench):
         pass
 
     def bench_cpu(self):
-        logger.info("[HardwareBenchmark]: bench_cpu...")
+        logger.info("bench_cpu...")
         start_time = time.time()
         dk = hashlib.pbkdf2_hmac('sha256', b'password', b'salt', self.args["iterations"])
         end_time = time.time()
@@ -27,7 +27,7 @@ class HardwareBenchmark(Bench):
         return {"type": "time", "time": {"val": total, "unit": "seconds"}}
 
     def bench_mem(self):
-        logger.info("[HardwareBenchmark]: bench_mem...")
+        logger.info("bench_mem...")
         matrix = np.random.rand(self.args["matrix-size"], self.args["matrix-size"])
         start_time = time.time()
         np.linalg.inv(matrix)
@@ -36,7 +36,7 @@ class HardwareBenchmark(Bench):
         return {"type": "time", "time": {"val": total, "unit": "seconds"}}
 
     def bench_disk_speed(self):
-        logger.info("[HardwareBenchmark]: bench_disk_speed...")
+        logger.info("bench_disk_speed...")
         blocksize = self.args["blocksize"]
         chunk = b'\xff' * 10000
         with open("test.file", "wb") as f:
@@ -48,4 +48,4 @@ class HardwareBenchmark(Bench):
         return {"type": "time", "MB/s": blocksize / total / (1000 * 1000), "time": {"val": total, "unit": "seconds"}}
 
 if __name__ == "__main__":
-    HardwareBenchmark().runTests({})
+    HardwareBenchmark().run({})

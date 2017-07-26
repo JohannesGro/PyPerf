@@ -7,7 +7,7 @@ from string import lowercase
 
 from bench import Bench
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("[" + __name__ + " - SqliteBenchmark]")
 
 
 class SqliteBenchmark(Bench):
@@ -22,11 +22,11 @@ class SqliteBenchmark(Bench):
         self.conn.close()
 
     def setUp(self):
-        logger.info("[SqliteBenchmark]: create table benchmark_table...")
+        logger.info("create table benchmark_table...")
         self.cur.execute("create table if not exists benchmark_table (bench_string, bench_num)")
 
     def tearDown(self):
-        logger.info("[SqliteBenchmark]: drop table benchmark_table...")
+        logger.info("drop table benchmark_table...")
         self.cur.execute("drop table benchmark_table ")
 
     def insert_generator(self, num):
@@ -36,7 +36,7 @@ class SqliteBenchmark(Bench):
             yield (string_val, i)
 
     def bench_insert(self):
-        logger.info("[SqliteBenchmark]: bench_insert")
+        logger.info("bench_insert")
 
         start_time = time.time()
         self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
@@ -46,7 +46,7 @@ class SqliteBenchmark(Bench):
         return {"type": "time", "time": {"val": total, "unit": "seconds"}}
 
     def bench_update(self):
-        logger.info("[SqliteBenchmark]: bench_update")
+        logger.info("bench_update")
 
         self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
         start_time = time.time()
@@ -57,4 +57,4 @@ class SqliteBenchmark(Bench):
 
 
 if __name__ == "__main__":
-    SqliteBenchmark().runTests({})
+    SqliteBenchmark().run({})

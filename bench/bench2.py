@@ -7,7 +7,7 @@ from string import lowercase
 from bench import Bench
 from cdb import sqlapi
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("[" + __name__ + " - SqlApiBenchmark]")
 
 
 class SqlApiBenchmark(Bench):
@@ -21,11 +21,11 @@ class SqlApiBenchmark(Bench):
         pass
 
     def setUp(self):
-        logger.info("[SqlApiBenchmark]: create table benchmark_table...")
+        logger.info("create table benchmark_table...")
         sqlapi.SQL_nova('create table if not exists benchmark_table (bench_string, bench_num)')
 
     def tearDown(self):
-        logger.info("[SqlApiBenchmark]: drop table benchmark_table...")
+        logger.info("drop table benchmark_table...")
         sqlapi.SQL_nova("drop table benchmark_table ")
 
     def insert_generator(self, num):
@@ -35,7 +35,7 @@ class SqlApiBenchmark(Bench):
             yield (string_val, i)
 
     def bench_insert(self):
-        logger.info("[SqlApiBenchmark]: bench_insert")
+        logger.info("bench_insert")
 
         total = []
         for i in self.insert_generator(self.args['rows']):
@@ -47,7 +47,7 @@ class SqlApiBenchmark(Bench):
         return {"type": "time series", "time": {"val": total, "unit": "seconds"}}
 
     def bench_update(self):
-        logger.info("[SqlApiBenchmark]: bench_update")
+        logger.info("bench_update")
 
         for i in self.insert_generator(self.args['rows']):
             sqlapi.SQL_nova("insert into benchmark_table (bench_string, bench_num) values " + str(i))
@@ -59,4 +59,4 @@ class SqlApiBenchmark(Bench):
 
 
 if __name__ == "__main__":
-    SqlApiBenchmark().runTests({})
+    SqlApiBenchmark().run({})
