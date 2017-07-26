@@ -1,0 +1,66 @@
+{
+    "results": {
+        "perf1": {
+            "args": {
+                "rows": 1000
+            }, 
+            "data": [
+                {
+                    "test_update": {
+                        "time": {
+                            "unit": "seconds", 
+                            "val": 0.0
+                        }, 
+                        "type": "time"
+                    }
+                }, 
+                {
+                    "test_insert": {
+                        "time": {
+                            "unit": "seconds", 
+                            "val": 0.012000083923339844
+                        }, 
+                        "type": "time"
+                    }
+                }
+            ]
+        }, 
+        "perf4": {
+            "args": {
+                "blocksize": 10000000, 
+                "iterations": 1000000, 
+                "matrix-size": 1000
+            }, 
+            "data": [
+                {
+                    "test_mem": {
+                        "time": {
+                            "unit": "seconds", 
+                            "val": 0.3320000171661377
+                        }, 
+                        "type": "time"
+                    }
+                }, 
+                {
+                    "test_disk_speed": {
+                        "MB/s": 588.236680083587, 
+                        "time": {
+                            "unit": "seconds", 
+                            "val": 0.01699995994567871
+                        }, 
+                        "type": "time"
+                    }
+                }, 
+                {
+                    "test_cpu": {
+                        "time": {
+                            "unit": "seconds", 
+                            "val": 1.0959999561309814
+                        }, 
+                        "type": "time"
+                    }
+                }
+            ]
+        }
+    }
+}
