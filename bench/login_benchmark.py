@@ -27,15 +27,14 @@ class LoginBenchmark(Bench):
                 continue
         if not hasattr(self, "rsp"):
             logger.info("No connection could be established")
+            exit(1)
 
     def bench_sending_requests(self):
-        if not hasattr(self, "rsp"):
-            return
         logger.info("bench_sending_requests")
         start_time = time.time()
         for _ in range(self.args["iterations"]):
             # 5 attempts
-            for _ in range(0, 5):
+            for _ in range(0, 100000):
                 try:
                     url = "http://%s%s" % (self.args["server"], self.args["self"].args["testpath"])
                     if payload:
@@ -56,9 +55,8 @@ class LoginBenchmark(Bench):
             return [total, "seconds"]
 
     def tearDownClass(self):
-        if hasattr(self, "rsp"):
-            logger.info(" Logging out...")
-            requests.get("http://%s/server/__quit__" % self.args["server"], cookies=self.rsp.cookies)
+        logger.info(" Logging out...")
+        requests.get("http://%s/server/__quit__" % self.args["server"], cookies=self.rsp.cookies)
 
 
 # Guard importing as main module
