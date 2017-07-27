@@ -89,6 +89,7 @@ def start_bench_script(path, className, args):
 
 
 if __name__ == "__main__":
+    # CLI
     parser = argparse.ArgumentParser(description="""The benchrunner reads benches from a benchsuite.
                                     Each bench will be called with an argument list. The result will
                                     be printet into outfile. The file format is json.""")

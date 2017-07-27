@@ -1,37 +1,56 @@
 {
   "suite": {
-    "perf1": {
-      "file": "bench.bench1",
+    "SqliteBenchmark": {
+      "file": "bench.sqlite_benchmark",
       "className": "SqliteBenchmark",
       "args": {
         "rows": 1000
       }
     },
-    "perf2": {
-      "file": "bench.bench2",
+    "SqlApiBenchmark": {
+      "file": "bench.sqlapi_benchmark",
       "className": "SqlApiBenchmark",
-      "active": false,
+      "active": true,
       "args": {
         "rows": 1000
       }
     },
-    "perf3": {
-      "file": "bench.bench3",
+    "LoginBenchmark": {
+      "file": "bench.login_benchmark",
       "className": "LoginBenchmark",
-      "active": false,
+      "active": true,
       "args": {
-        "server": "127.0.0.1:8080",
+        "server": "127.0.0.1:7000",
         "testpath": "/server/__keep_alive__",
         "iterations": 100
       }
     },
-    "perf4": {
-      "file": "bench.bench4",
+    "HardwareBenchmark": {
+      "file": "bench.hardware_benchmark",
       "className": "HardwareBenchmark",
       "args": {
         "iterations": 1000000,
         "matrix-size": 1000,
         "blocksize": 10000000
+      }
+    },
+    "LoadAssemblyTiming": {
+      "file": "bench.load_assembly_timing",
+      "className": "LoadAssemblyTiming",
+      "args": {
+        "z_nummer": "9502656-1",
+        "z_index": "",
+        "loops": 3
+      }
+    },
+    "WriteAssemblyTiming": {
+      "file": "bench.write_assembly_timing",
+      "className": "WriteAssemblyTiming",
+      "args": {
+        "z_nummer": "9502656-1",
+        "z_index": "",
+        "loops": 3,
+        "tmpdir": "tmpDir"
       }
     }
   }
