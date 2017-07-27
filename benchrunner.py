@@ -1,9 +1,11 @@
 #!c:\ce\trunk\sqlite\bin\powerscript.exe
-import json
+import argparse
 import importlib
+import json
 import logging.config
 import sys
-# bad practice?
+
+# defaults
 suite_file = 'benchsuite.json'
 output_file = 'benchmarkResults.json'
 loggingConfigFile = 'loggingConf.json'
@@ -11,7 +13,7 @@ loggingConfigFile = 'loggingConf.json'
 
 def main():
     logger.info("Starting")
-    logger.info("Reading the benchsuite: " + suite_file)
+    logger.info("Reading the benchsuite: " + opts.suite)
     data = loadJSONData()
     results = {'results': {}}
     # iterating the suite
@@ -29,7 +31,7 @@ def loadJSONData():
     This functions load the json-data.
     """
     try:
-        with open(suite_file) as data_file:
+        with open(opts.suite) as data_file:
             data = json.load(data_file)
     except IOError as err:
         logger.error("Could not open benchsuite! " + str(err))
@@ -49,9 +51,9 @@ def saveJSONData(data):
     """
     This functions dumps json data into a file.
     """
-    logger.info("Saving Results to file: " + output_file)
+    logger.info("Saving Results to file: " + opts.outfile)
     try:
-        with open(output_file, 'w') as outfile:
+        with open(opts.outfile, 'w') as outfile:
             json.dump(data, outfile, sort_keys=True, indent=4)
     except IOError as err:
         logger.error("Could not open file to save the data! " + str(err))
@@ -83,10 +85,20 @@ def start_bench_script(path, className, args):
         return
 
     # perform the benchmark
-    return bench_class().runTests(args)
+    return bench_class().run(args)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="""The benchrunner reads benches from a benchsuite.
+                                    Each bench will be called with an argument list. The result will
+                                    be printet into outfile. The file format is json.""")
+    parser.add_argument("--suite", "-s", nargs=1, default=suite_file, help="A json file which contains the benches.")
+    parser.add_argument("--outfile", "-o", nargs=1, default=output_file, help="The results will be stored in this file.")
+    parser.add_argument("--logconfig", "-l", nargs=1, default=loggingConfigFile, help="Configuration for the logger.")
+
+    # Grab the opts from argv
+    opts = parser.parse_args()
+
     # removing the root handlers
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
@@ -94,8 +106,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     # try to read config
-    with open(loggingConfigFile, "r") as configFile:
+    with open(opts.logconfig, "r") as configFile:
         logging.config.dictConfig(json.load(configFile))
         pass
     logger = logging.getLogger("[Benchrunner]")
+    logger.debug("Options: " + str(opts))
     main()
