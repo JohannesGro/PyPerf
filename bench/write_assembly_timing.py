@@ -8,7 +8,7 @@ import time
 from cs.documents import Document
 from cdb.storage import blob
 
-import bench
+from bench import Bench
 
 logger = logging.getLogger("[" + __name__ + " - WriteAssemblyTiming]")
 
@@ -24,18 +24,24 @@ class WriteAssemblyTiming(Bench):
     """
     def setUpClass(self):
         logger.info("Getting Document %s-%s" % (self.args['z_nummer'], self.args['z_index']))
-        doc = Document.ByKeys(self.args['z_nummer'], self.args['z_index'])
-        if not doc:
+        self.doc = Document.ByKeys(self.args['z_nummer'], self.args['z_index'])
+        if not self.doc:
             logger.error("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
             exit(1)
             # raise Exception("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
 
-    def bench_prepare(self):
+    def bench_main(self):
+        outfiles = prepare()
+        all_blob_ids = save(outfiles)
+        cleanup_blobs(all_blob_ids)
+        cleanup_files(outfiles)
+
+    def prepare(self):
         logger.info("bench_prepare")
         result = {}
         logger.info("Get reference structure")
         t1 = time.time()
-        ref_docs = doc.getAllRefDocs()
+        ref_docs = self.doc.getAllRefDocs()
         t2 = time.time()
         logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
                      % (len(ref_docs), t2 - t1))
@@ -64,9 +70,8 @@ class WriteAssemblyTiming(Bench):
         logger.debug("--> Loading of %d files / %d bytes took %.4f secs. (%.4f KBytes/sec)"
                      % (len(file_list), dlen, t2 - t1, dlen / ((t2 - t1) * 1024)))
         result['loadFileContent'] = {"bytes": dlen, "time": {"val": t2 - t1, "unit": "seconds"}}
-        result['save'] = save(filenames)
-        result['cleanUpFiles'] = cleanup_files(filenames)
-        return result
+        self.storeResult(result)
+        return filenames
 
     def write_file_to_bs(self, writer, from_path, blocksize=None):
         """ Write the content of a file to ``writer``
@@ -108,8 +113,8 @@ class WriteAssemblyTiming(Bench):
             all_blob_ids.extend(blob_ids)
 
             result["writingBlobs"] = writingBlobs
-            result["deletingBlobs"] = cleanup_blobs(all_blob_ids)
-        return result
+            self.storeResult(result)
+        return all_blob_ids
 
     def cleanup_blobs(self, blob_ids):
         logger.info("Cleanup: Removing %d blobs" % len(blob_ids))
@@ -121,7 +126,7 @@ class WriteAssemblyTiming(Bench):
         t2 = time.time()
         logger.debug("-> Deletion of %d blobs took %.4f secs. (%.4f blobs/sec)"
                      % (len(blob_ids), t2 - t1, (len(blob_ids) / (t2 - t1))))
-        return {"numFiles": len(blob_ids), "time": {"val": t2 - t1, "unit": "seconds"}}
+        self.storeResult({"numFiles": len(blob_ids), "time": {"val": t2 - t1, "unit": "seconds"}})
 
     def cleanup_files(self, sourcefiles):
         logger.info("Cleanup: Removing %d temporary files" % len(sourcefiles))
@@ -131,7 +136,7 @@ class WriteAssemblyTiming(Bench):
         t2 = time.time()
         logger.debug("-> Deletion of %d files took %.4f secs. (%.4f files/sec)"
                      % (len(sourcefiles), t2 - t1, (len(sourcefiles) / (t2 - t1))))
-        return {"numFiles": len(sourcefiles), "time": {"val": t2 - t1, "unit": "seconds"}}
+        self.storeResult({"numFiles": len(sourcefiles), "time": {"val": t2 - t1, "unit": "seconds"}})
 
 if __name__ == '__main__':
-    WriteAssemblyTiming().run()
+    WriteAssemblyTiming().run({"z_nummer": "", "z_index": ""})

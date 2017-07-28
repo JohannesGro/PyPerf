@@ -22,11 +22,11 @@ class SqlApiBenchmark(Bench):
 
     def setUp(self):
         logger.info("create table benchmark_table...")
-        sqlapi.SQL_nova('create table if not exists benchmark_table (bench_string, bench_num)')
+        sqlapi.SQL('create table if not exists benchmark_table (bench_string, bench_num)')
 
     def tearDown(self):
         logger.info("drop table benchmark_table...")
-        sqlapi.SQL_nova("drop table benchmark_table ")
+        sqlapi.SQL("drop table benchmark_table ")
 
     def insert_generator(self, num):
         str_len = 10
@@ -36,26 +36,29 @@ class SqlApiBenchmark(Bench):
 
     def bench_insert(self):
         logger.info("bench_insert")
-
-        total = []
-        for i in self.insert_generator(self.args['rows']):
-            pre_time = time.time()
-            sqlapi.SQL_nova("insert into benchmark_table (bench_string, bench_num) values " + str(i))
-            post_time = time.time()
-            total.append(post_time - pre_time)
-
-        return {"type": "time series", "time": {"val": total, "unit": "seconds"}}
+        res = []
+        for i in range(self.args['iterations']):
+            total = []
+            for i in self.insert_generator(self.args['rows']):
+                pre_time = time.time()
+                sqlapi.SQL("insert into benchmark_table (bench_string, bench_num) values " + str(i))
+                post_time = time.time()
+                total.append(post_time - pre_time)
+            res.append({"type": "time series", "time": {"val": total, "unit": "seconds"}})
+        self.storeResult(res)
 
     def bench_update(self):
         logger.info("bench_update")
 
         for i in self.insert_generator(self.args['rows']):
-            sqlapi.SQL_nova("insert into benchmark_table (bench_string, bench_num) values " + str(i))
-        start_time = time.time()
-        sqlapi.SQL_nova( "update benchmark_table set bench_num=bench_num*2")
-        end_time = time.time()
-        total = end_time - start_time
-        return {"type": "time", "time": {"val": total, "unit": "seconds"}}
+            sqlapi.SQL("insert into benchmark_table (bench_string, bench_num) values " + str(i))
+        total = []
+        for i in range(self.args['iterations']):
+            start_time = time.time()
+            sqlapi.SQL("update benchmark_table set bench_num=bench_num*2")
+            end_time = time.time()
+            total.append(end_time - start_time)
+        self.storeResult({"type": "time", "time": {"val": total, "unit": "seconds"}})
 
 
 if __name__ == "__main__":

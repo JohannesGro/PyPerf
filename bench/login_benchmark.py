@@ -26,15 +26,17 @@ class LoginBenchmark(Bench):
             except:
                 continue
         if not hasattr(self, "rsp"):
-            logger.info("No connection could be established")
+            logger.error("No connection could be established")
             exit(1)
 
     def bench_sending_requests(self):
         logger.info("bench_sending_requests")
-        start_time = time.time()
+
+        total = []
         for _ in range(self.args["iterations"]):
-            # 5 attempts
-            for _ in range(0, 100000):
+            start_time = time.time()
+            # 5 attempts to establish a connection
+            for _ in range(0, 5):
                 try:
                     url = "http://%s%s" % (self.args["server"], self.args["self"].args["testpath"])
                     if payload:
@@ -51,8 +53,8 @@ class LoginBenchmark(Bench):
             # print("Next request after %i seconds!" % next_request_after)
             # time.sleep(next_request_after)
             end_time = time.time()
-            total = end_time - start_time
-            return [total, "seconds"]
+            total.append(end_time - start_time)
+        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
 
     def tearDownClass(self):
         logger.info(" Logging out...")

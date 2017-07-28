@@ -37,23 +37,24 @@ class SqliteBenchmark(Bench):
 
     def bench_insert(self):
         logger.info("bench_insert")
-
-        start_time = time.time()
-        self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
-        end_time = time.time()
-
-        total = end_time - start_time
-        return {"type": "time", "time": {"val": total, "unit": "seconds"}}
+        total = []
+        for i in range(self.args['iterations']):
+            start_time = time.time()
+            self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
+            end_time = time.time()
+            total.append(end_time - start_time)
+        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
 
     def bench_update(self):
         logger.info("bench_update")
-
         self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
-        start_time = time.time()
-        self.cur.execute("update benchmark_table set bench_num=bench_num*2")
-        end_time = time.time()
-        total = end_time - start_time
-        return {"type": "time", "time": {"val": total, "unit": "seconds"}}
+        total = []
+        for i in range(self.args['iterations']):
+            start_time = time.time()
+            self.cur.execute("update benchmark_table set bench_num=bench_num*2")
+            end_time = time.time()
+            total.append(end_time - start_time)
+        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
 
 
 if __name__ == "__main__":

@@ -1,10 +1,12 @@
 #!C:\ce\trunk\win32\release\img\python
 from abc import ABCMeta
+import inspect
 
 
 class Bench(object):
     _metaclass_ = ABCMeta
     args = {}
+    results = []
 
     def setUp(self):
         """Method called to prepare the test fixture. The default implementation does nothing."""
@@ -27,6 +29,11 @@ class Bench(object):
         """
         pass
 
+    def storeResult(self, res):
+        curframe = inspect.currentframe()
+        calframe = inspect.getouterframes(curframe, 2)
+        self.results.append({calframe[1][3]: res})
+
     def run(self, args):
         """
         This method calls every test in this class. Test are indentified by the prefix 'test_'.
@@ -34,7 +41,7 @@ class Bench(object):
         called immediately after each test. The result is structured in json format and will be returned.
         """
         self.args = args
-        results = []
+        self.results = []
         self.setUpClass()
         for test, val in self.__class__.__dict__.iteritems():
             if test.find('bench_') == 0:
@@ -44,7 +51,7 @@ class Bench(object):
                 result = test_method()
                 if result:
                     # results.append({test_method.__name__: {'value': result[0], 'unit': result[1]}})
-                    results.append({test_method.__name__: result})
+                    self.results.append({test_method.__name__: result})
                 self.tearDown()
         self.tearDownClass()
-        return results
+        return self.results

@@ -1,11 +1,11 @@
-#!c:\ce\trunk\sqlite\bin\powerscript.exe
+#!c:\csall\trunk\sqlite\bin\powerscript.exe
 # -*- coding: iso-8859-1 -*-
-from optparse import OptionParser
 import logging
 import time
 
 from cs.documents import Document
-import bench
+from cdb.storage import blob
+from bench import Bench
 
 logger = logging.getLogger("[" + __name__ + " - LoadAssemblyTiming]")
 
@@ -30,7 +30,7 @@ class LoadAssemblyTiming(Bench):
         result = {}
         logger.info("Get reference structure")
         t1 = time.time()
-        ref_docs = doc.getAllRefDocs()
+        ref_docs = self.doc.getAllRefDocs()
         t2 = time.time()
         logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
                      % (len(ref_docs), t2 - t1))
@@ -81,4 +81,4 @@ class LoadAssemblyTiming(Bench):
 
 
 if __name__ == '__main__':
-    LoadAssemblyTiming().run()
+    LoadAssemblyTiming().run({"z_nummer": "", "z_index": ""})
