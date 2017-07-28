@@ -3,8 +3,10 @@
     "SqliteBenchmark": {
       "file": "bench.sqlite_benchmark",
       "className": "SqliteBenchmark",
+      "active": false,
       "args": {
-        "rows": 1000
+        "rows": 1000,
+        "iterations": 10
       }
     },
     "SqlApiBenchmark": {
@@ -12,7 +14,8 @@
       "className": "SqlApiBenchmark",
       "active": true,
       "args": {
-        "rows": 1000
+        "rows": 1000,
+        "iterations": 10
       }
     },
     "LoginBenchmark": {
@@ -20,7 +23,7 @@
       "className": "LoginBenchmark",
       "active": true,
       "args": {
-        "server": "127.0.0.1:7000",
+        "server": "127.0.0.1:50087",
         "testpath": "/server/__keep_alive__",
         "iterations": 100
       }
@@ -29,7 +32,9 @@
       "file": "bench.hardware_benchmark",
       "className": "HardwareBenchmark",
       "args": {
-        "iterations": 1000000,
+        "cpu-iterations": 100,
+        "matrix-iterations": 10,
+        "disk-iterations": 10,
         "matrix-size": 1000,
         "blocksize": 10000000
       }
