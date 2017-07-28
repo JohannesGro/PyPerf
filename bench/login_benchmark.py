@@ -5,6 +5,7 @@ import os
 import random
 import time
 import traceback
+import sys
 
 import requests
 
@@ -27,7 +28,7 @@ class LoginBenchmark(Bench):
                 continue
         if not hasattr(self, "rsp"):
             logger.error("No connection could be established")
-            exit(1)
+            raise Exception("No connection could be established")
 
     def bench_sending_requests(self):
         logger.info("bench_sending_requests")

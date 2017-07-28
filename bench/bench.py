@@ -42,16 +42,19 @@ class Bench(object):
         """
         self.args = args
         self.results = []
-        self.setUpClass()
-        for test, val in self.__class__.__dict__.iteritems():
-            if test.find('bench_') == 0:
-                test_method = getattr(self, test)
-                self.setUp()
-                # each test need to return [val, unit]
-                result = test_method()
-                if result:
-                    # results.append({test_method.__name__: {'value': result[0], 'unit': result[1]}})
-                    self.results.append({test_method.__name__: result})
-                self.tearDown()
-        self.tearDownClass()
+        try:
+            self.setUpClass()
+            for test, val in self.__class__.__dict__.iteritems():
+                if test.find('bench_') == 0:
+                    test_method = getattr(self, test)
+                    self.setUp()
+                    # each test need to return [val, unit]
+                    result = test_method()
+                    if result:
+                        # results.append({test_method.__name__: {'value': result[0], 'unit': result[1]}})
+                        self.results.append({test_method.__name__: result})
+                    self.tearDown()
+            self.tearDownClass()
+        except:
+            pass
         return self.results
