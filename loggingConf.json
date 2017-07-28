@@ -8,12 +8,12 @@
   },
   "handlers": {
     "default": {
-      "level": "INFO",
+      "level": "DEBUG",
       "formatter": "standard",
       "class": "logging.StreamHandler"
     },
     "file_handler": {
-      "level": "INFO",
+      "level": "DEBUG",
       "filename": "benchmark.log",
       "class": "logging.FileHandler",
       "formatter": "standard",
@@ -23,7 +23,7 @@
   "loggers": {},
   "root": {
     "handlers": ["file_handler", "default"],
-    "level": "INFO",
+    "level": "DEBUG",
     "propagate": true
   }
 }
