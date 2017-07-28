@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\CONTACT CIM DATABASE 11.1.17 Demo\powerscript.exe" -D C:\ProgramData\CONTACT\Server\CDB_11.1.17_DEMO\ %1

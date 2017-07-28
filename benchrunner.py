@@ -1,4 +1,4 @@
-#!c:\ce\trunk\sqlite\bin\powerscript.exe
+#!launcher.cmd
 import argparse
 import importlib
 import json
