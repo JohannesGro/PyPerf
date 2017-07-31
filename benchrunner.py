@@ -5,6 +5,13 @@ import json
 import logging.config
 import sys
 
+"""The benchrunner runs different benchmarks.
+These benchmarks inherit from the abstract class Bench.
+A benchsuit discribes a list of benchmarks and their parameters.
+The runner reads the bensuit, calls the benches, gathers the results and creates a
+ json formatted outputfile.
+"""
+
 # defaults
 suite_file = 'benchsuite.json'
 output_file = 'benchmarkResults.json'
@@ -27,8 +34,7 @@ def main():
 
 
 def loadJSONData():
-    """
-    This functions load the json-data.
+    """This functions load the json-data and returns it.
     """
     try:
         with open(opts.suite) as data_file:
@@ -48,8 +54,7 @@ def loadJSONData():
 
 
 def saveJSONData(data):
-    """
-    This functions dumps json data into a file.
+    """This functions dumps json data into a file.
     """
     logger.info("Saving Results to file: " + opts.outfile)
     try:
@@ -68,7 +73,7 @@ def saveJSONData(data):
 
 
 def start_bench_script(path, className, args):
-    """ This functions imports the bench module and creates an instance of the given
+    """This functions imports the bench module and creates an instance of the given
     className. It calls the method .main(args) which is the entry point for
     the test classes."""
     try:
