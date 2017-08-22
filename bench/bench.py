@@ -1,6 +1,14 @@
 #!C:\ce\trunk\win32\release\img\python
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 1990 - 2017 CONTACT Software GmbH
+# All rights reserved.
+# https://www.contact-software.com/
 from abc import ABCMeta
 import inspect
+import logging
+
+logger = logging.getLogger("[" + __name__ + " - Bench]")
 
 
 class Bench(object):
@@ -53,13 +61,17 @@ class Bench(object):
         self.results = []
         try:
             self.setUpClass()
-            for test, val in sorted(self.__class__.__dict__.iteritems()):
-                if test.find('bench_') == 0:
-                    test_method = getattr(self, test)
-                    self.setUp()
-                    test_method()
-                    self.tearDown()
-            self.tearDownClass()
-        except:
-            pass
+            try:
+                for test, val in sorted(self.__class__.__dict__.iteritems()):
+                    if test.find('bench_') == 0:
+                        test_method = getattr(self, test)
+                        self.setUp()
+                        test_method()
+                        self.tearDown()
+            except Exception:
+                logger.exception("Exception while running Bench")
+            finally:
+                self.tearDownClass()
+        except Exception:
+            logger.exception("Exception while running Bench")
         return self.results
