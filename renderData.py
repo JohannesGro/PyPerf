@@ -1,4 +1,9 @@
-#!c:\csall\trunk\sqlite\bin\powerscript.exe
+#!c:\ce\trunk\sqlite\bin\powerscript.exe
+# -*- mode: python; coding: utf-8 -*-
+#
+# Copyright (C) 1990 - 2017 CONTACT Software GmbH
+# All rights reserved.
+# https://www.contact-software.com/
 import argparse
 import json
 import logging
@@ -50,6 +55,8 @@ def render_bench(name, content):
 
 def render_data(data):
     title_templ = "<h3>{0}</h3>"
+    tile_templ = "<div class='tile'>{0}</div>"
+    content_templ = "<div class='content'>{0}</div>"
     res = ""
     for d in data:
         for meth_name, content in d.iteritems():
@@ -59,8 +66,8 @@ def render_data(data):
                     body = render_types(ele)
             else:
                 body = render_types(content)
-            res = res + title + body
-    return res
+            res = res + tile_templ.format(title + body)
+    return content_templ.format(res)
 
 
 def render_types(content):
@@ -72,7 +79,7 @@ def render_types(content):
     """
     dl_inner_temp = "<dt>{0}</dt><dd>{1}</dd>"
     if content["type"] == "time series":
-        time_list = content["time"]["val"]
+        time_list = content["value"]
         len_time_list = len(time_list)
         if len_time_list > 0:
             max_val = max(time_list)
@@ -80,16 +87,17 @@ def render_types(content):
             sum_val = sum(time_list)
             avg_val = sum_val / len(time_list)
             dl_inner = ""
-            dl_inner += dl_inner_temp.format("Unit:", content["time"]["unit"])
+            dl_inner += dl_inner_temp.format("Unit:", content["unit"])
             dl_inner += dl_inner_temp.format("Max:", max_val)
             dl_inner += dl_inner_temp.format("Min:", min_val)
             dl_inner += dl_inner_temp.format("Sum:", sum_val)
+            if "totalTime" in content:
+                dl_inner += dl_inner_temp.format("Total Time:", content["totalTime"])
             dl_inner += dl_inner_temp.format("Average:", avg_val)
             res += dl_temp.format(dl_inner)
     if content["type"] == "time":
         dl_inner = ""
-        dl_inner += dl_inner_temp.format("Unit:", content["time"]["unit"])
-        dl_inner += dl_inner_temp.format("Val:", content["time"]["val"])
+        dl_inner += dl_inner_temp.format("Result:", str(content["value"]) + " " + content["unit"])
         res += dl_temp.format(dl_inner)
     return res
 
