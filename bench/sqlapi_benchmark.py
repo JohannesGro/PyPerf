@@ -131,6 +131,8 @@ class SqlApiBenchmark(Bench):
         self.storeResult(t.elapsed.total_seconds())
 
     def cleanup(self, name):
+        """ Delete the tables holding the data related to the migration.
+        """
         tbl = self.tabledef(name)
         if tbl.exists():
             tbl.drop()
@@ -216,29 +218,29 @@ class SqlApiBenchmark(Bench):
                 self.do_single_insert(table, rec)
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        return res
+        self.storeResult(res, type="time_series")
 
-    def do_fetch_one_by_one(self, anzahl, table):
-        logger.info("\nFetch row by row for %d rows", anzahl)
+    def do_select_one_by_one(self, anzahl, table):
+        logger.info("\nSelect row by row for %d rows", anzahl)
         res = []
         for i in xrange(anzahl):
             with Timer() as t:
                 sqlapi.SQLselect("* from %s where z_nummer='%d'" % (table, i))
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        return res
+        self.storeResult(res, type="time_series")
 
-    def do_fetch_in_one_statement(self, table):
+    def do_select_in_one_statement(self, table):
         logger.info("\nGet all with one statement")
         with Timer() as t:
             sqlapi.SQLselect("* from %s" % table)
-        return t.elapsed.total_seconds()
+        self.storeResult(t.elapsed.total_seconds())
 
-    def do_PKs_fetch_in_one_statement(self, table):
+    def do_PKs_select_in_one_statement(self, table):
         logger.info("\nGet all PKs with one statement")
         with Timer() as t:
             sqlapi.SQLselect("z_nummer, z_index from %s" % table)
-        return t.elapsed.total_seconds()
+        self.storeResult(t.elapsed.total_seconds())
 
     def update_one_by_one(self, anzahl, table):
         logger.info("\nUpdate row by row for %d rows", anzahl)
@@ -249,7 +251,7 @@ class SqlApiBenchmark(Bench):
                                  % (table, i))
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        return res
+        self.storeResult(res, type="time_series")
 
     def warmup(self, table, cycles=10):
         """Do some warmup, to avoid flickering from cold FS caches
@@ -257,29 +259,32 @@ class SqlApiBenchmark(Bench):
         logger.info("Warming up")
         prevlog = logger.level
         logger.setLevel(logging.ERROR)
+        self.namespace = "warmup_"
         res = []
-        for i in xrange(cycles):
-            self.create_table(table)
-            res.append({"test_run #%d" % i: self.test_run(table, self.args["warmup"])})
-            self.cleanup(table)
+        with Timer() as t:
+            for i in xrange(cycles):
+                self.create_table(table)
+                res.append({"test_run #%d" % i: self.test_run(table, self.args["warmup"])})
+                self.cleanup(table)
+        self.namespace = ""
+        self.storeResult(t.elapsed.total_seconds())
         logger.setLevel(prevlog)
-        self.storeResult(res)
 
     def test_run(self, table, rows):
         res = {}
         res["do_inserts"] = self.do_inserts(rows, table)
         res["update_one_by_one"] = self.update_one_by_one(rows, table)
-        res["do_PKs_fetch_in_one_statement"] = self.do_PKs_fetch_in_one_statement(table)
-        res["do_fetch_in_one_statement"] = self.do_fetch_in_one_statement(table)
-        res["do_fetch_one_by_one"] = self.do_fetch_one_by_one(rows, table)
-        return res
+        res["do_PKs_select_in_one_statement"] = self.do_PKs_select_in_one_statement(table)
+        res["do_select_in_one_statement"] = self.do_select_in_one_statement(table)
+        res["do_select_one_by_one"] = self.do_select_one_by_one(rows, table)
+        # self.storeResult(res)
 
     def bench_main(self):
         logger.info("Bench_main")
-
+        self.namespace = "bench_main_"
         res = self.test_run(self.args['tablename'], self.args['rows'])
 
-        self.storeResult(res)
+        # self.storeResult(res)
 
     '''
     def bench_recordSet2(self):

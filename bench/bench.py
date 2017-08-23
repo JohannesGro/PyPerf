@@ -15,6 +15,7 @@ class Bench(object):
     _metaclass_ = ABCMeta
     args = {}
     results = []
+    namespace = ""
 
     def setUp(self):
         """Method called to prepare the test fixture. The default implementation does nothing.
@@ -38,7 +39,7 @@ class Bench(object):
         """
         pass
 
-    def storeResult(self, val, unit="seconds", type="time", name=""):
+    def storeResult(self, val, name="", type="time", unit="seconds"):
         """Store the benchmark result. The run-Method call will be return all stored results.
 
         Keyword arguments:
@@ -48,23 +49,8 @@ class Bench(object):
             curframe = inspect.currentframe()
             calframe = inspect.getouterframes(curframe, 2)
             name = calframe[1][3]
-        # does the entry already exist
-        element = next((item for item in self.results if name in item), None)
-        if element:
-            # add values to the existing entry. expecting it is the same unit and type.
-            if isinstance(element[name]["value"], list):
-                if isinstance(val, list):
-                    element[name]["value"].extend(val)
-                else:
-                    element[name]["value"].append(val)
-            else:
-                if isinstance(val, list):
-                    val.extend(element[name]["value"])
-                    element[name]["value"] = val
-                else:
-                    element[name]["value"] = [element[name]["value"], val]
-        else:
-            self.results.append({name: {"value": val, "unit": unit, "type": type}})
+        # overrides if the entry already exist
+        self.results.update({self.namespace + name: {"value": val, "unit": unit, "type": type}})
 
     def run(self, args):
         """
@@ -76,7 +62,7 @@ class Bench(object):
         args -- a dictionary consisting of all parameter which are used in this benchmark. E.g. iterations could be used for the repitition of an insert query.
         """
         self.args = args
-        self.results = []
+        self.results = {}
         try:
             self.setUpClass()
             try:
