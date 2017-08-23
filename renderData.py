@@ -47,27 +47,76 @@ def iterateBenches(data):
 
 def render_bench(name, content):
     title = "<h2>{0}</h2>".format(name)
+    tile_templ = "<div class='tile'>{0}</div>"
     args = render_args(content["args"])
     data = render_data(content["data"])
-    return title + args + data
+    return tile_templ.format(title + args + data)
     # print args
 
 
 def render_data(data):
     title_templ = "<h3>{0}</h3>"
-    tile_templ = "<div class='tile'>{0}</div>"
     content_templ = "<div class='content'>{0}</div>"
     res = ""
-    for d in data:
-        for meth_name, content in d.iteritems():
-            title = title_templ.format(meth_name)
-            if isinstance(content, list):
-                for ele in content:
-                    body = render_types(ele)
-            else:
-                body = render_types(content)
-            res = res + tile_templ.format(title + body)
-    return content_templ.format(res)
+    for (name, content) in data.iteritems():
+        title = title_templ.format(name)
+        # body = render_types(data)
+        body = render_tables_for_all_types(data)
+        # res = res + tile_templ.format(title + body)
+    # return content_templ.format(res)
+    return body
+
+
+def render_table_by_type(data, type):
+    res = "<h4>Tabelle {}</h4>".format(type)
+    elements = dict((name, content) for (name, content) in data.iteritems() if content["type"] == type)
+    time_series_table_header_templ = """<tr>
+                    <th>{}</th>
+                    <th>{}</th>
+                    <th>{}</th>
+                    <th>{}</th>
+                    <th>{}</th>
+                  </tr>"""
+    time_series_row_templ = """<tr>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                  </tr>"""
+    time_header_templ = """  <tr>
+                    <th>{}</th>
+                    <th>{}</th>
+                  </tr>"""
+    time_row_templ = """  <tr>
+                    <td>{}</td>
+                    <td>{}</td>
+                  </tr>"""
+    content = "<table>"
+    if type == "time_series":
+        content += time_series_table_header_templ.format("Test", "Max", "Min", "Sum", "Average")
+    elif type == "time":
+        content += time_header_templ.format("Test", "Time")
+    for (name, data) in elements.iteritems():
+        if type == "time_series":
+            time_list = data["value"]
+            max_val = max(time_list)
+            min_val = min(time_list)
+            sum_val = sum(time_list)
+            avg_val = sum_val / len(time_list)
+            content += time_series_row_templ.format(name, max_val, min_val, sum_val, avg_val)
+        elif type == "time":
+            content += time_row_templ.format(name, data["value"])
+    content += "</table>"
+    return res + content
+
+
+def render_tables_for_all_types(data):
+    types = ["time", "time_series"]
+    res = ""
+    for t in types:
+        res += render_table_by_type(data, t)
+    return res
 
 
 def render_types(content):
@@ -78,7 +127,7 @@ def render_types(content):
        </dl>
     """
     dl_inner_temp = "<dt>{0}</dt><dd>{1}</dd>"
-    if content["type"] == "time series":
+    if content["type"] == "time_series":
         time_list = content["value"]
         len_time_list = len(time_list)
         if len_time_list > 0:
