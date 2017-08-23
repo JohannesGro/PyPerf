@@ -28,7 +28,8 @@ The runner reads the bensuit, calls the benches, gathers the results and creates
  json formatted outputfile.
 """
 
-__revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z js $"
+# TODO
+__revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
 
 # defaults
 suite_file = 'benchsuite.json'
@@ -40,7 +41,7 @@ results = {'results': {}}
 def main():
     logger.info("Starting")
     logger.info("Reading the benchsuite: " + opts.suite)
-    data = loadJSONData()
+    data = loadJSONData(opts.suite)
 
     # iterating the suite
     for bench_key, bench_val in data["suite"].iteritems():
@@ -52,30 +53,30 @@ def main():
     saveJSONData(results)
 
 
-def loadJSONData():
+def loadJSONData(json_file):
     """This functions load the json-data and returns it.
     """
     try:
-        with open(opts.suite) as data_file:
+        with open(json_file) as data_file:
             data = json.load(data_file)
     except IOError as err:
-        logger.error("Could not open benchsuite! " + str(err))
+        logger.error("Could not open json file! " + str(err))
         sys.exit(1)
     except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode benchsuite! " + str(err))
+        logger.error("Could not decode json file! " + str(err))
         sys.exit(1)
     except:
         logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
         sys.exit(1)
     else:
-        logger.info("Reading successful")
+        logger.info("Reading json file successful")
     return data
 
 
 def saveJSONData(data):
     """This functions dumps json data into a file.
     """
-    logger.info("Saving Results to file: " + opts.outfile)
+    logger.info("Saving json to file: " + opts.outfile)
     try:
         with open(opts.outfile, 'w') as outfile:
             json.dump(data, outfile, sort_keys=True, indent=4)
@@ -139,6 +140,7 @@ def sys_info():
     logger.info("OS-Platform version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
     logger.info("CPU Count: %d", multiprocessing.cpu_count())
+
     for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
                 "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
                 "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
