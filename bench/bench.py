@@ -38,15 +38,33 @@ class Bench(object):
         """
         pass
 
-    def storeResult(self, res):
+    def storeResult(self, val, unit="seconds", type="time", name=""):
         """Store the benchmark result. The run-Method call will be return all stored results.
 
         Keyword arguments:
         res -- a dictionary with a format spezified in the field res['type']
         """
-        curframe = inspect.currentframe()
-        calframe = inspect.getouterframes(curframe, 2)
-        self.results.append({calframe[1][3]: res})
+        if name == "":
+            curframe = inspect.currentframe()
+            calframe = inspect.getouterframes(curframe, 2)
+            name = calframe[1][3]
+        # does the entry already exist
+        element = next((item for item in self.results if name in item), None)
+        if element:
+            # add values to the existing entry. expecting it is the same unit and type.
+            if isinstance(element[name]["value"], list):
+                if isinstance(val, list):
+                    element[name]["value"].extend(val)
+                else:
+                    element[name]["value"].append(val)
+            else:
+                if isinstance(val, list):
+                    val.extend(element[name]["value"])
+                    element[name]["value"] = val
+                else:
+                    element[name]["value"] = [element[name]["value"], val]
+        else:
+            self.results.append({name: {"value": val, "unit": unit, "type": type}})
 
     def run(self, args):
         """
