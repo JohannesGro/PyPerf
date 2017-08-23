@@ -47,8 +47,8 @@ class SqlApiBenchmark(Bench):
 
     def tabledef(self, name):
         # Use a wide table, so we use a copy of zeichung
-        #return ddl.Table(name,
-        return ddl.Table("x_cdb_testperf",
+        # return ddl.Table("x_cdb_testperf",
+        return ddl.Table(name,
                          ddl.Char("z_nummer", 20, 1),
                          ddl.Char("z_index", 10, 1),
                          ddl.Char("teilenummer", 20),
@@ -114,11 +114,10 @@ class SqlApiBenchmark(Bench):
                          ddl.Char("generated_from", 255),
                          ddl.PrimaryKey('z_nummer', 'z_index'))
 
-    def create_table(self, name, storeResults=True):
+    def create_table(self, name):
         """ Create the tables holding the data related to the migration.
         """
         logger.info("Create table '%s'", name)
-        res = []
         with Timer() as t:
             try:
                 tbl = self.tabledef(name)
@@ -129,9 +128,7 @@ class SqlApiBenchmark(Bench):
             except Exception as exc:
                 logger.error("Error while creating table '%s': %s", name, exc)
                 raise
-        if storeResults:
-            res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-            self.storeResult(res)
+        self.storeResult(t.elapsed.total_seconds())
 
     def cleanup(self, name):
         tbl = self.tabledef(name)
@@ -212,51 +209,47 @@ class SqlApiBenchmark(Bench):
         rec["schriftkopf_ok"] = 1
 
         res = []
-        with Timer() as t:
-            for i in xrange(anzahl):
-                rec["z_nummer"] = _quote("%d" % i)
-                # rec["z_index"] = _quote("%d" % i)
+        for i in xrange(anzahl):
+            rec["z_nummer"] = _quote("%d" % i)
+            # rec["z_index"] = _quote("%d" % i)
+            with Timer() as t:
                 self.do_single_insert(table, rec)
+            res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-        self.storeResult(res)
+        return res
 
     def do_fetch_one_by_one(self, anzahl, table):
         logger.info("\nFetch row by row for %d rows", anzahl)
         res = []
-        with Timer() as t:
-            for i in xrange(anzahl):
+        for i in xrange(anzahl):
+            with Timer() as t:
                 sqlapi.SQLselect("* from %s where z_nummer='%d'" % (table, i))
+            res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-        self.storeResult(res)
+        return res
 
     def do_fetch_in_one_statement(self, table):
         logger.info("\nGet all with one statement")
-        res = []
         with Timer() as t:
             sqlapi.SQLselect("* from %s" % table)
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-        self.storeResult(res)
+        return t.elapsed.total_seconds()
 
     def do_PKs_fetch_in_one_statement(self, table):
         logger.info("\nGet all PKs with one statement")
-        res = []
         with Timer() as t:
             sqlapi.SQLselect("z_nummer, z_index from %s" % table)
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-        self.storeResult(res)
+        return t.elapsed.total_seconds()
 
     def update_one_by_one(self, anzahl, table):
         logger.info("\nUpdate row by row for %d rows", anzahl)
         res = []
-        with Timer() as t:
-            for i in xrange(anzahl):
+        for i in xrange(anzahl):
+            with Timer() as t:
                 sqlapi.SQLupdate("%s set z_status=20 where z_nummer='%d'"
                                  % (table, i))
+            res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
-        self.storeResult(res)
+        return res
 
     def warmup(self, table, cycles=10):
         """Do some warmup, to avoid flickering from cold FS caches
@@ -264,29 +257,31 @@ class SqlApiBenchmark(Bench):
         logger.info("Warming up")
         prevlog = logger.level
         logger.setLevel(logging.ERROR)
-        for _ in xrange(cycles):
+        res = []
+        for i in xrange(cycles):
             self.create_table(table)
-            self.test_run(table, 100)
+            res.append({"test_run #%d" % i: self.test_run(table, self.args["warmup"])})
             self.cleanup(table)
         logger.setLevel(prevlog)
+        self.storeResult(res)
 
     def test_run(self, table, rows):
-        self.do_inserts(rows, table)
-        self.update_one_by_one(rows, table)
-        self.do_PKs_fetch_in_one_statement(table)
-        self.do_fetch_in_one_statement(table)
-        self.do_fetch_one_by_one(rows, table)
+        res = {}
+        res["do_inserts"] = self.do_inserts(rows, table)
+        res["update_one_by_one"] = self.update_one_by_one(rows, table)
+        res["do_PKs_fetch_in_one_statement"] = self.do_PKs_fetch_in_one_statement(table)
+        res["do_fetch_in_one_statement"] = self.do_fetch_in_one_statement(table)
+        res["do_fetch_one_by_one"] = self.do_fetch_one_by_one(rows, table)
+        return res
 
     def bench_main(self):
         logger.info("Bench_main")
-        res = []
 
-        with Timer() as t:
-            self.test_run(self.args['tablename'], self.args['rows'])
-        # logger.info("completed.")
-        res.append({"type": "time", "time": {"val": t.elapsed.total_seconds(), "unit": "seconds"}})
+        res = self.test_run(self.args['tablename'], self.args['rows'])
+
         self.storeResult(res)
-'''
+
+    '''
     def bench_recordSet2(self):
         res = []
         logger.info("bench_recordSet2")
@@ -357,4 +352,4 @@ class SqlApiBenchmark(Bench):
 '''
 
 if __name__ == "__main__":
-    print SqlApiBenchmark().run({"rows": 1000, "iterations": 10})
+    print SqlApiBenchmark().run({"rows": 1000, "iterations": 10, "tablename": "x_cdb_testperf", "warmup": 100})
