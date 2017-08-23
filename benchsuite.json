@@ -16,7 +16,8 @@
       "args": {
         "rows": 100000,
         "iterations": 10,
-        "tablename": "x_cdb_testperf"
+        "tablename": "x_cdb_testperf",
+        "warmup": 100
       }
     },
     "LoginBenchmark": {
