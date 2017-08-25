@@ -1,11 +1,15 @@
 #!C:\ce\trunk\win32\release\img\python
+
 import logging
+# sqlite db
 import sqlite3
 import time
+# for the string generator
 from random import choice
 from string import lowercase
 
 from bench import Bench
+from timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - SqliteBenchmark]")
 
@@ -30,31 +34,33 @@ class SqliteBenchmark(Bench):
         self.cur.execute("drop table benchmark_table ")
 
     def insert_generator(self, num):
+        """generator for random strings"""
         str_len = 10
         for i in range(0, num):
             string_val = "".join(choice(lowercase) for i in range(str_len))
             yield (string_val, i)
 
-    def bench_insert(self):
-        logger.info("bench_insert")
+    def do_inserts(self, rows):
+        """executes a amount of inserts"""
         total = []
-        for i in range(self.args['iterations']):
-            start_time = time.time()
-            self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
-            end_time = time.time()
-            total.append(end_time - start_time)
-        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
+        for i in range(rows):
+            with Timer() as t:
+                self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
+            total.append(t.elapsed.total_seconds())
+        self.storeResult(total, type="time series")
 
     def bench_update(self):
+        """test for updates"""
         logger.info("bench_update")
-        self.cur.executemany("insert into benchmark_table (bench_string, bench_num) values (?, ?)", self.insert_generator(self.args['rows']))
+        self.namespace = "bench_update_"
+        self.do_inserts(self.args['rows'])
+        self.namespace = ""
         total = []
         for i in range(self.args['iterations']):
-            start_time = time.time()
-            self.cur.execute("update benchmark_table set bench_num=bench_num*2")
-            end_time = time.time()
-            total.append(end_time - start_time)
-        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
+            with Timer() as t:
+                self.cur.execute("update benchmark_table set bench_num=bench_num*2")
+            total.append(t.elapsed.total_seconds())
+        self.storeResult(total, type="time series")
 
 
 if __name__ == "__main__":
