@@ -4,6 +4,7 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+
 from abc import ABCMeta
 import inspect
 import logging
@@ -12,38 +13,61 @@ logger = logging.getLogger("[" + __name__ + " - Bench]")
 
 
 class Bench(object):
+    """'Bench' is abstract class which has to be used for creating benchmarks.
+    """
     _metaclass_ = ABCMeta
     args = {}
-    results = []
+    """This dict contains the arguments for the benchmark. These arguments are set
+    in a benchsuite, read by the benchrunner and passed by the run method. """
+
+    results = {}
+    """This dict contains the result of the benchmark. A entry can be added by calling
+    the storeResult method. The run method returns the result."""
+
     namespace = ""
+    """The namespace is important for storing the result of the test. Whenever a
+    result is stored by the storeResult method, the namespace attribute will used
+    as prefix (default = \"\"). E.g. two methods calling a third method which stores
+    measurements. The data would be stored under the name of the third method.
+    In order to distinguish the calls the namespace attribute was introduced."""
 
     def setUp(self):
         """Method called to prepare the test fixture. The default implementation does nothing.
+        This is called immediately before calling the test method;
         """
         pass
 
     def tearDown(self):
-        """Method called immediately after the test method has been called and
-        the result recorded.  The default implementation does nothing.
+        """Method called immediately after the test method has been called.
+        Usually this method is used for cleaning purposes. The default implementation
+        does nothing.
         """
         pass
 
     def setUpClass(self):
-        """This method is called before the first test and is used for preparing all test.
+        """This method is called exactly once before the first test and is used for preparing all test.
+        If an exception is raised during a setUpClass then the tests in the class
+        are not run and the tearDownClass is not run.
         """
         pass
 
     def tearDownClass(self):
-        """
-        This method is called after the last test and is used for cleaning purposes.
+        """This method is called after the last test and is used for cleaning purposes.
         """
         pass
 
     def storeResult(self, val, name="", type="time", unit="seconds"):
-        """Store the benchmark result. The run-Method call will be return all stored results.
+        """Store the benchmark result. The run-Method call will return all stored results.
+        Note that the global variable 'namespace' is used as a prefix for the name.
+        If a method is called several times from different test, a namespace is
+        used to distinguish the entries. Entries with the same name will be updated.
 
-        Keyword arguments:
-        res -- a dictionary with a format spezified in the field res['type']
+        :param val: measurments; the val can be a collection or a single value.
+        :param name: the name of the entry for this data. If name is empty or not
+            specified, the name of calling method (parent frame) will be used.
+        :param type: type of measurments. this is important for further processing of
+            the data.
+        :param unit: the unit of the values.
         """
         if name == "":
             curframe = inspect.currentframe()
@@ -53,13 +77,14 @@ class Bench(object):
         self.results.update({self.namespace + name: {"value": val, "unit": unit, "type": type}})
 
     def run(self, args):
-        """
-        This method calls every test in this class. Test are indentified by the prefix 'test_'.
+        """This method calls every test in this class. Test are indentified by the prefix "bench\_".
         The setUp-method is called immediately before each test and the tearDown-method is
-        called immediately after each test. The result of benchmark is structured in json format and will be returned.
+        called immediately after each test. The result stored by 'storeResult'
+        is structured in json format and will be returned.
 
-        Keyword arguments:
-        args -- a dictionary consisting of all parameter which are used in this benchmark. E.g. iterations could be used for the repitition of an insert query.
+        :param args: a dictionary consisting of all parameter which are used in this benchmark.
+            E.g. iterations could be used for the repitition of an insert query.
+        :returns: a dict with the result of the benchmark.
         """
         self.args = args
         self.results = {}
