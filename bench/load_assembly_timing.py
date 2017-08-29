@@ -1,4 +1,4 @@
-#!c:\csall\trunk\sqlite\bin\powerscript.exe
+#!launcher.cmd
 # -*- coding: iso-8859-1 -*-
 import logging
 import time
@@ -6,6 +6,7 @@ import time
 from cs.documents import Document
 from cdb.storage import blob
 from bench import Bench
+from timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - LoadAssemblyTiming]")
 
@@ -18,67 +19,70 @@ class LoadAssemblyTiming(Bench):
     """
 
     def setUpClass(self):
-        logger.info("Get Document %s-%s" % (self.args['z_nummer'], self.args['z_index']))
-        self.doc = Document.ByKeys(self.args['z_nummer'], self.args['z_index'])
+        self.loadDocument(self.args['z_nummer'], self.args['z_index'])
+
+    def loadDocument(self, z_nummer, z_index):
+        logger.info("Getting Document %s-%s" % (z_nummer, z_index))
+        self.doc = Document.ByKeys(z_nummer, z_index)
         if not self.doc:
-            logger.error("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
-            exit(1)
-            # raise Exception("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
+            logger.error("Document %s-%s not found" % (z_nummer, z_index))
+            raise Exception("Document %s-%s not found" % (z_nummer, z_index))
+
+    def getAllRefDocs(self):
+        logger.info("Get reference structure")
+
+        with Timer() as t:
+            ref_docs = self.doc.getAllRefDocs()
+        self.storeResult(t.elapsed.total_seconds())
+        logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
+                     % (len(ref_docs), t.elapsed.total_seconds()))
+        return ref_docs
+
+    def getPrimaryFiles(self, ref_docs):
+        logger.info("Get files")
+        with Timer() as t:
+            file_list = []
+            for d in ref_docs:
+                file_list.extend(d.PrimaryFiles)
+        self.storeResult(t.elapsed.total_seconds())
+        logger.debug("--> Documents have %d primary files, %.4f secs. for query"
+                     % (len(file_list), t.elapsed.total_seconds()))
+        return file_list
 
     def bench_load(self):
         logger.info("bench_load")
-        result = {}
-        logger.info("Get reference structure")
-        t1 = time.time()
-        ref_docs = self.doc.getAllRefDocs()
-        t2 = time.time()
-        logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
-                     % (len(ref_docs), t2 - t1))
-        result['refDocs'] = {"numDocs": len(ref_docs), "time": {"val": t2 - t1, "unit": "seconds"}}
+        ref_docs = self.getAllRefDocs()
 
-        logger.info("Get files")
-        t1 = time.time()
-        file_list = []
-        for d in ref_docs:
-            file_list.extend(d.PrimaryFiles)
-        t2 = time.time()
-        logger.debug("--> Documents have %d primary files, %.4f secs. for query"
-                     % (len(file_list), t2 - t1))
-        result['primaryFiles'] = {"numPrimaryFiles": len(file_list), "time": {"val": t2 - t1, "unit": "seconds"}}
+        file_list = self.getPrimaryFiles(ref_docs)
 
         logger.info("load files")
-        loadingFiles = []
+        meta_values = []
+        blob_values = []
         for i in range(self.args['loops']):
             time.sleep(10)
             logger.debug("Load file content - %d/%d" % (i + 1, self.args['loops']))
-            t1 = time.time()
+
             dlen = 0
             bs = blob.getBlobStore('main')
-            for f in file_list:
-                # reader = f._get_blob_reader(False)
-                meta_start = time.time()
-                reader = bs.Download(f.cdbf_blob_id, only_metadata=True)
-                meta_end = time.time()
-                logger.debug("----> Fetching metadata for blob %s took %.4f secs" % (f.cdbf_blob_id, (meta_end - meta_start)))
-                result['fetchingMetadata'] = {"blob_id": f.cdbf_blob_id, "time": {"val": meta_end - meta_start, "unit": "seconds"}}
-                # could use 'print reader.meta' to have a look at the metadata dictionary
-                while 1:
-                    dummy = reader.read(1024 * 1024)
-                    dlen += len(dummy)
-                    if not dummy:
-                        break
-                meta_data = time.time()
-                logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
-                    f.cdbf_blob_id, len(reader), (meta_data - meta_end), len(reader) / ((meta_data - meta_end) * 1024)))
-                result['fetchingBlobData'] = {"blob_id": f.cdbf_blob_id, "bytes": len(reader), "time": {"val": meta_data - meta_end, "unit": "seconds"}}
 
-            t2 = time.time()
-            logger.debug("--> Loading of %d files / %d bytes took %.4f secs. (%.4f KBytes/sec)"
-                         % (len(file_list), dlen, t2 - t1, dlen / ((t2 - t1) * 1024)))
-            loadingFiles.append({"bytes": dlen, "time": {"val": t2 - t1, "unit": "seconds"}})
-        result['loadingFiles'] = loadingFiles
-        return result
+            for f in file_list:
+                with Timer() as t_meta:
+                    reader = bs.Download(f.cdbf_blob_id, only_metadata=True)
+                meta_values.append(t_meta.elapsed.total_seconds())
+                logger.debug("----> Fetching metadata for blob %s took %.4f secs" % (f.cdbf_blob_id, t_meta.elapsed.total_seconds()))
+                # could use 'print reader.meta' to have a look at the metadata dictionary
+                with Timer() as t_meta:
+                    while 1:
+                        dummy = reader.read(1024 * 1024)
+                        dlen += len(dummy)
+                        if not dummy:
+                            break
+                blob_values.append(t_meta.elapsed.total_seconds())
+                logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
+                    f.cdbf_blob_id, len(reader), t_meta.elapsed.total_seconds(), len(reader) / (t_meta.elapsed.total_seconds() * 1024)))
+        self.storeResult(meta_values, name="fetching_metadata", type="time_series")
+        self.storeResult(blob_values, name="fetching_blob_data", type="time_series")
 
 
 if __name__ == '__main__':
-    LoadAssemblyTiming().run({"z_nummer": "", "z_index": ""})
+    print LoadAssemblyTiming().run({"z_nummer": "000073-1", "z_index": "", "loops": 10})
