@@ -33,6 +33,11 @@ class SqlApiBenchmark(Bench):
 
     """
     def setUpClass(self):
+        cin = raw_input("""
+##########################################################################################\n
+Attention: This test will create, modify and delete table in your database! Continue (y/n)?""")
+        if not cin == "y":
+            raise Exception("User aborts the test!")
         self.warmup(self.args['tablename'])
         self.create_table(self.args['tablename'])
 
