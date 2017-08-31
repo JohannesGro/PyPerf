@@ -4,6 +4,12 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+"""The module renderData reads the results of one or several benchmarks and
+create a human readable output for example showing table or diagramms.
+A json file created by the benchrunner can be taken as a input. Currently this
+module supports html output only.
+"""
+
 import argparse
 import json
 import logging
@@ -19,9 +25,9 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-current_path = os.path.abspath(os.path.dirname(__file__))
-benchmark_file = os.path.join(current_path, "benchmarkResults.json")
-output_file = os.path.join(current_path, "html", "benchmarkResults.html")
+currentPath = os.path.abspath(os.path.dirname(__file__))
+benchmarkFile = os.path.join(currentPath, "benchmarkResults.json")
+outputFile = os.path.join(currentPath, "html", "benchmarkResults.html")
 
 template = """
 <html>
@@ -48,14 +54,16 @@ def main():
         renderMultipleBenchmarks()
     else:
         renderSingleBenchmark()
-    iterateBenches(data)
+    iterateBenches()
 
 
 def renderSingleBenchmark():
+    """Loads a single benchmark"""
     data[opts.benchmarks] = loadJSONData(opts.benchmarks)
 
 
 def renderMultipleBenchmarks():
+    """Loads a bunch of benchmarks."""
     for fileName in opts.benchmarks:
         data[fileName] = loadJSONData(fileName)
     areBenchmarksComparable(data)
@@ -63,185 +71,273 @@ def renderMultipleBenchmarks():
 
 def areBenchmarksComparable(benchmarks):
     """Checks the structure of each benchmark result. The same benchsuite is
-    necessary for comparison. The benches and the arguments are therefore checked."""
+    necessary for comparison. The benches and the arguments are therefore checked.
 
-    b0 = benchmarks.values()[0]
-    for bn in benchmarks.values():
-        if b0["results"].keys() != bn["results"].keys():
+    :param benchmarks: list with all benchmarks
+    :raises RuntimeError: if the strucutre of the benchmarks is unequal
+    """
+
+    # getAllBenches returns the benches of the first element
+    f0Benches = getAllBenches()
+    for fileName in benchmarks:
+        fnBenches = getAllBenches(fileName).keys()
+        if f0Benches.keys() != fnBenches:
             raise RuntimeError("Can not compare given benchmarks! Different benches.")
-        for bench_key, bench_val in bn["results"].iteritems():
-            if b0["results"][bench_key]["args"] != bn["results"][bench_key]["args"]:
-                raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % bench_key)
+        for benchKey in fnBenches:
+            if getBenchArgs(benchKey) != getBenchArgs(benchKey, fileName):
+                raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
 
-def iterateBenches(data):
+def iterateBenches():
+    """Iterates over each bench and calls a render function to display the data.
+    The render functions will produce html code. This code will be put together and
+    saved as .html file.
+    """
     body = ""
-    b0 = data.values()[0]
-    for bench_key, bench_val in b0["results"].iteritems():
-        logger.info("Render bench: " + bench_key)
-        body += renderSingleBench(bench_key, bench_val)
+    benches = getAllBenches()
+    for benchKey in benches:
+        logger.info("Render bench: " + benchKey)
+        body += renderBench(benchKey)
     writeHTML(template.format(body), opts.outfile)
 
 
-def renderSingleBench(bench_key, bench_val):
-    title = "<h2>{0}</h2>".format(bench_key)
-    tile_templ = "<div class='tile'>{0}</div>"
-    args = renderBenchArgs(bench_val["args"])
-    data = renderBenchData(bench_key, bench_val["data"])
-    return tile_templ.format(title + args + data)
-    # print args
+def renderBench(benchKey):
+    """Generates html code of the given bench name to display its data.
+    This function will display a heading, the arguments, table and diagramms.
+
+    :param benchKey: the name of the benchmark
+    :returns: string with html code
+    """
+    title = "<h2>{0}</h2>".format(benchKey)
+    tileTempl = "<div class='tile'>{0}</div>"
+    args = renderBenchArgs(benchKey)
+    data = renderBenchData(benchKey)
+    return tileTempl.format(title + args + data)
 
 
-def renderBenchData(bench_name, bench_val):
-    title_templ = "<h3>{0}</h3>"
-    content_templ = "<div class='content'>{0}</div>"
+def renderBenchData(benchName):
+    """Produces html code for the data of the given bench name.
+    A diagramm and tables are created.
+
+    :param benchName: name of the bench
+    :returns: html code of the data
+    """
     res = ""
-    body = ""
-#    if len(data) == 1:
-    body = createDiagramm(bench_name, bench_val)
-
-    # for (bench_test, bench_test_content) in bench_val.iteritems():
-        # title = title_templ.format(bench_test)
-        # body = renderTextByType(bench_val)
-        # res = res + tile_templ.format(title + body)
-    body += renderTablesByTypes(bench_name, bench_val)
-    # return content_templ.format(res)
+    body = createDiagramm(benchName)
+    body += renderTablesByTypes(benchName)
     return body
 
 
 def getTestResult(fileName, benchName, benchTest):
-    return data[fileName]["results"][benchName]["data"][benchTest]
+    """Helper function to return the result of a bench test.
+
+    :param fileName: name of the file
+    :param benchName: name of the benchmark
+    :param benchTest: name of the test
+    :returns: the selected data from specified file name
+    """
+    return getAllBenches(fileName)[benchName]["data"][benchTest]
 
 
-def createDiagramm(bench_name, bench_val):
+def getAllBenches(fileName=""):
+    """Helper function to return all benchmarks. If no file name is applied the
+    data is token from the first file.
+
+    :param fileName: file where the information shall be taken from
+    :returns: a dict of all benchmarks
+    """
+    if fileName == "":
+        fileName = data.keys()[0]
+    return data[fileName]["results"]
+
+
+def getAllBenchTests(benchName):
+    """Helper function to return all test of a benchmark.
+
+    :param benchName: name of the benchmark
+    :returns: a dict of all test of a benchmark
+    """
+    fileName = data.keys()[0]
+    return getAllBenches(fileName)[benchName]['data']
+
+
+def getBenchArgs(benchName, fileName=""):
+    """Helper function to return the arguments of a benchmark.  If no file name
+    is applied the data is token from the first file.
+
+    :param benchName: name of the benchmark
+    :param fileName: file where the information shall be taken from
+    :returns: a dict of arguments
+    """
+    return getAllBenches(fileName)[benchName]["args"]
+
+
+def createDiagramm(benchName):
+    """Produce html js code to display the data of a benchmark as diagramm.
+    The javascript function can be find in chart.js.
+
+    :param benchName: name of the benchmark
+    :returns: html/js code of the diagramm.
+    """
     elementTempl = """
     <div id="{0}">
         <script>
-            var bench_val = {1};
-            createBarChart("#{0}",bench_val);
+            var data = {1};
+            createBarChart("#{0}",data);
         </script>
      </div>"""
-    table_content = []
-    for (bench_test_name, content) in bench_val.iteritems():
-
+    tableContent = []
+    for (benchTestName, content) in getAllBenchTests(benchName).iteritems():
         for fileName in data:
-            val = getTestResult(fileName, benchName, bench_test_name)["value"]
+            val = getTestResult(fileName, benchName, benchTestName)["value"]
             if content["type"] == "time_series":
-                time_list = content["value"]
-                sum_time = sum(time_list)
-                avg = sum_time / len(time_list)
+                timeList = content["value"]
+                sumTime = sum(timeList)
+                avg = sumTime / len(timeList)
                 val = avg
+            tableContent.append({"file": fileName, "name": benchTestName.encode('UTF-8'), "value": val})
+    return elementTempl.format(benchTestName, tableContent)
 
-        table_content.append({"name": bench_test_name.encode('UTF-8'), "value": val})
-    return elementTempl.format(bench_test_name, table_content)
+
+def renderTablesByTypes(benchName):
+    """Creates tables for each type of bench test.
+
+    :param benchName: name of the benchmark
+    :return: the html code
+    """
+    types = ["time", "time_series"]
+    res = ""
+    for t in types:
+        res += renderTableByType(benchName, t)
+    return res
 
 
-def renderTableByType(bench_name, bench_val, type):
+def renderTableByType(benchName, type):
+    """Creates a table of specific type of bench tests.
+
+    :param benchName: name of the benchmark
+    :param type: type of the benchmark (e.g. 'time', 'time_series')
+    :returns: html code of the table.
+    """
     header = "<h4>Tabelle {}</h4>".format(type)
-    elements = dict((bench_test_name, content) for (bench_test_name, content) in bench_val.iteritems() if content["type"] == type)
+    elements = dict((benchTestName, content) for (benchTestName, content) in getAllBenchTests(benchName).iteritems() if content["type"] == type)
     if len(elements) == 0:
         return ""
 
     content = "<table>"
     if type == "time_series":
-        content += renderTimeSeriesRows(bench_name, elements)
+        content += renderTimeSeriesRows(benchName, elements)
     elif type == "time":
-        content += renderTimeRows(bench_name, elements)
+        content += renderTimeRows(benchName, elements)
 
     content += "</table>"
     return header + content
 
 
-def renderTimeRows(bench_name, elements):
+def renderTimeRows(benchName, elements):
+    """Creates the rows for the table. Each row display data of type 'time'.
+    The elements parameter contains a dict which is already filtered by this type.
+
+    :param benchName: name of the benchmark
+    :param elements: filtered dict which is containing test
+    :returns: string containing the rows
+    """
     content = ""
 
-    header_templ = "<tr>" + "<th>{}</th>" * (len(data) + 1) + "</tr>"
-    row_templ = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+    headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 1) + "</tr>"
+    rowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
 
-    content += header_templ.format("Test", *data.keys())
+    content += headerTempl.format("Test", *data.keys())
     for benchTestName in elements.keys():
         res = []
         for fileName in data.keys():
-            res.append(getTestResult(fileName, bench_name, benchTestName)["value"])
-        content += row_templ.format(benchTestName, *res)
+            res.append(getTestResult(fileName, benchName, benchTestName)["value"])
+        content += rowTempl.format(benchTestName, *res)
     return content
 
 
-def renderTimeSeriesRows(bench_name, elements):
+def renderTimeSeriesRows(benchName, elements):
+    """Creates the rows for the table. Each row display data of type 'time_series'.
+    The elements parameter contains a dict which is already filtered by this type.
+
+    :param benchName: name of the benchmark
+    :param elements: filtered dict which is containing test
+    :returns: string containing the rows
+    """
     content = ""
 
-    header_templ = "<tr>" + "<th>{}</th>" * (len(data) + 2) + "</tr>"
-    outer_row_templ = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
-    inner_row_templ = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+    headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 2) + "</tr>"
+    outerRowTempl = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
+    innerRowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
 
-    content += header_templ.format("Test", "Aggregation", *data.keys())
+    content += headerTempl.format("Test", "Aggregation", *data.keys())
     for benchTestName in elements.keys():
-        inner_content = ""
-        res_max = []
-        res_min = []
-        res_sum = []
-        res_avg = []
+        innerContent = ""
+        resMax = []
+        resMin = []
+        resSum = []
+        resAvg = []
         for fileName in data.keys():
-            time_list = getTestResult(fileName, bench_name, benchTestName)["value"]
-            max_val = max(time_list)
-            min_val = min(time_list)
-            sum_val = sum(time_list)
-            avg_val = sum_val / len(time_list)
-            res_max.append(max_val)
-            res_min.append(min_val)
-            res_sum.append(sum_val)
-            res_avg.append(avg_val)
-        inner_content += inner_row_templ.format("Max", *res_max)
-        inner_content += inner_row_templ.format("Min", *res_min)
-        inner_content += inner_row_templ.format("Sum", *res_sum)
-        inner_content += inner_row_templ.format("Average", *res_avg)
-        content += outer_row_templ.format(benchTestName, (len(data) + 1), inner_content)
-
+            timeList = getTestResult(fileName, benchName, benchTestName)["value"]
+            maxVal = max(timeList)
+            minVal = min(timeList)
+            minVal = sum(timeList)
+            avgVal = minVal / len(timeList)
+            resMax.append(maxVal)
+            resMin.append(minVal)
+            resSum.append(minVal)
+            resAvg.append(avgVal)
+        innerContent += innerRowTempl.format("Max", *resMax)
+        innerContent += innerRowTempl.format("Min", *resMin)
+        innerContent += innerRowTempl.format("Sum", *resSum)
+        innerContent += innerRowTempl.format("Average", *resAvg)
+        content += outerRowTempl.format(benchTestName, (len(data) + 1), innerContent)
     return content
-
-
-def renderTablesByTypes(bench_name, bench_val):
-    types = ["time", "time_series"]
-    res = ""
-    for t in types:
-        res += renderTableByType(bench_name, bench_val, t)
-    return res
 
 
 def renderTextByType(content):
+    """Produce html code to display the given data as text.
+
+    :param content: data which shall be shown.
+    :returns: html code
+    """
     res = "<h4>{}</h4>".format(content["type"])
-    dl_temp = """
+    dlTempl = """
         <dl>
         {0}
        </dl>
     """
-    dl_inner_temp = "<dt>{0}</dt><dd>{1}</dd>"
+    dlInnerTempl = "<dt>{0}</dt><dd>{1}</dd>"
     if content["type"] == "time_series":
-        time_list = content["value"]
-        len_time_list = len(time_list)
-        if len_time_list > 0:
-            max_val = max(time_list)
-            min_val = min(time_list)
-            sum_val = sum(time_list)
-            avg_val = sum_val / len(time_list)
-            dl_inner = ""
-            dl_inner += dl_inner_temp.format("Unit:", content["unit"])
-            dl_inner += dl_inner_temp.format("Max:", max_val)
-            dl_inner += dl_inner_temp.format("Min:", min_val)
-            dl_inner += dl_inner_temp.format("Sum:", sum_val)
+        timeList = content["value"]
+        lenTimeList = len(timeList)
+        if lenTimeList > 0:
+            maxVal = max(timeList)
+            minVal = min(timeList)
+            minVal = sum(timeList)
+            avgVal = minVal / len(timeList)
+            dlInner = ""
+            dlInner += dlInnerTempl.format("Unit:", content["unit"])
+            dlInner += dlInnerTempl.format("Max:", maxVal)
+            dlInner += dlInnerTempl.format("Min:", minVal)
+            dlInner += dlInnerTempl.format("Sum:", minVal)
             if "totalTime" in content:
-                dl_inner += dl_inner_temp.format("Total Time:", content["totalTime"])
-            dl_inner += dl_inner_temp.format("Average:", avg_val)
-            res += dl_temp.format(dl_inner)
+                dlInner += dlInnerTempl.format("Total Time:", content["totalTime"])
+            dlInner += dlInnerTempl.format("Average:", avgVal)
+            res += dlTempl.format(dlInner)
     if content["type"] == "time":
-        dl_inner = ""
-        dl_inner += dl_inner_temp.format("Result:", str(content["value"]) + " " + content["unit"])
-        res += dl_temp.format(dl_inner)
+        dlInner = ""
+        dlInner += dlInnerTempl.format("Result:", str(content["value"]) + " " + content["unit"])
+        res += dlTempl.format(dlInner)
     return res
 
 
-def renderBenchArgs(args):
-    """Displays the arguments in a table"""
+def renderBenchArgs(benchName):
+    """Displays the arguments of a benchmark in a table.
+
+    :param benchName: name of the benchmark
+    :returns: html table with arguments of the given bench
+    """
     result = """
         <table>
             <tr>
@@ -251,6 +347,7 @@ def renderBenchArgs(args):
             {0}
         </table>
     """
+    args = getBenchArgs(benchName)
     rows = ""
     for key, val in args.iteritems():
         rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
@@ -259,12 +356,14 @@ def renderBenchArgs(args):
 
 
 def loadJSONData(file):
-    """
-    This functions load the json-data.
+    """This functions load the json-data from a file.
+
+    :param file: name of the input file
+    :returns: json data
     """
     try:
-        with open(file) as data_file:
-            data = json.load(data_file)
+        with open(file) as dataFile:
+            data = json.load(dataFile)
     except IOError as err:
         logger.error("Could not open benchmark data file! " + str(err))
         sys.exit(1)
@@ -280,8 +379,10 @@ def loadJSONData(file):
 
 
 def writeHTML(data, outfile):
-    """
-    This functions dumps json data into a file.
+    """This functions dumps json data into a file.
+
+    :param data: json data
+    :param outfile: name of the output file
     """
     logger.info("Saving Results to file: " + outfile)
     try:
@@ -300,10 +401,10 @@ def writeHTML(data, outfile):
 
 if __name__ == "__main__":
     # CLI
-    parser = argparse.ArgumentParser(description="""reads data of benchmarks from a json file.
-                                    Each benchmakrs will be called rendered. Produces a html file with the results.""")
-    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmark_file, help="One or more json files which contain the benchmarks.")
-    parser.add_argument("--outfile", "-o", nargs=1, default=output_file, help="The results will be stored in this file.")
+    parser = argparse.ArgumentParser(description="""Reads benchmark data from a json file to display the data in human readable output.
+                                    Each benchmark will therefore be rendered to display its results as a html file.""")
+    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
+    parser.add_argument("--outfile", "-o", nargs=1, default=outputFile, help="The results will be stored in this file.")
 
     # Grab the opts from argv
     opts = parser.parse_args()
