@@ -97,8 +97,9 @@ def renderBenchData(bench_name, bench_val):
     content_templ = "<div class='content'>{0}</div>"
     res = ""
     body = ""
-    if len(data) == 1:
-        body = createDiagramm(bench_val)
+#    if len(data) == 1:
+    body = createDiagramm(bench_name, bench_val)
+
     # for (bench_test, bench_test_content) in bench_val.iteritems():
         # title = title_templ.format(bench_test)
         # body = renderTextByType(bench_val)
@@ -112,7 +113,7 @@ def getTestResult(fileName, benchName, benchTest):
     return data[fileName]["results"][benchName]["data"][benchTest]
 
 
-def createDiagramm(bench_val):
+def createDiagramm(bench_name, bench_val):
     elementTempl = """
     <div id="{0}">
         <script>
@@ -122,12 +123,14 @@ def createDiagramm(bench_val):
      </div>"""
     table_content = []
     for (bench_test_name, content) in bench_val.iteritems():
-        val = content["value"]
-        if content["type"] == "time_series":
-            time_list = content["value"]
-            sum_time = sum(time_list)
-            avg = sum_time / len(time_list)
-            val = avg
+
+        for fileName in data:
+            val = getTestResult(fileName, benchName, bench_test_name)["value"]
+            if content["type"] == "time_series":
+                time_list = content["value"]
+                sum_time = sum(time_list)
+                avg = sum_time / len(time_list)
+                val = avg
 
         table_content.append({"name": bench_test_name.encode('UTF-8'), "value": val})
     return elementTempl.format(bench_test_name, table_content)
