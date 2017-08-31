@@ -16,7 +16,6 @@ stored in a json formatted outputfile.
 """
 
 import argparse
-import datetime
 import getpass
 import importlib
 import json
@@ -152,37 +151,10 @@ def sys_info():
     """Detect serveral system infos. This infos will be saved later with the
     results of the benchmarks.
     """
-    logger.info("SYSINFOS:\n")
-    logger.info("Elements Version: %s", version.getVersionDescription())
+    import sysEnv
+    results['Sysinfos'] = sysEnv.getAllSysInfos()
     logger.info("Script Version: %s", __revision__)
-    logger.info("Hostname: %s", usutil.getfqdn())
-    logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
-    logger.info("Current User: %s", getpass.getuser())
-    logger.info("OS-Platform: %s", sys.platform)
-    logger.info("OS-Platform version: %s", platform.platform())
-    logger.info("Processor: %s", platform.processor())
-    logger.info("CPU Count: %d", multiprocessing.cpu_count())
-
-    for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
-                "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
-                "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
-        logger.info("%s: %s", var, rte.environ[var])
-    logger.info(72 * "-")
-    results['Sysinfos'] = {"Elements Version": version.getVersionDescription(),
-                           "Script Version": __revision__,
-                           "Hostname": usutil.getfqdn(),
-                           "Current Time (UTC)": datetime.datetime.utcnow().isoformat(),
-                           "Current User": getpass.getuser(),
-                           "OS-Platform": sys.platform,
-                           "OS-Platform version:": platform.platform(),
-                           "Processor": platform.processor(),
-                           "CPU Count": multiprocessing.cpu_count()}
-
-    for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
-                "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
-                "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
-            results['Sysinfos'][var] = rte.environ[var]
-
+    results['Sysinfos']['Script Version'] = __revision__
 
 if __name__ == "__main__":
     # CLI

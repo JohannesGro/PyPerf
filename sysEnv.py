@@ -4,8 +4,12 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+"""Provides serveral system information.
+"""
 import ctypes
+import datetime
 import getpass
+import logging
 import multiprocessing
 import platform
 import sys
@@ -15,75 +19,115 @@ from cdb import rte
 from cdb.uberserver import usutil
 from cdb import version
 
+logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
-class SystemInfos(object):
-    """Provides system information.
-    """
-    class MEMORYSTATUSEX(ctypes.Structure):
-        _fields_ = [
-            ("dwLength", ctypes.c_ulong),
-            ("dwMemoryLoad", ctypes.c_ulong),
-            ("ullTotalPhys", ctypes.c_ulonglong),
-            ("ullAvailPhys", ctypes.c_ulonglong),
-            ("ullTotalPageFile", ctypes.c_ulonglong),
-            ("ullAvailPageFile", ctypes.c_ulonglong),
-            ("ullTotalVirtual", ctypes.c_ulonglong),
-            ("ullAvailVirtual", ctypes.c_ulonglong),
-            ("sullAvailExtendedVirtual", ctypes.c_ulonglong),
-        ]
 
-        def __init__(self):
-            # have to initialize this to the size of MEMORYSTATUSEX
-            self.dwLength = ctypes.sizeof(self)
-            super(MEMORYSTATUSEX, self).__init__()
+class MEMORYSTATUSEX(ctypes.Structure):
+    _fields_ = [
+        ("dwLength", ctypes.c_ulong),
+        ("dwMemoryLoad", ctypes.c_ulong),
+        ("ullTotalPhys", ctypes.c_ulonglong),
+        ("ullAvailPhys", ctypes.c_ulonglong),
+        ("ullTotalPageFile", ctypes.c_ulonglong),
+        ("ullAvailPageFile", ctypes.c_ulonglong),
+        ("ullTotalVirtual", ctypes.c_ulonglong),
+        ("ullAvailVirtual", ctypes.c_ulonglong),
+        ("sullAvailupdateedVirtual", ctypes.c_ulonglong),
+    ]
 
-    def getMemoryInfos():
-        # working for windows only
-        mega = 1024 * 1024
-        stat = MEMORYSTATUSEX()
-        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+    def __init__(self):
+        # have to initialize this to the size of MEMORYSTATUSEX
+        self.dwLength = ctypes.sizeof(self)
+        super(MEMORYSTATUSEX, self).__init__()
 
-        logger.info("MemoryLoad: %d%%" % (stat.dwMemoryLoad))
-        logger.info("TotalPhys: %dMB" % (stat.ullTotalPhys / mega))
-        logger.info("AvailPhys: %dMB" % (stat.ullAvailPhys / mega))
-        logger.info("TotalVirtual: %dMB" % (stat.ullTotalVirtual / mega))
 
-    def getMac():
-        from uuid import getnode as get_mac
-        logger.info("MAC: %x" % hex(get_mac()))
+def getMemoryInfos():
+    # working for windows only
+    mega = 1024 * 1024
+    stat = MEMORYSTATUSEX()
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
 
-    def getAllHostnames():
-        logger.info("Hostnames: %s" % usutil.gethostnames())
+    logger.info("MemoryLoad: %d%%" % (stat.dwMemoryLoad))
+    logger.info("TotalPhys: %dMB" % (stat.ullTotalPhys / mega))
+    logger.info("AvailPhys: %dMB" % (stat.ullAvailPhys / mega))
+    logger.info("TotalVirtual: %dMB" % (stat.ullTotalVirtual / mega))
+    res = {}
+    res['MemoryLoad'] = stat.dwMemoryLoad
+    res['TotalPhys'] = stat.ullTotalPhys
+    res['AvailPhys'] = stat.ullAvailPhys
+    res['TotalVirtual'] = stat.ullTotalVirtual
+    return res
 
-    def sys_info():
-        logger.info("SYSINFOS:\n")
-        logger.info("Elements Version: %s", version.getVersionDescription())
-        logger.info("Script Version: %s", __revision__)
-        logger.info("Hostname: %s", usutil.getfqdn())
-        logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
-        logger.info("Current User: %s", getpass.getuser())
-        logger.info("OS-Platform: %s", sys.platform)
-        logger.info("OS-Platform version: %s", platform.platform())
-        logger.info("Processor: %s", platform.processor())
-        logger.info("CPU Count: %d", multiprocessing.cpu_count())
 
-        for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
-                    "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
-                    "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
-            logger.info("%s: %s", var, rte.environ[var])
-        logger.info(72 * "-")
-        results['Sysinfos'] = {"Elements Version": version.getVersionDescription(),
-                               "Script Version": __revision__,
-                               "Hostname": usutil.getfqdn(),
-                               "Current Time (UTC)": datetime.datetime.utcnow().isoformat(),
-                               "Current User": getpass.getuser(),
-                               "OS-Platform": sys.platform,
-                               "OS-Platform version:": platform.platform(),
-                               "Processor": platform.processor(),
-                               "CPU Count": multiprocessing.cpu_count()}
+def getMac():
+    from uuid import getnode as get_mac
+    return hex(get_mac())
 
-        for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
-                    "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
-                    "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
-                results['Sysinfos'][var] = rte.environ[var]
-    pass
+
+def getMacInfo():
+    logger.info("MAC-Adress: %s" % (getMac()))
+    return {"MAC-Adress": getMac()}
+
+
+def getAllHostnames():
+    return usutil.gethostnames()
+
+
+def getAllHostnamesInfo():
+    logger.info("Hostnames: {}".format(usutil.gethostnames()))
+    return {"Hostnames": getAllHostnames()}
+
+
+def getSysInfo():
+    logger.info("Elements Version: %s", version.getVersionDescription())
+    logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
+    logger.info("Current User: %s", getpass.getuser())
+    logger.info("OS-Platform: %s", sys.platform)
+    logger.info("OS-Platform version: %s", platform.platform())
+    logger.info("Processor: %s", platform.processor())
+    logger.info("CPU Count: %d", multiprocessing.cpu_count())
+    res = {}
+    res["Elements Version"] = version.getVersionDescription(),
+    res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat(),
+    res["Current User"] = getpass.getuser(),
+    res["OS-Platform"] = sys.platform,
+    res["OS-Platform version"] = platform.platform(),
+    res["Processor"] = platform.processor(),
+    res["CPU Count"] = multiprocessing.cpu_count()
+    return res
+
+
+def getCADDOKINfos():
+    res = {}
+    for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
+                "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
+                "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
+        logger.info("%s: %s", var, rte.environ[var])
+        res[var] = rte.environ[var]
+    return res
+
+
+def isVMware():
+    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056']
+    mac = getMac()
+    for str in prefix:
+        if str in mac:
+            return True
+    return False
+
+
+def VMWareInfo():
+    logger.info("Running in VM: %s", "Yes" if isVMware() else "No")
+    return {"Running in VM": "Yes" if isVMware() else "No"}
+
+
+def getAllSysInfos():
+    logger.info("SYSINFOS:\n")
+    res = {}
+    res.update(getSysInfo())
+    res.update(getCADDOKINfos())
+    res.update(VMWareInfo())
+    res.update(getAllHostnamesInfo())
+    res.update(getMacInfo())
+    res.update(getMemoryInfos())
+    return res
