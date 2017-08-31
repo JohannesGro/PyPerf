@@ -1,0 +1,225 @@
+{
+  "Sysinfos": {
+    "CADDOK_DB1": "",
+    "CADDOK_DB2": "",
+    "CADDOK_DB3": "",
+    "CADDOK_DBCNCT": "",
+    "CADDOK_DBDRIVER": "sqlite3",
+    "CADDOK_DBMODE": "$(CADDOK_BASE)/data.db",
+    "CADDOK_DBNAME": "CDB_11.1.17_DEMO",
+    "CADDOK_DBSYS": "sqlite",
+    "CADDOK_SERVER": "$(CADDOK_BASE)/data.db@",
+    "CPU Count": 4,
+    "Current Time (UTC)": "2017-08-29T07:04:23.343000",
+    "Current User": "tst",
+    "Elements Version": "15.1 Service Level 14 (Build #161157)",
+    "Hostname": "con-057.contact.de",
+    "OS-Platform": "win32",
+    "OS-Platform version:": "Windows-10-10.0.15063-SP0",
+    "Processor": "Intel64 Family 6 Model 58 Stepping 9, GenuineIntel",
+    "Script Version": "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
+  },
+  "results": {
+    "LoadAssemblyTiming": {
+      "args": {
+        "loops": 3,
+        "z_index": "",
+        "z_nummer": "9502656-1"
+      },
+      "data": {
+        "fetching_blob_data": {
+          "type": "time_series",
+          "unit": "seconds",
+          "value": [
+            0.041881,
+            0.026871,
+            0.025508
+          ]
+        },
+        "fetching_metadata": {
+          "type": "time_series",
+          "unit": "seconds",
+          "value": [
+            0.007896,
+            0.008078,
+            0.008208
+          ]
+        },
+        "getAllRefDocs": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.000232
+        },
+        "getPrimaryFiles": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 2.9e-05
+        }
+      }
+    },
+    "LoginBenchmark": {
+      "args": {
+        "iterations": 100,
+        "server": "127.0.0.1:7000",
+        "testpath": "/server/__keep_alive__"
+      },
+      "data": {
+        "bench_sending_requests": {
+          "type": "time_series",
+          "unit": "seconds",
+          "value": [
+            1.2e-05,
+            6e-06,
+            6e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            1.8e-05,
+            7e-06,
+            6e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            1.6e-05,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06,
+            5e-06
+          ]
+        },
+        "establishConnection": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 8.880346
+        }
+      }
+    },
+    "WriteAssemblyTiming": {
+      "args": {
+        "loops": 3,
+        "tmpdir": "tmpDir",
+        "z_index": "",
+        "z_nummer": "9502656-1"
+      },
+      "data": {
+        "cleanupBlobs": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.02924
+        },
+        "cleanupFiles": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.001195
+        },
+        "getAllRefDocs": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.022319
+        },
+        "getPrimaryFiles": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.001183
+        },
+        "loadFileContent": {
+          "type": "time",
+          "unit": "seconds",
+          "value": 0.087957
+        },
+        "saveFilesIntoBlobStore": {
+          "type": "time_series",
+          "unit": "seconds",
+          "value": [
+            0.03843,
+            0.026809,
+            0.028077
+          ]
+        }
+      }
+    }
+  }
+}
