@@ -11,10 +11,15 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   benchrunner
+   bench
+   benchsuite
+   howto
+   renderData
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

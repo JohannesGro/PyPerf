@@ -15,6 +15,7 @@ Contents:
    bench
    benchsuite
    howto
+   renderData
 
 Indices and tables
 ==================
