@@ -14,7 +14,7 @@
       "className": "SqlApiBenchmark",
       "active": true,
       "args": {
-        "rows": 100000,
+        "rows": 10000,
         "iterations": 10,
         "tablename": "x_cdb_testperf",
         "warmup": 100
@@ -23,29 +23,17 @@
     "LoginBenchmark": {
       "file": "bench.login_benchmark",
       "className": "LoginBenchmark",
-      "active": false,
+      "active": true,
       "args": {
-        "server": "127.0.0.1:50087",
+        "server": "127.0.0.1:7000",
         "testpath": "/server/__keep_alive__",
         "iterations": 100
-      }
-    },
-    "HardwareBenchmark": {
-      "file": "bench.hardware_benchmark",
-      "className": "HardwareBenchmark",
-      "active": false,
-      "args": {
-        "cpu-iterations": 100,
-        "matrix-iterations": 10,
-        "disk-iterations": 10,
-        "matrix-size": 1000,
-        "blocksize": 10000000
       }
     },
     "LoadAssemblyTiming": {
       "file": "bench.load_assembly_timing",
       "className": "LoadAssemblyTiming",
-      "active": false,
+      "active": true,
       "args": {
         "z_nummer": "9502656-1",
         "z_index": "",
@@ -55,7 +43,7 @@
     "WriteAssemblyTiming": {
       "file": "bench.write_assembly_timing",
       "className": "WriteAssemblyTiming",
-      "active": false,
+      "active": true,
       "args": {
         "z_nummer": "9502656-1",
         "z_index": "",
