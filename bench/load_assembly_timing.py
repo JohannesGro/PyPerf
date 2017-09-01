@@ -3,9 +3,9 @@
 import logging
 import time
 
-from cs.documents import Document
-from cdb.storage import blob
 from bench import Bench
+from cdb.storage import blob
+from cs.documents import Document
 from timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - LoadAssemblyTiming]")

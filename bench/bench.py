@@ -5,9 +5,9 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from abc import ABCMeta
 import inspect
 import logging
+from abc import ABCMeta
 
 logger = logging.getLogger("[" + __name__ + " - Bench]")
 

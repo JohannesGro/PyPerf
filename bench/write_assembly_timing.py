@@ -1,14 +1,13 @@
 #!launcher.cmd
 # -*- coding: iso-8859-1 -*-
 import logging
-from optparse import OptionParser
 import os
 import time
-
-from cs.documents import Document
-from cdb.storage import blob
+from optparse import OptionParser
 
 from bench import Bench
+from cdb.storage import blob
+from cs.documents import Document
 from timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - WriteAssemblyTiming]")

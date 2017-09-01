@@ -18,12 +18,8 @@ from random import choice
 from string import lowercase
 
 from bench import Bench
-from cdb import cdbtime
-from cdb import ddl
-from cdb import misc
-from cdb import sqlapi
+from cdb import cdbtime, ddl, misc, sqlapi
 from timer import Timer
-
 
 logger = logging.getLogger("[" + __name__ + " - SqlApiBenchmark]")
 

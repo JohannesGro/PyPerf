@@ -24,12 +24,8 @@ import multiprocessing
 import platform
 import sys
 
-
-from cdb import sqlapi
-from cdb import rte
+from cdb import rte, sqlapi, version
 from cdb.uberserver import usutil
-from cdb import version
-
 
 # TODO
 __revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
@@ -155,6 +151,7 @@ def sys_info():
     results['Sysinfos'] = sysEnv.getAllSysInfos()
     logger.info("Script Version: %s", __revision__)
     results['Sysinfos']['Script Version'] = __revision__
+
 
 if __name__ == "__main__":
     # CLI
