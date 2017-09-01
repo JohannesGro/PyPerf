@@ -17,7 +17,7 @@ function createBarChart(DOMElement, data) {
   var num_files = files.length;
 
   data.sort(function(a, b) {
-      return a.name.localeCompare(b.name);
+      return b.name.localeCompare(a.name);
   });
 
   // Color scale
@@ -76,7 +76,6 @@ function createBarChart(DOMElement, data) {
         .attr("x", function(d) { return x(d.value) + 1 ; })
         .attr("y", function(d, i) { return y(d.name) + ((i%num_files)  * (barHeight + gapBetweenGroups)) + barHeight / 2 ;})
         .attr("dy", ".35em")
-      //  .attr("text-anchor", "middle")
         .attr("alignment-baseline", "baseline")
         .text(function(d) { return formatVal(d.value); });
 
