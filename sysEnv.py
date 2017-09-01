@@ -4,8 +4,10 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+
 """Provides serveral system information.
 """
+
 import ctypes
 import datetime
 import getpass
@@ -14,10 +16,8 @@ import multiprocessing
 import platform
 import sys
 
-from cdb import sqlapi
-from cdb import rte
+from cdb import rte, sqlapi, version
 from cdb.uberserver import usutil
-from cdb import version
 
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
@@ -52,10 +52,10 @@ def getMemoryInfos():
     logger.info("AvailPhys: %dMB" % (stat.ullAvailPhys / mega))
     logger.info("TotalVirtual: %dMB" % (stat.ullTotalVirtual / mega))
     res = {}
-    res['MemoryLoad'] = stat.dwMemoryLoad
-    res['TotalPhys'] = stat.ullTotalPhys
-    res['AvailPhys'] = stat.ullAvailPhys
-    res['TotalVirtual'] = stat.ullTotalVirtual
+    res['MemoryLoad in %'] = stat.dwMemoryLoad
+    res['TotalPhys in MB'] = stat.ullTotalPhys / mega
+    res['AvailPhys in MB'] = stat.ullAvailPhys / mega
+    res['TotalVirtual in MB'] = stat.ullTotalVirtual / mega
     return res
 
 
@@ -87,12 +87,12 @@ def getSysInfo():
     logger.info("Processor: %s", platform.processor())
     logger.info("CPU Count: %d", multiprocessing.cpu_count())
     res = {}
-    res["Elements Version"] = version.getVersionDescription(),
-    res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat(),
-    res["Current User"] = getpass.getuser(),
-    res["OS-Platform"] = sys.platform,
-    res["OS-Platform version"] = platform.platform(),
-    res["Processor"] = platform.processor(),
+    res["Elements Version"] = version.getVersionDescription()
+    res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat()
+    res["Current User"] = getpass.getuser()
+    res["OS-Platform"] = sys.platform
+    res["OS-Platform version"] = platform.platform()
+    res["Processor"] = platform.processor()
     res["CPU Count"] = multiprocessing.cpu_count()
     return res
 
@@ -118,7 +118,7 @@ def isVMware():
 
 def VMWareInfo():
     logger.info("Running in VM: %s", "Yes" if isVMware() else "No")
-    return {"Running in VM": "Yes" if isVMware() else "No"}
+    return {"Probalby running in VM": "Yes" if isVMware() else "No"}
 
 
 def getAllSysInfos():
