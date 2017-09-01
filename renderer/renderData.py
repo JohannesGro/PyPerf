@@ -4,6 +4,7 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
+
 """The module renderData reads the results of one or several benchmarks and
 create a human readable output for example showing table or diagramms.
 A json file created by the benchrunner can be taken as a input. Currently this
@@ -15,7 +16,6 @@ import json
 import logging
 import os
 import sys
-
 
 logger = logging.getLogger("[" + __name__ + " - Renderer]")
 ch = logging.StreamHandler(sys.stdout)
@@ -51,18 +51,35 @@ def main():
     logger.debug("benchmarks files: {}".format(opts.benchmarks))
     logger.debug("output file: {}".format(opts.outfile))
     if isinstance(opts.benchmarks, list):
-        renderMultipleBenchmarks()
+        loadDataForMultipleBenchmarks()
     else:
-        renderSingleBenchmark()
+        loadDataForSingleBenchmark()
     iterateBenches()
 
 
-def renderSingleBenchmark():
+def renderSysInfos():
+    templ = "<div class='tile'><table>{}</table></div>"
+    content = ""
+
+    headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 1) + "</tr>"
+    rowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+
+    content += headerTempl.format("System Info", *data.keys())
+    infos = data[data.keys()[0]]["Sysinfos"]
+    for infoName in sorted(infos):
+        res = []
+        for fileName in sorted(data):
+            res.append(data[fileName]["Sysinfos"][infoName])
+        content += rowTempl.format(infoName, *res)
+    return templ.format(content)
+
+
+def loadDataForSingleBenchmark():
     """Loads a single benchmark"""
     data[opts.benchmarks] = loadJSONData(opts.benchmarks)
 
 
-def renderMultipleBenchmarks():
+def loadDataForMultipleBenchmarks():
     """Loads a bunch of benchmarks."""
     for fileName in opts.benchmarks:
         data[fileName] = loadJSONData(fileName)
@@ -93,7 +110,7 @@ def iterateBenches():
     The render functions will produce html code. This code will be put together and
     saved as .html file.
     """
-    body = ""
+    body = renderSysInfos()
     benches = getAllBenches()
     for benchKey in benches:
         logger.info("Render bench: " + benchKey)
@@ -248,9 +265,9 @@ def renderTimeRows(benchName, elements):
     rowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
 
     content += headerTempl.format("Test", *data.keys())
-    for benchTestName in elements.keys():
+    for benchTestName in sorted(elements):
         res = []
-        for fileName in data.keys():
+        for fileName in sorted(data):
             res.append(getTestResult(fileName, benchName, benchTestName)["value"])
         content += rowTempl.format(benchTestName, *res)
     return content
@@ -271,13 +288,13 @@ def renderTimeSeriesRows(benchName, elements):
     innerRowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
 
     content += headerTempl.format("Test", "Aggregation", *data.keys())
-    for benchTestName in elements.keys():
+    for benchTestName in sorted(elements):
         innerContent = ""
         resMax = []
         resMin = []
         resSum = []
         resAvg = []
-        for fileName in data.keys():
+        for fileName in sorted(data):
             timeList = getTestResult(fileName, benchName, benchTestName)["value"]
             maxVal = max(timeList)
             minVal = min(timeList)
@@ -349,7 +366,7 @@ def renderBenchArgs(benchName):
     """
     args = getBenchArgs(benchName)
     rows = ""
-    for key, val in args.iteritems():
+    for key, val in sorted(args.iteritems()):
         rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
     result = result.format(rows)
     return result
