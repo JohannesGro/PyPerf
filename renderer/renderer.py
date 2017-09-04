@@ -5,7 +5,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""The module renderData reads the results of one or several benchmarks and
+"""The module renderer reads the results of one or several benchmarks and
 create a human readable output for example showing table or diagramms.
 A json file created by the benchrunner can be taken as a input. Currently this
 module supports html output only.
@@ -27,7 +27,7 @@ logger.addHandler(ch)
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 benchmarkFile = os.path.join(currentPath, "benchmarkResults.json")
-outputFile = os.path.join(currentPath, "html", "benchmarkResults.html")
+outputFile = "benchmarkResults.html"
 
 template = """
 <html>
@@ -115,7 +115,7 @@ def iterateBenches():
     for benchKey in benches:
         logger.info("Render bench: " + benchKey)
         body += renderBench(benchKey)
-    writeHTML(template.format(body), opts.outfile)
+    writeToFile(template.format(body), opts.outfile)
 
 
 def renderBench(benchKey):
@@ -298,11 +298,11 @@ def renderTimeSeriesRows(benchName, elements):
             timeList = getTestResult(fileName, benchName, benchTestName)["value"]
             maxVal = max(timeList)
             minVal = min(timeList)
-            minVal = sum(timeList)
-            avgVal = minVal / len(timeList)
+            sumVal = sum(timeList)
+            avgVal = sumVal / len(timeList)
             resMax.append(maxVal)
             resMin.append(minVal)
-            resSum.append(minVal)
+            resSum.append(sumVal)
             resAvg.append(avgVal)
         innerContent += innerRowTempl.format("Max", *resMax)
         innerContent += innerRowTempl.format("Min", *resMin)
@@ -395,22 +395,19 @@ def loadJSONData(file):
     return data
 
 
-def writeHTML(data, outfile):
+def writeToFile(data, outfile):
     """This functions dumps json data into a file.
 
     :param data: json data
     :param outfile: name of the output file
     """
+    outfile = os.path.join(currentPath, "html", outfile)
     logger.info("Saving Results to file: " + outfile)
     try:
         with open(outfile, 'w') as out:
             out.write(data)
     except IOError as err:
         logger.error("Could not open file to save the data! " + str(err))
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode values! " + str(err))
-    except TypeError as err:
-        logger.error("Could not serialize object! " + str(err))
     except:
         logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
     else:
@@ -421,7 +418,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Reads benchmark data from a json file to display the data in human readable output.
                                     Each benchmark will therefore be rendered to display its results as a html file.""")
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
-    parser.add_argument("--outfile", "-o", nargs=1, default=outputFile, help="The results will be stored in this file.")
+    parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
 
     # Grab the opts from argv
     opts = parser.parse_args()

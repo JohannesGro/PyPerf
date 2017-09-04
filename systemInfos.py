@@ -52,10 +52,10 @@ def getMemoryInfos():
     logger.info("AvailPhys: %dMB" % (stat.ullAvailPhys / mega))
     logger.info("TotalVirtual: %dMB" % (stat.ullTotalVirtual / mega))
     res = {}
-    res['MemoryLoad in %'] = stat.dwMemoryLoad
-    res['TotalPhys in MB'] = stat.ullTotalPhys / mega
-    res['AvailPhys in MB'] = stat.ullAvailPhys / mega
-    res['TotalVirtual in MB'] = stat.ullTotalVirtual / mega
+    res['Memory Load in %'] = stat.dwMemoryLoad
+    res['Memory Total Phys in MB'] = stat.ullTotalPhys / mega
+    res['Memory Available Phys in MB'] = stat.ullAvailPhys / mega
+    res['Memory Total Virtual in MB'] = stat.ullTotalVirtual / mega
     return res
 
 
