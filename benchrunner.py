@@ -26,6 +26,7 @@ import sys
 
 from cdb import rte, sqlapi, version
 from cdb.uberserver import usutil
+import systemInfos
 
 # TODO
 __revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
@@ -143,12 +144,11 @@ def init_logging():
     logger.debug("Options: " + str(opts))
 
 
-def sys_info():
+def sys_infos():
     """Detect serveral system infos. This infos will be saved later with the
     results of the benchmarks.
     """
-    import sysEnv
-    results['Sysinfos'] = sysEnv.getAllSysInfos()
+    results['Sysinfos'] = systemInfos.getAllSysInfos()
     logger.info("Script Version: %s", __revision__)
     results['Sysinfos']['Script Version'] = __revision__
 
@@ -158,13 +158,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""The benchrunner reads a list of benches from a benchsuite.
                                     Each bench will be called with an argument list. The result will
                                     be written into output file. The file is json formatted.""")
-    parser.add_argument("--suite", "-s", nargs=1, default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
-    parser.add_argument("--outfile", "-o", nargs=1, default=output_file, help="The results will be stored in this file. (default: %(default)s)")
-    parser.add_argument("--logconfig", "-l", nargs=1, default=logging_config_file, help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--suite", "-s", nargs='?', default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
+    parser.add_argument("--outfile", "-o", nargs='?', default=output_file, help="The results will be stored in this file. (default: %(default)s)")
+    parser.add_argument("--logconfig", "-l", nargs='?', default=logging_config_file, help="Configuration file for the logger. (default: %(default)s)")
 
     # Grab the opts from argv
     opts = parser.parse_args()
 
     init_logging()
-    sys_info()
+    sys_infos()
     main()
