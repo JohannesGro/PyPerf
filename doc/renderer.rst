@@ -1,7 +1,7 @@
 Renderer
 ***********
 
-.. automodule:: renderer.renderData
+.. automodule:: renderer.renderer
 	:members:
 
 	Members
@@ -13,7 +13,7 @@ In the following the command line interface will be shown.
 
 .. code-block:: none
 
-  usage: renderData.py [-h] [--benchmarks BENCHMARKS [BENCHMARKS ...]]
+  usage: renderer.py [-h] [--benchmarks BENCHMARKS [BENCHMARKS ...]]
                        [--outfile OUTFILE]
 
   Reads benchmark data from a json file to display the data in human readable
