@@ -261,12 +261,12 @@ Attention: This test will create, modify and delete table in your database! Cont
         prevlog = logger.level
         logger.setLevel(logging.ERROR)
         self.namespace = "warmup_"
-        res = []
         with Timer() as t:
             for i in xrange(cycles):
                 self.create_table(table)
-                res.append({"test_run #%d" % i: self.test_run(table, self.args["warmup"])})
+                self.test_run(table, self.args["warmup"])
                 self.cleanup(table)
+        self.discard(self.namespace)
         self.namespace = ""
         self.storeResult(t.elapsed.total_seconds())
         logger.setLevel(prevlog)
