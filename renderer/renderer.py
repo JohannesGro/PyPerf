@@ -27,19 +27,20 @@ logger.addHandler(ch)
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 benchmarkFile = os.path.join(currentPath, "benchmarkResults.json")
-outputFile = "benchmarkResults.html"
+outputFile = os.path.join(currentPath, "html", "benchmarkResults.html")
 
 template = """
 <html>
 <head>
-    <link rel="stylesheet" href="./assets/css/main.css">
-    <link rel="stylesheet" href="./assets/css/barChart.css">
-    <script src="./assets/js/d3.v4.min.js"></script>
-    <script src="./assets/js/charts.js"></script>
+    <style>
+    {}
+    </style>
+    <script>{}</script>
+    <script>{}</script>
 </head>
 <body>
 <h1>Benchmark Results</h1>
-{0}
+{}
 
 </body>
 </html>
@@ -110,12 +111,15 @@ def iterateBenches():
     The render functions will produce html code. This code will be put together and
     saved as .html file.
     """
+    inline_css = readFile(os.path.join(currentPath, "html", "assets", "css", "main.css"))
+    d3Lib = readFile(os.path.join(currentPath, "html", "assets", "js", "d3.v4.min.js"))
+    chartsJS = readFile(os.path.join(currentPath, "html", "assets", "js", "charts.js"))
     body = renderSysInfos()
     benches = getAllBenches()
     for benchKey in benches:
         logger.info("Render bench: " + benchKey)
         body += renderBench(benchKey)
-    writeToFile(template.format(body), opts.outfile)
+    writeToFile(template.format(inline_css, d3Lib, chartsJS, body), opts.outfile)
 
 
 def renderBench(benchKey):
@@ -372,14 +376,14 @@ def renderBenchArgs(benchName):
     return result
 
 
-def loadJSONData(file):
+def loadJSONData(fileName):
     """This functions load the json-data from a file.
 
-    :param file: name of the input file
+    :param fileName: name of the input file
     :returns: json data
     """
     try:
-        with open(file) as dataFile:
+        with open(fileName) as dataFile:
             data = json.load(dataFile)
     except IOError as err:
         logger.error("Could not open benchmark data file! " + str(err))
@@ -395,13 +399,23 @@ def loadJSONData(file):
     return data
 
 
+def readFile(fileName):
+    """Reads a file and return the content
+
+    :param fileName: name of the file
+    :returns: content of the file as string
+    """
+    with open(fileName, 'r') as f:
+        data = f.read()
+    return data
+
+
 def writeToFile(data, outfile):
     """This functions dumps json data into a file.
 
     :param data: json data
     :param outfile: name of the output file
     """
-    outfile = os.path.join(currentPath, "html", outfile)
     logger.info("Saving Results to file: " + outfile)
     try:
         with open(outfile, 'w') as out:
