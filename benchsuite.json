@@ -1,39 +1,18 @@
 {
   "suite": {
-    "SqliteBenchmark": {
-      "file": "bench.sqlite_benchmark",
-      "className": "SqliteBenchmark",
-      "active": false,
-      "args": {
-        "rows": 1000,
-        "iterations": 10
-      }
-    },
     "SqlApiBenchmark": {
       "file": "bench.sqlapi_benchmark",
       "className": "SqlApiBenchmark",
-      "active": true,
       "args": {
-        "rows": 10000,
+        "rows": 100000,
         "iterations": 10,
         "tablename": "x_cdb_testperf",
         "warmup": 100
       }
     },
-    "LoginBenchmark": {
-      "file": "bench.login_benchmark",
-      "className": "LoginBenchmark",
-      "active": true,
-      "args": {
-        "server": "127.0.0.1:7000",
-        "testpath": "/server/__keep_alive__",
-        "iterations": 100
-      }
-    },
     "LoadAssemblyTiming": {
       "file": "bench.load_assembly_timing",
       "className": "LoadAssemblyTiming",
-      "active": true,
       "args": {
         "z_nummer": "9502656-1",
         "z_index": "",
@@ -43,7 +22,6 @@
     "WriteAssemblyTiming": {
       "file": "bench.write_assembly_timing",
       "className": "WriteAssemblyTiming",
-      "active": true,
       "args": {
         "z_nummer": "9502656-1",
         "z_index": "",
