@@ -76,6 +76,18 @@ class Bench(object):
         # overrides if the entry already exist
         self.results.update({self.namespace + name: {"value": val, "unit": unit, "type": type}})
 
+    def discard(self, prefix):
+        """Discard results with the given prefix.
+
+        :param prefix: prefix or complete name of the entry
+        """
+        remove = []
+        for key in self.results:
+            if key.startswith(prefix):
+                remove.append(key)
+        for ele in remove:
+            self.results.pop(ele, None)
+
     def run(self, args):
         """This method calls every test in this class. Test are indentified by the prefix "bench\_".
         The setUp-method is called immediately before each test and the tearDown-method is
