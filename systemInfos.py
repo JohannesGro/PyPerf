@@ -99,9 +99,47 @@ def getSysInfo():
 
 def getCADDOKINfos():
     res = {}
-    for var in ("CADDOK_SERVER", "CADDOK_DBNAME", "CADDOK_DBSYS",
-                "CADDOK_DBCNCT", "CADDOK_DBMODE", "CADDOK_DBDRIVER",
-                "CADDOK_DB1", "CADDOK_DB2", "CADDOK_DB3"):
+
+    for var in ('CADDOK_FLS_SOED',
+                'CADDOK_DB_RETRY',
+                'CADDOK_DEFAULT',
+                'CADDOK_TMPDIR',
+                'CADDOK_SERVER',
+                'CADDOK_LOGDIR',
+                'CADDOK_DBMODE',
+                'CADDOK_ARCH',
+                'CADDOK_AUTH_PERSNO',
+                'CADDOK_DEBUG',
+                'CADDOK_TOPDIR',
+                'CADDOK_DBDRIVER',
+                'CADDOK_WWWSERVICE_URL',
+                'CADDOK_SQLDBMS_STRLEN',
+                'CADDOK_DBNAME',
+                'CADDOK_BASE',
+                'CADDOK_RUNTIME',
+                'CADDOK_LANGUAGE',
+                'CADDOK_DBSYS',
+                'CADDOK_SQLDBMS',
+                'CADDOK_AUTH_LOGIN',
+                'CADDOK_ISOLANG',
+                'CADDOK_AUTH_FULLNAME',
+                'CADDOK_HOME',
+                'CADDOK_SOED_PLACES',
+                'CADDOK_DBCNCT',
+                'CADDOK_MAX_USER_SESSIONS',
+                'CADDOK_SML_SHOWID',
+                'CADDOK_AUTH_REAL_LOGIN',
+                'CADDOK_APP_CONF',
+                'CADDOK_AUTH_SOURCE',
+                'CADDOK_REPLICATION_DOMAIN',
+                'CADDOK_DB3',
+                'CADDOK_DB2',
+                'CADDOK_DB1',
+                'CADDOK_CDBPKG_HOST',
+                'CADDOK_INSTALLDIR',
+                'CADDOK_PACKAGE_REPOSITORY_DIR',
+                'CADDOK_TOOL',
+                'CADDOK_SCRIPTDIR'):
         logger.info("%s: %s", var, rte.environ[var])
         res[var] = rte.environ[var]
     return res
