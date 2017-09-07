@@ -13,21 +13,19 @@ module supports html output only.
 
 import argparse
 import json
-import logging
+import logging.config
 import os
 import sys
 
-logger = logging.getLogger("[" + __name__ + " - Renderer]")
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+import ioservice
+from log import customlogging
 
+# workaround for realtiv path
+sys.path.append('..')
 
-currentPath = os.path.abspath(os.path.dirname(__file__))
-benchmarkFile = os.path.join(currentPath, "benchmarkResults.json")
-outputFile = os.path.join(currentPath, "html", "benchmarkResults.html")
+benchmarkFile = os.path.join("benchmarkResults.json")
+outputFile = os.path.join("html", "benchmarkResults.html")
+logging_config_file = 'log/loggingConf.json'
 
 template = """
 <html>
@@ -49,8 +47,11 @@ data = {}
 
 
 def main():
+    global logger
+    logger = customlogging.init_logging("[Renderer]", opts.logconfig)
     logger.debug("benchmarks files: {}".format(opts.benchmarks))
     logger.debug("output file: {}".format(opts.outfile))
+    logger.debug("logger conf file: " + str(opts.logconfig))
     if isinstance(opts.benchmarks, list):
         loadDataForMultipleBenchmarks()
     else:
@@ -77,13 +78,13 @@ def renderSysInfos():
 
 def loadDataForSingleBenchmark():
     """Loads a single benchmark"""
-    data[opts.benchmarks] = loadJSONData(opts.benchmarks)
+    data[opts.benchmarks] = ioservice.loadJSONData(opts.benchmarks)
 
 
 def loadDataForMultipleBenchmarks():
     """Loads a bunch of benchmarks."""
     for fileName in opts.benchmarks:
-        data[fileName] = loadJSONData(fileName)
+        data[fileName] = ioservice.loadJSONData(fileName)
     areBenchmarksComparable(data)
 
 
@@ -111,15 +112,15 @@ def iterateBenches():
     The render functions will produce html code. This code will be put together and
     saved as .html file.
     """
-    inline_css = readFile(os.path.join(currentPath, "html", "assets", "css", "main.css"))
-    d3Lib = readFile(os.path.join(currentPath, "html", "assets", "js", "d3.v4.min.js"))
-    chartsJS = readFile(os.path.join(currentPath, "html", "assets", "js", "charts.js"))
+    inline_css = ioservice.readFile(os.path.join("html", "assets", "css", "main.css"))
+    d3Lib = ioservice.readFile(os.path.join("html", "assets", "js", "d3.v4.min.js"))
+    chartsJS = ioservice.readFile(os.path.join("html", "assets", "js", "charts.js"))
     body = renderSysInfos()
     benches = getAllBenches()
     for benchKey in benches:
         logger.info("Render bench: " + benchKey)
         body += renderBench(benchKey)
-    writeToFile(template.format(inline_css, d3Lib, chartsJS, body), opts.outfile)
+    ioservice.writeToFile(template.format(inline_css, d3Lib, chartsJS, body), opts.outfile)
 
 
 def renderBench(benchKey):
@@ -217,7 +218,7 @@ def createDiagramm(benchName):
                 avg = sumTime / len(timeList)
                 val = avg
             tableContent.append({"file": fileName, "name": benchTestName.encode('UTF-8'), "value": val})
-    return elementTempl.format(benchTestName, tableContent)
+    return elementTempl.format(benchName, tableContent)
 
 
 def renderTablesByTypes(benchName):
@@ -376,63 +377,13 @@ def renderBenchArgs(benchName):
     return result
 
 
-def loadJSONData(fileName):
-    """This functions load the json-data from a file.
-
-    :param fileName: name of the input file
-    :returns: json data
-    """
-    try:
-        with open(fileName) as dataFile:
-            data = json.load(dataFile)
-    except IOError as err:
-        logger.error("Could not open benchmark data file! " + str(err))
-        sys.exit(1)
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode benchmark data file! " + str(err))
-        sys.exit(1)
-    except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[:]))
-        sys.exit(1)
-    else:
-        logger.info("Reading successful")
-    return data
-
-
-def readFile(fileName):
-    """Reads a file and return the content
-
-    :param fileName: name of the file
-    :returns: content of the file as string
-    """
-    with open(fileName, 'r') as f:
-        data = f.read()
-    return data
-
-
-def writeToFile(data, outfile):
-    """This functions dumps json data into a file.
-
-    :param data: json data
-    :param outfile: name of the output file
-    """
-    logger.info("Saving Results to file: " + outfile)
-    try:
-        with open(outfile, 'w') as out:
-            out.write(data)
-    except IOError as err:
-        logger.error("Could not open file to save the data! " + str(err))
-    except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
-    else:
-        logger.info("Saving successful")
-
 if __name__ == "__main__":
     # CLI
     parser = argparse.ArgumentParser(description="""Reads benchmark data from a json file to display the data in human readable output.
                                     Each benchmark will therefore be rendered to display its results as a html file.""")
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
+    parser.add_argument("--logconfig", "-l", nargs='?', default=logging_config_file, help="Configuration file for the logger. (default: %(default)s)")
 
     # Grab the opts from argv
     opts = parser.parse_args()
