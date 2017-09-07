@@ -18,18 +18,22 @@ stored in a json formatted outputfile.
 import argparse
 import getpass
 import importlib
-import json
+
 import logging.config
 import multiprocessing
 import platform
 import sys
 
-from cdb import rte, sqlapi, version
-from cdb.uberserver import usutil
+from cdb import rte, version
+import ioservice
+from log import customlogging
 import systemInfos
 
 # TODO
 __revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
+
+# workaround for realtiv path
+sys.path.append('..')
 
 # defaults
 suite_file = 'benchsuite.json'
@@ -39,9 +43,13 @@ results = {'results': {}}
 
 
 def main():
+    global logger
+    logger = init_logging("[Benchrunner]", ops.logconfig)
+    sys_infos()
     logger.info("Starting")
+    logger.debug("Options: " + str(opts))
     logger.info("Reading the benchsuite: " + opts.suite)
-    data = load_json_data(opts.suite)
+    data = ioservice.loadJSONData(opts.suite)
 
     # iterating the suite
     for bench_key, bench_val in data["suite"].iteritems():
@@ -50,52 +58,7 @@ def main():
         logger.info("Execute bench: " + bench_key)
         result = start_bench_script(bench_val["file"], bench_val["className"], bench_val["args"])
         results['results'][bench_key] = {'args': bench_val["args"], 'data': result}
-    save_json_data(results)
-
-
-def load_json_data(json_file):
-    """This functions load the json-data and returns it.
-
-    :param json_file: the file in json format
-    :returns: json object
-    """
-    try:
-        with open(json_file) as data_file:
-            data = json.load(data_file)
-    except IOError as err:
-        logger.error("Could not open json file! " + str(err))
-        sys.exit(1)
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode json file! " + str(err))
-        sys.exit(1)
-    except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
-        sys.exit(1)
-    else:
-        logger.info("Reading json file successful")
-    return data
-
-
-def save_json_data(data):
-    """This functions dumps json data into a file. The name of the output file
-    is determined by parameter. The default output file is 'benchmarkResults.json'.
-
-    :param data: json data which will be saved to file
-    """
-    logger.info("Saving json to file: " + opts.outfile)
-    try:
-        with open(opts.outfile, 'w') as outfile:
-            json.dump(data, outfile, sort_keys=True, indent=4)
-    except IOError as err:
-        logger.error("Could not open file to save the data! " + str(err))
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode values! " + str(err))
-    except TypeError as err:
-        logger.error("Could not serialize object! " + str(err))
-    except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
-    else:
-        logger.info("Saving successful")
+    ioservice.saveJSONData(opts.outfile, results)
 
 
 def start_bench_script(path, class_name, args):
@@ -125,23 +88,7 @@ def start_bench_script(path, class_name, args):
     return bench_class().run(args)
 
 
-def init_logging():
-    """Initialize the logger. The name of the config file is determined by parameter.
-    The default config file is 'loggingConf.json'.
-    """
-    # removing the root handlers
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-    # initialize the logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
-    # try to read config
-    with open(opts.logconfig, "r") as config_file:
-        logging.config.dictConfig(json.load(config_file))
-        pass
-    global logger
-    logger = logging.getLogger("[Benchrunner]")
-    logger.debug("Options: " + str(opts))
 
 
 def sys_infos():
@@ -165,6 +112,4 @@ if __name__ == "__main__":
     # Grab the opts from argv
     opts = parser.parse_args()
 
-    init_logging()
-    sys_infos()
     main()
