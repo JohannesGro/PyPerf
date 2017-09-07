@@ -14,7 +14,7 @@
     },
     "file_handler": {
       "level": "DEBUG",
-      "filename": "benchmark.log",
+      "filename": "log/benchmark.log",
       "class": "logging.FileHandler",
       "formatter": "standard",
       "mode": "w"
