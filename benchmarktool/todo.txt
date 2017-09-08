@@ -1,0 +1,18 @@
+Reporting:
+- Design von Contact(evtl. css übernehmen)
+- Ein Ergebnis dartstellen
+- Mehrere Ergebnisse Vergleichen (mit Referenz)
+- Grafiken 
+
+System Daten:
+- Ram
+- CPU
+- Netzadresse (VM-Erkennen)
+
+
+Generieren der Daten:
+- Daten mitnehmen
+- Daten generieren
+- merken löschen (Fehler protokollieren)
+
+Dokumentation
