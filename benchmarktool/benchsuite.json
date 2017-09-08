@@ -4,7 +4,7 @@
       "file": "bench.sqlapi_benchmark",
       "className": "SqlApiBenchmark",
       "args": {
-        "rows": 100000,
+        "rows": 1000,
         "iterations": 10,
         "tablename": "x_cdb_testperf",
         "warmup": 100

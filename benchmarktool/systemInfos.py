@@ -14,6 +14,7 @@ import getpass
 import logging
 import multiprocessing
 import platform
+import subprocess
 import sys
 
 from cdb import rte, sqlapi, version
@@ -155,8 +156,17 @@ def isVMware():
 
 
 def VMWareInfo():
-    logger.info("Running in VM: %s", "Yes" if isVMware() else "No")
+    logger.info("Probalby running in VM: {}".format("Yes" if isVMware() else "No"))
     return {"Probalby running in VM": "Yes" if isVMware() else "No"}
+
+
+def traceroute(dest):
+    output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = output.decode('cp852')
+
+    logger.info("Route to server: {}".format(output))
+    return {"Route to server:": output}
+    # output = subprocess.check_output(["traceroute", "-w", "100", "localhost"], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
 def getAllSysInfos():
@@ -164,6 +174,7 @@ def getAllSysInfos():
     res = {}
     res.update(getSysInfo())
     res.update(getCADDOKINfos())
+    res.update(traceroute(res['CADDOK_CDBPKG_HOST']))
     res.update(VMWareInfo())
     res.update(getAllHostnamesInfo())
     res.update(getMacInfo())

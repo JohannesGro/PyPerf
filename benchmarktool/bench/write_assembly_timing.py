@@ -1,4 +1,4 @@
-#!launcher.cmd
+#!demoLauncher.cmd
 # -*- coding: iso-8859-1 -*-
 import logging
 import os
