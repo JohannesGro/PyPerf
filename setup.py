@@ -18,4 +18,10 @@ setup(name='benchmarktool',
       author='Timo Stüber',
       author_email='Timo.Stueber@contact-software.com',
       license='',
-      packages=['benchmarktool'])
+      packages=['benchmarktool'],
+      entry_points={
+           "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
+                             "render=benchmarktool.renderer:Renderer"],
+           "console_scripts": ["benchmark=benchmarktool.benchmark:main", ]
+      }
+      )
