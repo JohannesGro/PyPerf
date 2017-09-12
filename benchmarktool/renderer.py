@@ -26,7 +26,7 @@ class Renderer(object):
     """
 
     benchmarkFile = os.path.join("benchmarkResults.json")
-    outputFile = os.path.join("html", "benchmarkResults.html")
+    outputFile = os.path.join("benchmarkResults.html")
     logging_file = 'renderer.log'
 
     template = """
@@ -73,27 +73,27 @@ class Renderer(object):
         templ = "<div class='tile'><table>{}</table></div>"
         content = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 1) + "</tr>"
-        rowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
+        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
 
-        content += headerTempl.format("System Info", *data.keys())
-        infos = data[data.keys()[0]]["Sysinfos"]
+        content += headerTempl.format("System Info", *self.data.keys())
+        infos = self.data[self.data.keys()[0]]["Sysinfos"]
         for infoName in sorted(infos):
             res = []
-            for fileName in sorted(data):
-                res.append(data[fileName]["Sysinfos"][infoName])
+            for fileName in sorted(self.data):
+                res.append(self.data[fileName]["Sysinfos"][infoName])
             content += rowTempl.format(infoName, *res)
         return templ.format(content)
 
     def loadDataForSingleBenchmark(self):
         """Loads a single benchmark"""
-        data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
+        self.data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
 
     def loadDataForMultipleBenchmarks(self):
         """Loads a bunch of benchmarks."""
         for fileName in self.args.benchmarks:
-            data[fileName] = ioservice.loadJSONData(fileName)
-        areBenchmarksComparable(data)
+            self.data[fileName] = ioservice.loadJSONData(fileName)
+        self.areBenchmarksComparable(self.data)
 
     def areBenchmarksComparable(self, benchmarks):
         """Checks the structure of each benchmark result. The same benchsuite is
@@ -103,14 +103,14 @@ class Renderer(object):
         :raises RuntimeError: if the strucutre of the benchmarks is unequal
         """
 
-        # getAllBenches returns the benches of the first element
-        f0Benches = getAllBenches()
+        # self.getAllBenches returns the benches of the first element
+        f0Benches = self.getAllBenches()
         for fileName in benchmarks:
-            fnBenches = getAllBenches(fileName).keys()
+            fnBenches = self.getAllBenches(fileName).keys()
             if f0Benches.keys() != fnBenches:
                 raise RuntimeError("Can not compare given benchmarks! Different benches.")
             for benchKey in fnBenches:
-                if getBenchArgs(benchKey) != getBenchArgs(benchKey, fileName):
+                if self.getBenchArgs(benchKey) != self.getBenchArgs(benchKey, fileName):
                     raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
     def iterateBenches(self, ):
@@ -121,12 +121,12 @@ class Renderer(object):
         inline_css = ioservice.readFile(os.path.join("html", "assets", "css", "main.css"))
         d3Lib = ioservice.readFile(os.path.join("html", "assets", "js", "d3.v4.min.js"))
         chartsJS = ioservice.readFile(os.path.join("html", "assets", "js", "charts.js"))
-        body = renderSysInfos()
-        benches = getAllBenches()
+        body = self.renderSysInfos()
+        benches = self.getAllBenches()
         for benchKey in benches:
             logger.info("Render bench: " + benchKey)
-            body += renderBench(benchKey)
-        ioservice.writeToFile(template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
+            body += self.renderBench(benchKey)
+        ioservice.writeToFile(self.template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
 
     def renderBench(self, benchKey):
         """Generates html code of the given bench name to display its data.
@@ -137,11 +137,11 @@ class Renderer(object):
         """
         title = "<h2>{0}</h2>".format(benchKey)
         tileTempl = "<div class='tile'>{0}</div>"
-        args = renderBenchArgs(benchKey)
-        data = renderBenchData(benchKey)
-        return tileTempl.format(title + args + data)
+        args = self.renderBenchArgs(benchKey)
+        measurements = self.renderBenchMeasurements(benchKey)
+        return tileTempl.format(title + args + measurements)
 
-    def renderBenchData(self, benchName):
+    def renderBenchMeasurements(self, benchName):
         """Produces html code for the data of the given bench name.
         A diagramm and tables are created.
 
@@ -149,8 +149,8 @@ class Renderer(object):
         :returns: html code of the data
         """
         res = ""
-        body = createDiagramm(benchName)
-        body += renderTablesByTypes(benchName)
+        body = self.createDiagramm(benchName)
+        body += self.renderTablesByTypes(benchName)
         return body
 
     def getTestResult(self, fileName, benchName, benchTest):
@@ -161,7 +161,7 @@ class Renderer(object):
         :param benchTest: name of the test
         :returns: the selected data from specified file name
         """
-        return getAllBenches(fileName)[benchName]["data"][benchTest]
+        return self.getAllBenches(fileName)[benchName]["data"][benchTest]
 
     def getAllBenches(self, fileName=""):
         """Helper function to return all benchmarks. If no file name is applied the
@@ -171,8 +171,8 @@ class Renderer(object):
         :returns: a dict of all benchmarks
         """
         if fileName == "":
-            fileName = data.keys()[0]
-        return data[fileName]["results"]
+            fileName = self.data.keys()[0]
+        return self.data[fileName]["results"]
 
     def getAllBenchTests(self, benchName):
         """Helper function to return all test of a benchmark.
@@ -180,8 +180,8 @@ class Renderer(object):
         :param benchName: name of the benchmark
         :returns: a dict of all test of a benchmark
         """
-        fileName = data.keys()[0]
-        return getAllBenches(fileName)[benchName]['data']
+        fileName = self.data.keys()[0]
+        return self.getAllBenches(fileName)[benchName]['data']
 
     def getBenchArgs(self, benchName, fileName=""):
         """Helper function to return the arguments of a benchmark.  If no file name
@@ -191,7 +191,7 @@ class Renderer(object):
         :param fileName: file where the information shall be taken from
         :returns: a dict of arguments
         """
-        return getAllBenches(fileName)[benchName]["args"]
+        return self.getAllBenches(fileName)[benchName]["args"]
 
     def createDiagramm(self, benchName):
         """Produce html js code to display the data of a benchmark as diagramm.
@@ -204,13 +204,17 @@ class Renderer(object):
         <div id="{0}">
             <script>
                 var data = {1};
-                createBarChart("#{0}",data);
+                createBarChart("#{0}",self.data);
             </script>
          </div>"""
         tableContent = []
-        for (benchTestName, content) in getAllBenchTests(benchName).iteritems():
-            for fileName in data:
-                val = getTestResult(fileName, benchName, benchTestName)["value"]
+        allTests = self.getAllBenchTests(benchName)
+        # not data available
+        if allTests is None or allTests == {}:
+            return ""
+        for (benchTestName, content) in allTests.iteritems():
+            for fileName in self.data:
+                val = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 if content["type"] == "time_series":
                     timeList = content["value"]
                     sumTime = sum(timeList)
@@ -228,7 +232,7 @@ class Renderer(object):
         types = ["time", "time_series"]
         res = ""
         for t in types:
-            res += renderTableByType(benchName, t)
+            res += self.renderTableByType(benchName, t)
         return res
 
     def renderTableByType(self, benchName, type):
@@ -239,15 +243,19 @@ class Renderer(object):
         :returns: html code of the table.
         """
         header = "<h4>Tabelle {}</h4>".format(type)
-        elements = dict((benchTestName, content) for (benchTestName, content) in getAllBenchTests(benchName).iteritems() if content["type"] == type)
+        allTests = self.getAllBenchTests(benchName)
+        # not data available
+        if allTests is None or allTests == {}:
+            return ""
+        elements = dict((benchTestName, content) for (benchTestName, content) in allTests.iteritems() if content["type"] == type)
         if len(elements) == 0:
             return ""
 
         content = "<table>"
         if type == "time_series":
-            content += renderTimeSeriesRows(benchName, elements)
+            content += self.renderTimeSeriesRows(benchName, elements)
         elif type == "time":
-            content += renderTimeRows(benchName, elements)
+            content += self.renderTimeRows(benchName, elements)
 
         content += "</table>"
         return header + content
@@ -262,14 +270,14 @@ class Renderer(object):
         """
         content = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 1) + "</tr>"
-        rowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
+        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
 
-        content += headerTempl.format("Test", *data.keys())
+        content += headerTempl.format("Test", *self.data.keys())
         for benchTestName in sorted(elements):
             res = []
-            for fileName in sorted(data):
-                res.append(getTestResult(fileName, benchName, benchTestName)["value"])
+            for fileName in sorted(self.data):
+                res.append(self.getTestResult(fileName, benchName, benchTestName)["value"])
             content += rowTempl.format(benchTestName, *res)
         return content
 
@@ -283,19 +291,19 @@ class Renderer(object):
         """
         content = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(data) + 2) + "</tr>"
+        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 2) + "</tr>"
         outerRowTempl = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
-        innerRowTempl = "<tr>" + "<td>{}</td>" * (len(data) + 1) + "</tr>"
+        innerRowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
 
-        content += headerTempl.format("Test", "Aggregation", *data.keys())
+        content += headerTempl.format("Test", "Aggregation", *self.data.keys())
         for benchTestName in sorted(elements):
             innerContent = ""
             resMax = []
             resMin = []
             resSum = []
             resAvg = []
-            for fileName in sorted(data):
-                timeList = getTestResult(fileName, benchName, benchTestName)["value"]
+            for fileName in sorted(self.data):
+                timeList = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
@@ -308,7 +316,7 @@ class Renderer(object):
             innerContent += innerRowTempl.format("Min", *resMin)
             innerContent += innerRowTempl.format("Sum", *resSum)
             innerContent += innerRowTempl.format("Average", *resAvg)
-            content += outerRowTempl.format(benchTestName, (len(data) + 1), innerContent)
+            content += outerRowTempl.format(benchTestName, (len(self.data) + 1), innerContent)
         return content
 
 
@@ -364,7 +372,7 @@ class Renderer(object):
                 {0}
             </table>
         """
-        args = getBenchArgs(benchName)
+        args = self.getBenchArgs(benchName)
         rows = ""
         for key, val in sorted(args.iteritems()):
             rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
