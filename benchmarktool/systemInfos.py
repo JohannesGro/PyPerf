@@ -141,8 +141,9 @@ def getCADDOKINfos():
                 'CADDOK_PACKAGE_REPOSITORY_DIR',
                 'CADDOK_TOOL',
                 'CADDOK_SCRIPTDIR'):
-        logger.info("%s: %s", var, rte.environ[var])
-        res[var] = rte.environ[var]
+        if var in rte.environ:
+            logger.info("%s: %s", var, rte.environ[var])
+            res[var] = rte.environ[var]
     return res
 
 
@@ -174,7 +175,8 @@ def getAllSysInfos():
     res = {}
     res.update(getSysInfo())
     res.update(getCADDOKINfos())
-    res.update(traceroute(res['CADDOK_CDBPKG_HOST']))
+    if 'CADDOK_CDBPKG_HOST' in res:
+        res.update(traceroute(res['CADDOK_CDBPKG_HOST']))
     res.update(VMWareInfo())
     res.update(getAllHostnamesInfo())
     res.update(getMacInfo())
