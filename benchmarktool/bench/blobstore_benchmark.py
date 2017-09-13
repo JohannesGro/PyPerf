@@ -1,6 +1,8 @@
-#!launcher.cmd
+#!demoLauncher.cmd
 # -*- coding: iso-8859-1 -*-
+import glob
 import logging
+import os
 import time
 
 from bench import Bench
@@ -11,75 +13,123 @@ from timer import Timer
 logger = logging.getLogger("[" + __name__ + " - BlobstoreBenchmark]")
 
 
-class LoadAssemblyTiming(Bench):
-    """ Zu einer gegebenen Dokumentnummer die Referenzstruktur ermitteln, und alle
-        Hauptdateien aus dem BlobStore laden.
-        Die Daten landen nicht auf der Platte, sondern nur im Speicher.
-        Es wird dreimal der Dateiinhalt geholt, um Caching-Effekte zu sehen.
+class BlobstoreTiming(Bench):
+    """ Die Blob-Daten von der lokalen Platte unter neuen Blob-IDs in
+        den Blobstore schreiben. Dieser Vorgang wird mehrmals wiederholt.
+        Anschließend diese runterladen.
+
+        Nach dem Lauf die geschriebenen neuen Blobs wieder entfernen.
     """
 
-    def setUpClass(self):
-        logger.info("Get Document %s-%s" % (self.args['z_nummer'], self.args['z_index']))
-        self.doc = Document.ByKeys(self.args['z_nummer'], self.args['z_index'])
-        if not self.doc:
-            logger.error("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
-            raise Exception("Document %s-%s not found" % (self.args['z_nummer'], self.args['z_index']))
+    def bench_main(self):
+        outfiles = self.prepare()
+        all_blob_ids = self.saveFilesIntoBlobStore(outfiles)
+        self.downloadBlobs(all_blob_ids)
+        self.cleanupBlobs(all_blob_ids)
+        logger.debug(self.results)
 
-    def getAllRefDocs(self):
-        logger.info("Get reference structure")
+    def prepare(self):
+        logger.info("prepare")
+        return glob.glob(self.args['blobfolder'])
 
-        with Timer() as t:
-            ref_docs = self.doc.getAllRefDocs()
-        self.storeResult(t.elapsed.total_seconds())
-        logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
-                     % (len(ref_docs), t.elapsed.total_seconds()))
-        return ref_docs
+    def writeFileToWriter(self, writer, from_path, blocksize=None):
+        """ Write the content of a file to ``writer``
+        """
+        blocksize = blocksize or (256 * 1024)
+        with open(from_path, 'rb') as fd:
+            while True:
+                mybuf = fd.read(blocksize)
+                if not mybuf or len(mybuf) == 0:
+                    break
+                writer.write(mybuf)
+        # return the blob_id
+        return writer.close()
 
-    def getPrimaryFiles(self, ref_docs):
-        logger.info("Get files")
-        with Timer() as t:
-            file_list = []
-            for d in ref_docs:
-                file_list.extend(d.PrimaryFiles)
-        self.storeResult(t.elapsed.total_seconds())
-        logger.debug("--> Documents have %d primary files, %.4f secs. for query"
-                     % (len(file_list), t.elapsed.total_seconds()))
-        return file_list
+    def downloadBlobs(self, blob_ids):
+        logger.info("downloadBlobs")
 
-    def bench_load(self):
-        logger.info("bench_load")
-        ref_docs = self.getAllRefDocs()
-
-        file_list = self.getPrimaryFiles(ref_docs)
-
-        logger.info("load files")
         meta_values = []
         blob_values = []
         for i in range(self.args['loops']):
+            self.namespace = "(Loops#:{})".format(i)
             time.sleep(10)
             logger.debug("Load file content - %d/%d" % (i + 1, self.args['loops']))
 
             dlen = 0
             bs = blob.getBlobStore('main')
+            blobs_per_loop = len(blob_ids) / self.args['loops']
+            start_index = i * blobs_per_loop
+            stop_index = start_index + blobs_per_loop
+            for blob_id in blob_ids[start_index:stop_index]:
 
-            for f in file_list:
                 with Timer() as t_meta:
-                    reader = bs.Download(f.cdbf_blob_id, only_metadata=True)
+                    reader = bs.Download(blob_id, only_metadata=True)
                 meta_values.append(t_meta.elapsed.total_seconds())
-                logger.debug("----> Fetching metadata for blob %s took %.4f secs" % (f.cdbf_blob_id, t_meta.elapsed.total_seconds()))
+                logger.debug("----> Fetching metadata for blob %s took %.4f secs" % (blob_id, t_meta.elapsed.total_seconds()))
                 # could use 'print reader.meta' to have a look at the metadata dictionary
-                with Timer() as t_meta:
+                with Timer() as t_blob:
                     while 1:
                         dummy = reader.read(1024 * 1024)
                         dlen += len(dummy)
                         if not dummy:
                             break
-                blob_values.append(t_meta.elapsed.total_seconds())
+                blob_values.append(t_blob.elapsed.total_seconds())
                 logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
-                    f.cdbf_blob_id, len(reader), t_meta.elapsed.total_seconds(), len(reader) / (t_meta.elapsed.total_seconds() * 1024)))
-        self.storeResult(meta_values, name="fetching_metadata", type="time series")
-        self.storeResult(blob_values, name="fetching_blob_data", type="time series")
+                    blob_id, len(reader), t_blob.elapsed.total_seconds(), len(reader) / (t_blob.elapsed.total_seconds() * 1024)))
+            self.storeResult(meta_values, name="fetching_metadata", type="time_series")
+            self.storeResult(blob_values, name="fetching_blob_data", type="time_series")
+        self.namespace = ""
+
+    def saveFilesIntoBlobStore(self, sourcefiles):
+
+        timeWritingBlobs = []
+
+        for fn in sourcefiles:
+            if not os.path.isfile(fn):
+                raise RuntimeError("Source file %s does not exist" % fn)
+
+        all_blob_ids = []
+        for i in xrange(self.args['loops']):
+            self.namespace = "(Loop#:{})".format(i)
+            logger.debug("saveFilesIntoBlobStore: Starting to write blobs %d/%d" % (i + 1, self.args['loops']))
+            dlen = 0
+            blob_ids = []
+            for fn in sourcefiles:
+                size = os.stat(fn).st_size
+                with Timer() as t:
+                    ul = blob.uploader('main', size, {})
+                    blob_id = self.writeFileToWriter(ul, fn)
+                dlen += size
+                blob_ids.append(blob_id)
+                logger.debug("--> Writing of blob %s (%d bytes) took %.4f secs. (%.4f KBytes/sec)"
+                             % (blob_id, dlen, t.elapsed.total_seconds(), dlen / ((t.elapsed.total_seconds()) * 1024)))
+                # store numFiles, dlen, kb/s ?
+                timeWritingBlobs.append(t.elapsed.total_seconds())
+                self.storeResult(timeWritingBlobs, type="time_series")
+            all_blob_ids.extend(blob_ids)
+        self.namespace = ""
+        return all_blob_ids
+
+    def cleanupBlobs(self, blob_ids):
+        logger.info("Cleanup: Removing %d blobs" % len(blob_ids))
+        with Timer() as t:
+            bs = blob.getBlobStore('main')
+            for blob_id in blob_ids:
+                # nuke it completely, do not move to trash area
+                bs.delete(blob_id, True)
+        logger.debug("-> Deletion of %d blobs took %.4f secs. (%.4f blobs/sec)"
+                     % (len(blob_ids), t.elapsed.total_seconds(), (len(blob_ids) / (t.elapsed.total_seconds()))))
+        self.storeResult(t.elapsed.total_seconds())
+
+    def cleanupFiles(self, sourcefiles):
+        logger.info("Cleanup: Removing %d temporary files" % len(sourcefiles))
+        with Timer() as t:
+            for fn in sourcefiles:
+                os.unlink(fn)
+        logger.debug("-> Deletion of %d files took %.4f secs. (%.4f files/sec)"
+                     % (len(sourcefiles), t.elapsed.total_seconds(), (len(sourcefiles) / (t.elapsed.total_seconds()))))
+        self.storeResult(t.elapsed.total_seconds())
 
 
 if __name__ == '__main__':
-    LoadAssemblyTiming().run({"z_nummer": "000073-1", "z_index": "", "loops": 10})
+    BlobstoreTiming().run({"loops": 2, "blobfolder": u"./benchmarktool/blobdata/blobs/*"})

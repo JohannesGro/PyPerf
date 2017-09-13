@@ -49,8 +49,8 @@ class LoadAssemblyTiming(Bench):
                      % (len(file_list), t.elapsed.total_seconds()))
         return file_list
 
-    def bench_load(self):
-        logger.info("bench_load")
+    def benchLoad(self):
+        logger.info("benchLoad")
         ref_docs = self.getAllRefDocs()
 
         file_list = self.getPrimaryFiles(ref_docs)
@@ -71,15 +71,15 @@ class LoadAssemblyTiming(Bench):
                 meta_values.append(t_meta.elapsed.total_seconds())
                 logger.debug("----> Fetching metadata for blob %s took %.4f secs" % (f.cdbf_blob_id, t_meta.elapsed.total_seconds()))
                 # could use 'print reader.meta' to have a look at the metadata dictionary
-                with Timer() as t_meta:
+                with Timer() as t_blob:
                     while 1:
                         dummy = reader.read(1024 * 1024)
                         dlen += len(dummy)
                         if not dummy:
                             break
-                blob_values.append(t_meta.elapsed.total_seconds())
+                blob_values.append(t_blob.elapsed.total_seconds())
                 logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
-                    f.cdbf_blob_id, len(reader), t_meta.elapsed.total_seconds(), len(reader) / (t_meta.elapsed.total_seconds() * 1024)))
+                    f.cdbf_blob_id, len(reader), t_blob.elapsed.total_seconds(), len(reader) / (t_blob.elapsed.total_seconds() * 1024)))
         self.storeResult(meta_values, name="fetching_metadata", type="time_series")
         self.storeResult(blob_values, name="fetching_blob_data", type="time_series")
 

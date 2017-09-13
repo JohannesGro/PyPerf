@@ -1,7 +1,7 @@
 {
   "suite": {
     "SqlApiBenchmark": {
-      "file": "bench.sqlapi_benchmark",
+      "file": "benchmarktool.bench.sqlapi_benchmark",
       "className": "SqlApiBenchmark",
       "args": {
         "rows": 1000,
@@ -11,12 +11,20 @@
       }
     },
     "LoadAssemblyTiming": {
-      "file": "bench.load_assembly_timing",
+      "file": "benchmarktool.bench.load_assembly_timing",
       "className": "LoadAssemblyTiming",
       "args": {
         "z_nummer": "9502656-1",
         "z_index": "",
         "loops": 3
+      }
+    },
+    "LoadAssemblyTiming": {
+      "file": "benchmarktool.bench.blobstore_benchmark",
+      "className": "BlobstoreTiming",
+      "args": {
+        "loops": 3,
+        "blobfolder": "./benchmarktool/blobdata/blobs/*"
       }
     },
     "WriteAssemblyTiming": {
