@@ -24,22 +24,17 @@ class Benchmark(object):
             try:
                 return cmd.main()
             except RuntimeError as exc:
-                return -1
-
-    def subcommandHelp(self):
-        text = ["Available subcommands:\n",
-                ]
-        for subc in sorted(self.subcommands.items()):
-            text.append("{0: <12} {1}".format(subc[0], subc[1].__doc__))
-        return "\n".join(text)
+                print(exc)
 
 
 def main():
     bm = Benchmark()
     global parser
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
-    parser.add_argument("command", nargs=1, help="Run a the specified subcommand. {}".format(bm.subcommandHelp()))
-    parser.add_argument("commandargs", nargs=argparse.REMAINDER, help="Argument list for the command to run.")
+    parser = argparse.ArgumentParser(description=__doc__)
+    group = parser.add_argument_group('Available subcommands')
+    for subc in sorted(bm.subcommands.items()):
+        group.add_argument(subc[0], nargs=1, help=subc[1].__doc__)
+    parser.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
     # Grab the self.args from argv
     args = parser.parse_args()
     return bm._main(args)
