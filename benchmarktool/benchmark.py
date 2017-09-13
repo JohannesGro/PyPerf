@@ -31,9 +31,9 @@ def main():
     bm = Benchmark()
     global parser
     parser = argparse.ArgumentParser(description=__doc__)
-    group = parser.add_argument_group('Available subcommands')
+    group = parser.add_mutually_exclusive_group('Available subcommands')
     for subc in sorted(bm.subcommands.items()):
-        group.add_argument(subc[0], nargs=1, help=subc[1].__doc__)
+        group.add_argument(subc[0], help=subc[1].__doc__)
     parser.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
     # Grab the self.args from argv
     args = parser.parse_args()
