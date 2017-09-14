@@ -24,8 +24,8 @@ class Renderer(object):
     A json file created by the benchrunner can be taken as a input. Currently this
     module supports html output only.
     """
-
-    benchmarkFile = os.path.join("benchmarkResults.json")
+    currentDir = os.path.dirname(__file__)
+    benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = os.path.join("benchmarkResults.html")
     logging_file = 'renderer.log'
 
@@ -54,8 +54,8 @@ class Renderer(object):
     """
     data = {}
 
-    def __init__(self, argv):
-
+    def __init__(self, args):
+        print args
         # Grab the self.args from argv
         if type(args) == argparse.Namespace:
             sys.argv = []
@@ -124,9 +124,9 @@ class Renderer(object):
         The render functions will produce html code. This code will be put together and
         saved as .html file.
         """
-        inline_css = ioservice.readFile(os.path.join("html", "assets", "css", "main.css"))
-        d3Lib = ioservice.readFile(os.path.join("html", "assets", "js", "d3.v4.min.js"))
-        chartsJS = ioservice.readFile(os.path.join("html", "assets", "js", "charts.js"))
+        inline_css = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
+        d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
+        chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
         body = self.renderSysInfos()
         benches = self.getAllBenches()
         for benchKey in benches:
@@ -223,6 +223,8 @@ class Renderer(object):
                 val = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 if content["type"] == "time_series":
                     timeList = content["value"]
+                    if len(timeList) == 0:
+                        continue
                     sumTime = sum(timeList)
                     avg = sumTime / len(timeList)
                     val = avg
@@ -310,6 +312,8 @@ class Renderer(object):
             resAvg = []
             for fileName in sorted(self.data):
                 timeList = self.getTestResult(fileName, benchName, benchTestName)["value"]
+                if len(timeList) == 0:
+                    continue
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
@@ -318,6 +322,8 @@ class Renderer(object):
                 resMin.append(minVal)
                 resSum.append(sumVal)
                 resAvg.append(avgVal)
+            if len(resMax) == 0:
+                continue
             innerContent += innerRowTempl.format("Max", *resMax)
             innerContent += innerRowTempl.format("Min", *resMin)
             innerContent += innerRowTempl.format("Sum", *resSum)
