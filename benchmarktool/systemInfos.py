@@ -237,7 +237,17 @@ def getCADDOKINfos():
 
 
 def isVMware():
-    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056']
+    """ VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69, 0x001c14
+        Microsoft Hyper-V, Virtual Server, Virtual PC	00-03-FF
+        Parallells Desktop, Workstation, Server, Virtuozzo	00-1C-42
+        Virtual Iron 4	00-0F-4B
+        Red Hat Xen	00-16-3E
+        Oracle VM	00-16-3E
+        XenSource	00-16-3E
+        Novell Xen	00-16-3E
+        Sun xVM VirtualBox	08-00-27"""
+    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff", "0x001c42", "0x000f4b", "0x00163e", "0x080027"]
+
     mac = getMac()
     for str in prefix:
         if str in mac:
