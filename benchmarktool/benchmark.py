@@ -15,14 +15,11 @@ class Benchmark(object):
 
     def _main(self, args):
         cmdname = args.__dict__.pop('command', None)
-        print args
         import sys
-        print sys.argv
         cmdclass = self.subcommands.get(cmdname, None)
         if cmdclass is None:
             parser.error("Unknown subcommand %s" % cmdname)
         else:
-            print args
             cmd = cmdclass(args)
             try:
                 return cmd.main()
