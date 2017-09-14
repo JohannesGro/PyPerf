@@ -40,10 +40,5 @@ def main():
                 command._add_action(action)
     #subparsers.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
     # Grab the self.args from argv
-    print "-"*60
-    try:
-        args = parser.parse_args()
-    except Exception as e:
-        print e
-    print "-"*60
+    args = parser.parse_args()
     return bm._main(args)
