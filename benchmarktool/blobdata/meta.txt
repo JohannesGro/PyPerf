@@ -1,0 +1,1 @@
+{u'cdbf_description': u'', u'cdbf_name': u'000073-1-.CATProduct', u'cdbf_object_id': u'7d9c4bcf-1db4-11e2-85c9-000c29b29bed', u'__content_hash__': u'md5:251e97d9f0a42b4d072ca25c96e96c6c', u'cdb_object_id': u'7dd7ce32-1db4-11e2-b357-000c29b29bed', u'persno': u'caddok'}
