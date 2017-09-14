@@ -109,7 +109,8 @@ def getMemoryInfos():
 
 def getMac():
     from uuid import getnode as get_mac
-    return hex(get_mac())
+    # '0x' + 6bytes  = len 14
+    return "{0:#0{1}x}".format(get_mac(), 14)
 
 
 def getMacInfo():
