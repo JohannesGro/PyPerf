@@ -14,6 +14,7 @@ import getpass
 import logging
 import multiprocessing
 import platform
+import psutil
 import subprocess
 import sys
 
@@ -44,19 +45,65 @@ class MEMORYSTATUSEX(ctypes.Structure):
 
 def getMemoryInfos():
     # working for windows only
-    mega = 1024 * 1024
-    stat = MEMORYSTATUSEX()
-    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+    mb = 1024 * 1024
+    if psutil.WINDOWS:
+        stat = MEMORYSTATUSEX()
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
 
-    logger.info("MemoryLoad: %d%%" % (stat.dwMemoryLoad))
-    logger.info("TotalPhys: %dMB" % (stat.ullTotalPhys / mega))
-    logger.info("AvailPhys: %dMB" % (stat.ullAvailPhys / mega))
-    logger.info("TotalVirtual: %dMB" % (stat.ullTotalVirtual / mega))
-    res = {}
-    res['Memory Load in %'] = stat.dwMemoryLoad
-    res['Memory Total Phys in MB'] = stat.ullTotalPhys / mega
-    res['Memory Available Phys in MB'] = stat.ullAvailPhys / mega
-    res['Memory Total Virtual in MB'] = stat.ullTotalVirtual / mega
+        logger.info("Memory total virtual: %dMB" % (stat.ullTotalVirtual / mb))
+        res = {}
+        res['Memory total virtual in MB'] = stat.ullTotalVirtual / mb
+
+    mem = psutil.virtual_memory()
+    logger.info("Memory total {}MB".format(mem.total / mb))
+    res['Memory total memory in MB'] = mem.total / mb
+
+    logger.info("Memory percent used memory: {}%".format(mem.percent))
+    res['Memory percent used memory'] = mem.percent
+
+    logger.info("Memory used {}MB".format(mem.used / mb))
+    res['Memory used in MB'] = mem.used / mb
+
+    logger.info("Memory free {}MB".format(mem.free / mb))
+    res['Memory free in MB'] = mem.free / mb
+
+    logger.info("Memory available {}MB".format(mem.available / mb))
+    res['Memory available in MB'] = mem.available / mb
+    if(psutil.POSIX):
+        logger.info("Memory active {}MB".format(mem.active / mb))
+        res['Memory active in MB'] = mem.active / mb
+
+        logger.info("Inactive {}MB".format(mem.inactive / mb))
+        res['Memory inactive in MB'] = mem.inactive / mb
+
+    if(psutil.POSIX or psutil.BSD):
+        logger.info("Memory buffers {}MB".format(mem.buffers / mb))
+        res['Memory buffers in MB'] = mem.buffers / mb
+
+        logger.info("Memory shared {}MB".format(mem.shared / mb))
+        res['Memory shared in MB'] = mem.shared / mb
+
+        logger.info("Memory cached {}MB".format(mem.cached / mb))
+        res['Memory cached in MB'] = mem.cached / mb
+    if(psutil.OSX or psutil.BSD):
+        logger.info("Memory wired {}MB".format(mem.wired / mb))
+        res['Memory wired in MB'] = mem.wired / mb
+
+    swap = psutil.swap_memory()
+    logger.info('Swap total memory {}MB'.format(swap.total / mb))
+    res['Swap total memory in MB'] = swap.total / mb
+    logger.info('Swap used memory {}MB'.format(swap.used / mb))
+    res['Swap total used in MB'] = swap.used / mb
+    logger.info('Swap free memory {}MB'.format(swap.free / mb))
+    res['Swap free memory in MB'] = swap.free / mb
+    logger.info('Swap percent memory {}'.format(swap.percent))
+    res['Swap percent memory'] = swap.percent
+    if not psutil.WINDOWS:
+        logger.info('Swap in memory {}MB'.format(swap.sin / mb))
+        res['Swap in memory in MB'] = swap.sin / mb
+
+        logger.info('Swaped out memory {}MB'.format(swap.sout / mb))
+        res['Swaped out memory'] = swap.sout / mb
     return res
 
 
@@ -79,6 +126,25 @@ def getAllHostnamesInfo():
     return {"Hostnames": getAllHostnames()}
 
 
+def diskIOCounter():
+    # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L, write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
+    res = {}
+    diskcounters = psutil.disk_io_counters(perdisk=False)
+    logger.info('Disk IO read_count: {}'.format(diskcounters.read_count))
+    res['Disk IO read_count'] = diskcounters.read_count
+    logger.info('Disk IO write_count: {}'.format(diskcounters.write_count))
+    res['Disk IO write_count'] = diskcounters.write_count
+    logger.info('Disk IO read_bytes: {}'.format(diskcounters.read_bytes))
+    res['Disk IO read_bytes'] = diskcounters.read_bytes
+    logger.info('Disk IO write_bytes: {}'.format(diskcounters.write_bytes))
+    res['Disk IO write_bytes'] = diskcounters.write_bytes
+    logger.info('Disk IO read_time: {}'.format(diskcounters.read_time))
+    res['Disk IO read_time'] = diskcounters.read_time
+    logger.info('Disk IO write_time: {}'.format(diskcounters.write_time))
+    res['Disk IO write_time'] = diskcounters.write_time
+    return res
+
+
 def getSysInfo():
     logger.info("Elements Version: %s", version.getVersionDescription())
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
@@ -96,6 +162,29 @@ def getSysInfo():
     res["Processor"] = platform.processor()
     res["CPU Count"] = multiprocessing.cpu_count()
     return res
+
+
+def getCPUInfo():
+        cpu_times = psutil.cpu_times()
+        logger.info("CPU time spent by processes in user mode: {}".format(cpu_times.user))
+        res["CPU time spent by processes in user mode"] = cpu_times.user
+        logger.info("CPU time spent by processes in kernel mode: {}".format(cpu_times.system))
+        res["CPU time spent by processes executing in kernel mode"] = cpu_times.system
+        logger.info("CPU time spent  doing nothing: {}".format(cpu_times.idle))
+        res["CPU time spent doing nothing"] = cpu_times.idle
+
+        logger.info('CPU Percent: {}'.format(psutil.cpu_percent(interval=1, percpu=True)))
+        res['CPU Percent'] = psutil.cpu_percent(interval=1, percpu=True)
+        logger.info('CPU Percent Time Spent: {}'.format(psutil.cpu_times_percent(interval=1.1, percpu=True)))
+        res['CPU Percent Time Spent'] = psutil.cpu_times_percent(interval=1.1, percpu=True)
+
+        logger.info('CPU count locial CPUs: {}'.format(psutil.cpu_count()))
+        res['CPU count locial CPUs'] = psutil.cpu_count()
+        logger.info('CPU count physical CPUs: {}'.format(psutil.cpu_count(ogical=False)))
+        res['CPU count physical CPUs'] = psutil.cpu_count(logical=False)
+
+        logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=True)))
+        res['CPU Frenquency'] = psutil.cpu_freq(percpu=True)
 
 
 def getCADDOKINfos():
@@ -157,8 +246,28 @@ def isVMware():
 
 
 def VMWareInfo():
-    logger.info("Probalby running in VM: {}".format("Yes" if isVMware() else "No"))
-    return {"Probalby running in VM": "Yes" if isVMware() else "No"}
+    logger.info("VM running?: (probably) {}".format("Yes" if isVMware() else "No"))
+    return {"VM running?: (probably) ": ("Yes" if isVMware() else "No")}
+
+
+def msinfo32():
+    if(psutil.WINDOWS):
+        import xml.etree.ElementTree as ElementTree
+        import os
+        res = {}
+        fileName = "msinfo.xml"
+        proc = subprocess.Popen(['msinfo32', "/nfo", fileName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.stdout.read()
+
+        root = ElementTree.parse(fileName).getroot()
+
+        cat_list = ['Systemübersicht', 'Datenträger']
+        for cat in root.iter("Category"):
+            if cat.get('name') in cat_list:
+                for data in cat.findall("Data"):
+                    res[data.find('Element').text] = data.find('Wert').text
+        os.unlink(fileName)
+        return res
 
 
 def traceroute(dest):
@@ -181,4 +290,6 @@ def getAllSysInfos():
     res.update(getAllHostnamesInfo())
     res.update(getMacInfo())
     res.update(getMemoryInfos())
+    res.update(diskIOCounter())
+    res.update(msinfo32())
     return res
