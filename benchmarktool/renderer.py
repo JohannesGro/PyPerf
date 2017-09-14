@@ -29,6 +29,13 @@ class Renderer(object):
     outputFile = os.path.join("benchmarkResults.html")
     logging_file = 'renderer.log'
 
+    # CLI
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
+    parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
+    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
+
+
     template = """
     <html>
     <head>
@@ -48,14 +55,13 @@ class Renderer(object):
     data = {}
 
     def __init__(self, argv):
-        # CLI
-        parser = argparse.ArgumentParser(description=self.__doc__)
-        parser.add_argument("--benchmarks", "-s", nargs='+', default=self.benchmarkFile, help="One or more json files which contain the benchmarks.")
-        parser.add_argument("--outfile", "-o", nargs='?', default=self.outputFile, help="The results will be stored in this file.")
-        parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
 
         # Grab the self.args from argv
-        self.args = parser.parse_args(argv)
+        if type(args) == argparse.Namespace:
+            sys.argv = []
+            self.args = self.parser.parse_args(args=None, namespace=args)
+        else:
+            self.args = self.parser.parse_args(args)
 
     def main(self):
         global logger

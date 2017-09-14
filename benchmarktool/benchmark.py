@@ -4,7 +4,6 @@
 
 
 import argparse
-from argparse import RawTextHelpFormatter
 import pkg_resources
 
 
@@ -15,12 +14,16 @@ class Benchmark(object):
             self.subcommands[ep.name] = ep.load()
 
     def _main(self, args):
-        cmdname = args.command[0]
+        cmdname = args.__dict__.pop('command', None)
+        print args
+        import sys
+        print sys.argv
         cmdclass = self.subcommands.get(cmdname, None)
         if cmdclass is None:
             parser.error("Unknown subcommand %s" % cmdname)
         else:
-            cmd = cmdclass(args.commandargs)
+            print args
+            cmd = cmdclass(args)
             try:
                 return cmd.main()
             except RuntimeError as exc:
@@ -31,10 +34,19 @@ def main():
     bm = Benchmark()
     global parser
     parser = argparse.ArgumentParser(description=__doc__)
-    group = parser.add_mutually_exclusive_group('Available subcommands')
+    subparsers = parser.add_subparsers(help='Available subcommands')
     for subc in sorted(bm.subcommands.items()):
-        group.add_argument(subc[0], help=subc[1].__doc__)
-    parser.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
+        command = subparsers.add_parser(subc[0], help=subc[1].__doc__)
+        command.set_defaults(command=subc[0])
+        for action in subc[1].parser._actions:
+            if type(action) == argparse._StoreAction:
+                command._add_action(action)
+    #subparsers.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
     # Grab the self.args from argv
-    args = parser.parse_args()
+    print "-"*60
+    try:
+        args = parser.parse_args()
+    except Exception as e:
+        print e
+    print "-"*60
     return bm._main(args)

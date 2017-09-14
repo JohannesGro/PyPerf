@@ -37,24 +37,25 @@ class Benchrunner(object):
     stored in a json formatted outputfile.
     """
 
-    # workaround for realtiv path
-    sys.path.append('..')
-
     # defaults
     suite_file = 'benchsuite.json'
     output_file = 'benchmarkResults.json'
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    def __init__(self, argv):
-        # CLI
-        parser = argparse.ArgumentParser(description=self.__doc__)
-        parser.add_argument("--suite", "-s", nargs='?', default=self.suite_file, help="A json file which contains the benches. (default: %(default)s)")
-        parser.add_argument("--outfile", "-o", nargs='?', default=self.output_file, help="The results will be stored in this file. (default: %(default)s)")
-        parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
+    # CLI
+    parser = argparse.ArgumentParser(description=__doc__, prog="Benchrunner")
+    parser.add_argument("--suite", "-s", nargs='?', default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
+    parser.add_argument("--outfile", "-o", nargs='?', default=output_file, help="The results will be stored in this file. (default: %(default)s)")
+    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
 
+    def __init__(self, args):
         # Grab the self.args from argv
-        self.args = parser.parse_args(argv)
+        if type(args) == argparse.Namespace:
+            sys.argv = []
+            self.args = self.parser.parse_args(args=None, namespace=args)
+        else:
+            self.args = self.parser.parse_args(args)
 
     def main(self):
         global logger
