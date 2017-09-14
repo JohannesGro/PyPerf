@@ -251,10 +251,11 @@ def VMWareInfo():
 
 
 def msinfo32():
+    res = {}
     if(psutil.WINDOWS):
         import xml.etree.ElementTree as ElementTree
         import os
-        res = {}
+
         fileName = "msinfo.xml"
         proc = subprocess.Popen(['msinfo32', "/nfo", fileName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.stdout.read()
@@ -267,7 +268,7 @@ def msinfo32():
                 for data in cat.findall("Data"):
                     res[data.find('Element').text] = data.find('Wert').text
         os.unlink(fileName)
-        return res
+    return res
 
 
 def traceroute(dest):
