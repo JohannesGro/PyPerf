@@ -46,12 +46,12 @@ class MEMORYSTATUSEX(ctypes.Structure):
 def getMemoryInfos():
     # working for windows only
     mb = 1024 * 1024
+    res = {}
     if psutil.WINDOWS:
         stat = MEMORYSTATUSEX()
         ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
 
         logger.info("Memory total virtual: %dMB" % (stat.ullTotalVirtual / mb))
-        res = {}
         res['Memory total virtual in MB'] = stat.ullTotalVirtual / mb
 
     mem = psutil.virtual_memory()
