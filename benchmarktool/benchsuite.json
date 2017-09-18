@@ -19,7 +19,7 @@
         "loops": 3
       }
     },
-    "LoadAssemblyTiming": {
+    "BlobstoreTiming": {
       "file": "benchmarktool.bench.blobstore_benchmark",
       "className": "BlobstoreTiming",
       "args": {
