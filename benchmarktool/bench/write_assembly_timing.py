@@ -3,9 +3,10 @@
 import logging
 import os
 import time
-from optparse import OptionParser
+import sys
 
 from bench import Bench
+from cdb import rte
 from cdb.storage import blob
 from cs.documents import Document
 from timer import Timer
@@ -23,6 +24,7 @@ class WriteAssemblyTiming(Bench):
         Nach dem Lauf die geschriebenen neuen Blobs wieder entfernen.
     """
     def setUpClass(self):
+        rte.ensure_run_level(rte.USER_IMPERSONATED, prog="", user="caddok")
         self.loadDocument(self.args['z_nummer'], self.args['z_index'])
 
     def loadDocument(self, z_nummer, z_index):
@@ -149,6 +151,7 @@ class WriteAssemblyTiming(Bench):
         logger.debug("-> Deletion of %d files took %.4f secs. (%.4f files/sec)"
                      % (len(sourcefiles), t.elapsed.total_seconds(), (len(sourcefiles) / (t.elapsed.total_seconds()))))
         self.storeResult(t.elapsed.total_seconds())
+        os.rmdir(self.args['tmpdir'])
 
 if __name__ == '__main__':
     print WriteAssemblyTiming().run({"z_nummer": "9502656-1", "z_index": "", "loops": 3,

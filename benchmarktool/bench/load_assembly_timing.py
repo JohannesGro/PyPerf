@@ -2,8 +2,10 @@
 # -*- coding: iso-8859-1 -*-
 import logging
 import time
+import sys
 
 from bench import Bench
+from cdb import rte
 from cdb.storage import blob
 from cs.documents import Document
 from timer import Timer
@@ -19,6 +21,7 @@ class LoadAssemblyTiming(Bench):
     """
 
     def setUpClass(self):
+        rte.ensure_run_level(rte.USER_IMPERSONATED, prog="", user="caddok")
         self.loadDocument(self.args['z_nummer'], self.args['z_index'])
 
     def loadDocument(self, z_nummer, z_index):
@@ -49,7 +52,7 @@ class LoadAssemblyTiming(Bench):
                      % (len(file_list), t.elapsed.total_seconds()))
         return file_list
 
-    def benchLoad(self):
+    def bench_load(self):
         logger.info("benchLoad")
         ref_docs = self.getAllRefDocs()
 

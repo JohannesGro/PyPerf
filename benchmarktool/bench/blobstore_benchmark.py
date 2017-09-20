@@ -4,8 +4,11 @@ import glob
 import logging
 import os
 import time
+import sys
+
 
 from bench import Bench
+from cdb import rte
 from cdb.storage import blob
 from cs.documents import Document
 from timer import Timer
@@ -21,6 +24,9 @@ class BlobstoreTiming(Bench):
         Nach dem Lauf die geschriebenen neuen Blobs wieder entfernen.
     """
 
+    def setUPClass(self):
+        rte.ensure_run_level(rte.USER_IMPERSONATED, prog="", user="caddok")
+
     def bench_main(self):
         outfiles = self.prepare()
         all_blob_ids = self.saveFilesIntoBlobStore(outfiles)
@@ -30,7 +36,10 @@ class BlobstoreTiming(Bench):
 
     def prepare(self):
         logger.info("prepare")
-        return glob.glob(self.args['blobfolder'])
+        files = glob.glob(self.args['blobfolder'])
+        if files == []:
+            raise IOError("Blobs not found")
+        return files
 
     def writeFileToWriter(self, writer, from_path, blocksize=None):
         """ Write the content of a file to ``writer``

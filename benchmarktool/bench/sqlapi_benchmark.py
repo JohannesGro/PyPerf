@@ -16,9 +16,11 @@ import logging
 import time
 from random import choice
 from string import lowercase
+import sys
+
 
 from bench import Bench
-from cdb import cdbtime, ddl, misc, sqlapi
+from cdb import cdbtime, ddl, misc, rte, sqlapi
 from timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - SqlApiBenchmark]")
@@ -29,6 +31,7 @@ class SqlApiBenchmark(Bench):
 
     """
     def setUpClass(self):
+        rte.ensure_run_level(rte.USER_IMPERSONATED, prog="", user="caddok")
         self.warmup(self.args['tablename'])
         self.create_table(self.args['tablename'])
 
