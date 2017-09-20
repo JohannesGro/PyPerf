@@ -18,7 +18,7 @@ import psutil
 import subprocess
 import sys
 
-from cdb import rte, sqlapi, version
+from cdb import rte, version
 from cdb.uberserver import usutil
 
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
@@ -283,6 +283,12 @@ def msinfo32():
 
 
 def traceroute(dest):
+    import re
+    m = re.search("\/\/(.*):", dest)
+    if m is None:
+        dest = "localhost"
+    else:
+        dest = m.group(1)
     output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = output.decode('cp852')
 
@@ -296,8 +302,8 @@ def getAllSysInfos():
     res = {}
     res.update(getSysInfo())
     res.update(getCADDOKINfos())
-    if 'CADDOK_CDBPKG_HOST' in res:
-        res.update(traceroute(res['CADDOK_CDBPKG_HOST']))
+    if 'CADDOK_SERVER' in res:
+        res.update(traceroute(res['CADDOK_SERVER']))
     res.update(VMWareInfo())
     res.update(getAllHostnamesInfo())
     res.update(getMacInfo())
