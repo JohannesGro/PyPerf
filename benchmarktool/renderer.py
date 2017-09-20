@@ -13,9 +13,10 @@ import json
 import logging.config
 import os
 import sys
+import time
 
 import ioservice
-from .log import customlogging
+from benchmarktool.log import customlogging
 
 
 class Renderer(object):
@@ -26,7 +27,7 @@ class Renderer(object):
     """
     currentDir = os.path.dirname(__file__)
     benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
-    outputFile = os.path.join("benchmarkResults.html")
+    outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'renderer.log'
 
     # CLI
@@ -34,7 +35,6 @@ class Renderer(object):
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
-
 
     template = """
     <html>
@@ -58,8 +58,10 @@ class Renderer(object):
         print args
         # Grab the self.args from argv
         if type(args) == argparse.Namespace:
+            prev = sys.argv
             sys.argv = []
             self.args = self.parser.parse_args(args=None, namespace=args)
+            sys.argv = prev
         else:
             self.args = self.parser.parse_args(args)
 
@@ -310,10 +312,19 @@ class Renderer(object):
             resMin = []
             resSum = []
             resAvg = []
+            resMidOutl = []
+            resExtrOutl = []
             for fileName in sorted(self.data):
                 timeList = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 if len(timeList) == 0:
+                    resMax.append([])
+                    resMin.append([])
+                    resSum.append([])
+                    resAvg.append([])
+                    resMidOutl.append([])
+                    resExtrOutl.append([])
                     continue
+                outlier = self.findOutlier(sorted(timeList))
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
@@ -322,15 +333,20 @@ class Renderer(object):
                 resMin.append(minVal)
                 resSum.append(sumVal)
                 resAvg.append(avgVal)
+                resMidOutl.append(outlier['midOutlier'])
+                resExtrOutl.append(outlier['extremeOutlier'])
             if len(resMax) == 0:
                 continue
             innerContent += innerRowTempl.format("Max", *resMax)
             innerContent += innerRowTempl.format("Min", *resMin)
             innerContent += innerRowTempl.format("Sum", *resSum)
             innerContent += innerRowTempl.format("Average", *resAvg)
+            # if len(outlier['midOutlier']) > 0:
+            innerContent += innerRowTempl.format("Mid Outlier", *resMidOutl)
+            innerContent += innerRowTempl.format("Extreme Outlier", *resExtrOutl)
+
             content += outerRowTempl.format(benchTestName, (len(self.data) + 1), innerContent)
         return content
-
 
     def renderTextByType(self, content):
         """Produce html code to display the given data as text.
@@ -368,7 +384,6 @@ class Renderer(object):
             res += dlTempl.format(dlInner)
         return res
 
-
     def renderBenchArgs(self, benchName):
         """Displays the arguments of a benchmark in a table.
 
@@ -390,3 +405,42 @@ class Renderer(object):
             rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
         result = result.format(rows)
         return result
+
+    def calcMedian(self, data):
+        size = len(data)
+        if not (size % 2 == 0):
+            return (data[(size - 1) / 2] + data[(size + 1) / 2]) / 2
+        else:
+            return data[size / 2]
+
+    def findOutlier(self, data):
+        size = len(data)
+        if size < 10:
+            return {'midOutlier': [], 'extremeOutlier': []}
+        median = self.calcMedian(data)
+        q1 = self.calcMedian(data[: size / 2])
+        q3 = self.calcMedian(data[size / 2:])
+        diffQ = q3 - q1
+        lowerInnerLimit = q1 - diffQ * 1.5
+        upperInnerLimit = q3 + diffQ * 1.5
+        lowerOuterLimit = q1 - diffQ * 3
+        upperOuterLimit = q3 + diffQ * 3
+
+        print "-" * 80
+        print "upperInnerLimit: {}".format(upperInnerLimit)
+        print "lowerInnerLimit: {}".format(lowerInnerLimit)
+        print "upperOuterLimit: {}".format(upperOuterLimit)
+        print "lowerOuterLimit: {}".format(lowerOuterLimit)
+        print data
+
+        midOutlier = []
+        extremeOutlier = []
+        for d in data:
+            if d < lowerInnerLimit or d > upperInnerLimit:
+                if d < lowerOuterLimit or d > upperOuterLimit:
+                    print "extreme outlier: {} (distance - {})".format(d, median - d)
+                    extremeOutlier.append(d)
+                else:
+                    print "mid outlier: {} (distance - {})".format(d, median - d)
+                    midOutlier.append(d)
+        return {'midOutlier': midOutlier, 'extremeOutlier': extremeOutlier}

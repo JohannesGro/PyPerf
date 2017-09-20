@@ -13,6 +13,7 @@ __revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
 
 
 import argparse
+import time
 import getpass
 import importlib
 
@@ -21,7 +22,6 @@ import multiprocessing
 import platform
 import sys
 
-from cdb import rte, version
 import ioservice
 from benchmarktool.log import customlogging
 import systemInfos
@@ -39,7 +39,7 @@ class Benchrunner(object):
 
     # defaults
     suite_file = 'benchsuite.json'
-    output_file = 'benchmarkResults.json'
+    output_file = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
@@ -52,8 +52,10 @@ class Benchrunner(object):
     def __init__(self, args):
         # Grab the self.args from argv
         if type(args) == argparse.Namespace:
+            prev = sys.argv
             sys.argv = []
             self.args = self.parser.parse_args(args=None, namespace=args)
+            sys.argv = prev
         else:
             self.args = self.parser.parse_args(args)
 
