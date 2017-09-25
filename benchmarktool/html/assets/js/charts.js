@@ -7,6 +7,13 @@
  */
 function createBarChart(DOMElement, data) {
 
+  data.sort(function(a, b) {
+    if (b.name.localeCompare(a.name, {sensitivity: "case"}) == 0)
+      return a.file.localeCompare(b.file, {sensitivity: "case"}) // ascending
+    return b.name.localeCompare(a.name, {sensitivity: "case"});
+  });
+  console.log(data)
+
   var files = [];
   for(var i = 0 ; i < data.length; i++) {
     var d = data[i];
@@ -16,9 +23,6 @@ function createBarChart(DOMElement, data) {
   }
   var num_files = files.length;
 
-  data.sort(function(a, b) {
-      return b.name.localeCompare(a.name);
-  });
 
   // Color scale
   var color = d3.scaleOrdinal(d3.schemeCategory20);
@@ -42,6 +46,11 @@ function createBarChart(DOMElement, data) {
       .tickSize(0)
       .tickPadding(6);
 
+
+  // Define the div for the tooltip
+  var div = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
 
   // create a svg
   var svg = d3.select(DOMElement).append("svg")
@@ -68,7 +77,20 @@ function createBarChart(DOMElement, data) {
         .attr("y", function(d, i) { return y(d.name) + ((i%num_files)  * (barHeight + gapBetweenGroups))})
         .attr("width", function(d) { return x(d.value) - x(0); })
         .attr("height", barHeight)
-        .attr("fill", function(d,i) { return color(i % num_files); });
+        .attr("fill", function(d,i) { return color(i % num_files); })
+        .on("mouseover", function(d) {
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    div	.html(d.file + "<br/>")
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                    })
+        .on("mouseout", function(d) {
+            div.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
 
     // write text next to the bars
     var formatVal = d3.format(".5f");
