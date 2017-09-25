@@ -19,6 +19,7 @@ import importlib
 
 import logging.config
 import multiprocessing
+import os
 import platform
 import sys
 
@@ -85,18 +86,30 @@ class Benchrunner(object):
         :param args: serveral arguments for the benchmark
         :returns: the dict with measurements of the benchmark.
         """
+        prevSysPath = sys.path
         try:
-            mod = __import__(path, fromlist=[class_name])
+            dirPath = os.path.dirname(path)
+            fileName = os.path.basename(path)
+            module, extension = os.path.splitext(fileName)
+            if (not extension == '' and not extension == '.py') or module == '':
+                raise ValueError("The bench file '{}' is not specified correctly.".format(fileName))
+            sys.path.append(dirPath)
+            mod = __import__(module, fromlist=[class_name])
             bench_class = getattr(mod, class_name)
         except ImportError as err:
-            logger.error("Could not import bench file! " + str(err))
+            logger.error("Could not import bench file! {}".format(str(err)))
             return
         except AttributeError as err:
             logger.error("Could not find className: {0}! {1}".format(class_name, str(err)))
             return
+        except ValueError as err:
+            logger.error(str(err))
+            return
         except:
             logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
             return
+        finally:
+            sys.path = prevSysPath
 
         # perform the benchmark
         return bench_class().run(args)
