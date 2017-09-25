@@ -1,6 +1,6 @@
 ﻿# coding: utf-8
 
-from cdb.comparch.pkgtools import setup
+from cdb.comparch.pkgtools import setup, find_packages
 from codecs import open
 from os import path
 
@@ -18,7 +18,7 @@ setup(name='benchmarktool',
       author='Timo Stüber',
       author_email='Timo.Stueber@contact-software.com',
       license='',
-      packages=['benchmarktool'],
+      packages=find_packages(),
       entry_points={
            "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
                              "render=benchmarktool.renderer:Renderer"],
