@@ -1,8 +1,6 @@
 
 """Benchmark tool
 """
-
-
 import argparse
 import pkg_resources
 
