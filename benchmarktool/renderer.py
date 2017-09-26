@@ -12,6 +12,7 @@ import argparse
 import json
 import logging.config
 import os
+import sqlite3
 import sys
 import time
 
@@ -22,10 +23,10 @@ from benchmarktool.log import customlogging
 class Renderer(object):
     """The module renderer reads the results of one or several benchmarks and
     create a human readable output for example showing table or diagramms.
-    A json file created by the benchrunner can be taken as a input. Currently this
+    A json file created by the benchrunner can be taken as a input. self.currently this
     module supports html output only.
     """
-    currentDir = os.path.dirname(__file__)
+    self.currentDir = os.path.dirname(__file__)
     benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'renderer.log'
@@ -70,11 +71,46 @@ class Renderer(object):
         logger.debug("benchmarks files: {}".format(self.args.benchmarks))
         logger.debug("output file: {}".format(self.args.outfile))
         logger.debug("logger conf file: " + str(self.args.logconfig))
-        if isinstance(self.args.benchmarks, list):
-            self.loadDataForMultipleBenchmarks()
-        else:
-            self.loadDataForSingleBenchmark()
+
+        self.loadBenchmarkData()
+        self.createTempSqlDB()
+        return
         self.iterateBenches()
+
+    def createTempSqlDB(self):
+        con = sqlite3.connect(':memory:')
+        self.cur = con.cursor()
+        self.cur.execute("CREATE TABLE Benchmark(B_ID INTEGER PRIMARY KEY unique, Name TEXT)")
+        self.cur.execute("CREATE TABLE SysInfo(S_ID INTEGER PRIMARY KEY, Name TEXT)")
+        self.cur.execute("CREATE TABLE Benchmark_SysInfo(B_ID INT, S_ID INT, Value TEXT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(S_ID) REFERENCES SysInfo(S_ID))")
+
+        self.cur.execute("CREATE TABLE Bench(BE_ID INTEGER PRIMARY KEY, Name TEXT)")
+        self.cur.execute("CREATE TABLE Test(T_ID INTEGER PRIMARY KEY, Name TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
+        self.cur.execute("CREATE TABLE Arg(A_ID INTEGER PRIMARY KEY, Name TEXT, Value TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
+        self.cur.execute("CREATE TABLE Result(R_ID INTEGER PRIMARY KEY, Type TEXT, Unit TEXT, Value TEXT, T_ID INT, B_ID INT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(T_ID) REFERENCES Test(T_ID))")
+
+        for fileName, content in self.data.iteritems():
+            print fileName
+            self.cur.execute("insert into Benchmark values (?, ?)", (None, fileName))
+            B_ID = self.cur.lastrowid
+            for sysinfo, val in content["Sysinfos"].iteritems():
+                self.cur.execute("insert into SysInfo select :id, :info where not exists(select 1 from SysInfo where SysInfo.Name = :info)", ({'id': None, 'info': sysinfo}))
+                self.cur.execute("insert into Benchmark_SysInfo values (?, (select SysInfo.S_ID from SysInfo where SysInfo.Name = ?), ?)", (B_ID, sysinfo, unicode(val)))
+
+            for bench, bench_content in content["results"].iteritems():
+                self.cur.execute("insert into Bench select :id, :bench where not exists(select 1 from Bench where Bench.Name = :bench)", ({'id': None, 'bench': bench}))
+                for arg, val in bench_content['args'].iteritems():
+                    self.cur.execute("insert into Arg select :id, :arg, :val, (select 1 from Bench where Bench.Name = :bench) where not exists(select 1 from Arg where Arg.BE_ID = (select Bench.BE_ID from Bench where Bench.Name = :bench) and Arg.Name = :arg)", ({'id': None, 'arg': arg, 'val': unicode(val), 'bench': bench}))
+
+                for test, test_content in bench_content['data'].iteritems():
+                    self.cur.execute("insert into Test select :id, :test, (select 1 from Bench where Bench.Name = :bench) where not exists(select 1 from Test where Test.Name = :test)", ({'id': None, 'test': test, 'bench': bench}))
+                    self.cur.execute("insert into Result values (?, ?, ?, ?, (SELECT Test.T_ID from Test where Test.Name = ?), ?)", (None, test_content['type'], test_content['unit'], unicode(test_content['value']), test, B_ID))
+
+            for line in con.iterdump():
+                print "{}\n".format(line)
+
+            # self.cur.execute("select SysInfo.Name from Benchmark inner join Benchmark_SysInfo on Benchmark.B_ID = Benchmark_SysInfo.B_ID INNER JOIN SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID;")
+            # print self.cur.fetchall()
 
     def renderSysInfos(self):
         templ = "<div class='tile'><table>{}</table></div>"
@@ -95,15 +131,17 @@ class Renderer(object):
             content += rowTempl.format(infoName, *res)
         return templ.format(content)
 
-    def loadDataForSingleBenchmark(self):
-        """Loads a single benchmark"""
-        self.data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
-
-    def loadDataForMultipleBenchmarks(self):
-        """Loads a bunch of benchmarks."""
-        for fileName in self.args.benchmarks:
-            self.data[fileName] = ioservice.loadJSONData(fileName)
-        self.areBenchmarksComparable(self.data)
+    def loadBenchmarkData(self):
+        """Loads the benchmark data. The data can be accessed by self.data.
+        The Format is a list of the benchmark result produced by the benchmark runner."""
+        if isinstance(self.args.benchmarks, list):
+            # Loads a bunch of benchmarks.
+            for fileName in self.args.benchmarks:
+                self.data[fileName] = ioservice.loadJSONData(fileName)
+            self.areBenchmarksComparable(self.data)
+        else:
+            # Loads a single benchmark
+            self.data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
 
     def areBenchmarksComparable(self, benchmarks):
         """Checks the structure of each benchmark result. The same benchsuite is
@@ -123,7 +161,7 @@ class Renderer(object):
                 if self.getBenchArgs(benchKey) != self.getBenchArgs(benchKey, fileName):
                     raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
-    def iterateBenches(self, ):
+    def iterateBenches(self):
         """Iterates over each bench and calls a render function to display the data.
         The render functions will produce html code. This code will be put together and
         saved as .html file.
