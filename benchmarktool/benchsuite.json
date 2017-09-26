@@ -1,17 +1,17 @@
 {
   "suite": {
     "SqlApiBenchmark": {
-      "file": "benchmarktool.bench.sqlapi_benchmark",
+      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\sqlapi_benchmark",
       "className": "SqlApiBenchmark",
       "args": {
-        "rows": 1000,
+        "rows": 10000,
         "iterations": 10,
         "tablename": "x_cdb_testperf",
         "warmup": 100
       }
     },
     "LoadAssemblyTiming": {
-      "file": "benchmarktool.bench.load_assembly_timing",
+      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\load_assembly_timing",
       "className": "LoadAssemblyTiming",
       "args": {
         "z_nummer": "9502656-1",
@@ -20,15 +20,15 @@
       }
     },
     "BlobstoreTiming": {
-      "file": "benchmarktool.bench.blobstore_benchmark",
+      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\blobstore_benchmark",
       "className": "BlobstoreTiming",
       "args": {
         "loops": 3,
-        "blobfolder": "./benchmarktool/blobdata/blobs/*"
+        "blobfolder": "c:/benchmarktool/benchmarktool/blobdata/blobs/*"
       }
     },
     "WriteAssemblyTiming": {
-      "file": "bench.write_assembly_timing",
+      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\write_assembly_timing",
       "className": "WriteAssemblyTiming",
       "args": {
         "z_nummer": "9502656-1",
