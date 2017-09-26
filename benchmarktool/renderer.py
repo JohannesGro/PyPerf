@@ -55,7 +55,6 @@ class Renderer(object):
     data = {}
 
     def __init__(self, args):
-        print args
         # Grab the self.args from argv
         if type(args) == argparse.Namespace:
             prev = sys.argv
@@ -89,7 +88,10 @@ class Renderer(object):
         for infoName in sorted(infos):
             res = []
             for fileName in sorted(self.data):
-                res.append(self.data[fileName]["Sysinfos"][infoName])
+                if infoName in self.data[fileName]["Sysinfos"]:
+                    res.append(self.data[fileName]["Sysinfos"][infoName])
+                else:
+                    res.append('-')
             content += rowTempl.format(infoName, *res)
         return templ.format(content)
 
@@ -224,12 +226,15 @@ class Renderer(object):
             for fileName in self.data:
                 val = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 if content["type"] == "time_series":
-                    timeList = content["value"]
+                    timeList = val
+                    print "#" * 80
                     if len(timeList) == 0:
                         continue
                     sumTime = sum(timeList)
                     avg = sumTime / len(timeList)
                     val = avg
+                    print "avg {0} val {1} sum {2}".format(avg, val, sumTime)
+                print "#" * 80
                 tableContent.append({"file": fileName, "name": benchTestName.encode('UTF-8'), "value": val})
         return elementTempl.format(benchName, tableContent)
 
@@ -426,21 +431,12 @@ class Renderer(object):
         lowerOuterLimit = q1 - diffQ * 3
         upperOuterLimit = q3 + diffQ * 3
 
-        print "-" * 80
-        print "upperInnerLimit: {}".format(upperInnerLimit)
-        print "lowerInnerLimit: {}".format(lowerInnerLimit)
-        print "upperOuterLimit: {}".format(upperOuterLimit)
-        print "lowerOuterLimit: {}".format(lowerOuterLimit)
-        print data
-
         midOutlier = []
         extremeOutlier = []
         for d in data:
             if d < lowerInnerLimit or d > upperInnerLimit:
                 if d < lowerOuterLimit or d > upperOuterLimit:
-                    print "extreme outlier: {} (distance - {})".format(d, median - d)
                     extremeOutlier.append(d)
                 else:
-                    print "mid outlier: {} (distance - {})".format(d, median - d)
                     midOutlier.append(d)
         return {'midOutlier': midOutlier, 'extremeOutlier': extremeOutlier}
