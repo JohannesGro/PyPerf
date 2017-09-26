@@ -26,7 +26,7 @@ class Renderer(object):
     A json file created by the benchrunner can be taken as a input. self.currently this
     module supports html output only.
     """
-    self.currentDir = os.path.dirname(__file__)
+    currentDir = os.path.dirname(__file__)
     benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'renderer.log'
