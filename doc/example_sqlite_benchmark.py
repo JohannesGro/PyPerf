@@ -6,8 +6,8 @@ import time
 from random import choice
 from string import lowercase
 
-from bench import Bench
-from timer import Timer
+from benchmarktool.bench import Bench
+from benchmarktool.timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - SqliteBenchmark]")
 
