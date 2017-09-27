@@ -74,6 +74,7 @@ class Renderer(object):
 
         self.loadBenchmarkData()
         self.createTempSqlDB()
+        self.renderTrend()
         return
         self.iterateBenches()
 
@@ -106,11 +107,70 @@ class Renderer(object):
                     self.cur.execute("insert into Test select :id, :test, (select 1 from Bench where Bench.Name = :bench) where not exists(select 1 from Test where Test.Name = :test)", ({'id': None, 'test': test, 'bench': bench}))
                     self.cur.execute("insert into Result values (?, ?, ?, ?, (SELECT Test.T_ID from Test where Test.Name = ?), ?)", (None, test_content['type'], test_content['unit'], unicode(test_content['value']), test, B_ID))
 
-            for line in con.iterdump():
-                print "{}\n".format(line)
+            # for line in con.iterdump():
+            #     print "{}\n".format(line)
 
             # self.cur.execute("select SysInfo.Name from Benchmark inner join Benchmark_SysInfo on Benchmark.B_ID = Benchmark_SysInfo.B_ID INNER JOIN SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID;")
             # print self.cur.fetchall()
+
+    def renderTrend(self):
+        """Iterates over each bench and calls a render function to display the data.
+        The render functions will produce html code. This code will be put together and
+        saved as .html file./TODO
+        """
+        inline_css = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
+        d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
+        chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
+        body = self.sysInfoTrend()
+        # benches = self.getAllBenches()
+        # for benchKey in benches:
+        #     logger.info("Render bench: " + benchKey)
+        #     body += self.renderBench(benchKey)
+        ioservice.writeToFile(self.template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
+
+    def sysInfoTrend(self):
+        templ = "<div class='tile'><table>{}</table></div>"
+        content = ""
+
+        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
+        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
+        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by SysInfo.Name;")
+        res = self.cur.fetchall()
+        for row in res:
+            infoname = row[0]
+            values = row[1].split(',')
+            content += rowTempl.format(infoname, *values)
+        result = templ.format(content) + self.createTrendDiagramForSysInfo('Memory free in MB')
+        return result
+
+    def createTrendDiagramForSysInfo(self, SysInfoName):
+        # self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? group by SysInfo.Name ;", (SysInfoName,))
+        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? OR Name = 'Current Time (UTC)' group by SysInfo.Name ;", (SysInfoName,))
+        res = self.cur.fetchall()
+        for ele in res:
+            if ele[0] == 'Current Time (UTC)':
+                time = ele[1].split(',')
+            if ele[0] == SysInfoName:
+                values = ele[1].split(',')
+
+        return self.createTrendDiagramm({SysInfoName: values, 'time': time}, id)
+
+    def createTrendDiagramm(self, data, id):
+        """Produce html js code to display the data of a benchmark as diagramm.
+        The javascript function can be find in chart.js.
+        :param benchName: name of the benchmark
+
+        :returns: html/js code of the diagramm.
+        """
+        elementTempl = """
+        <div id="{0}">
+        <script>
+        var data = {1};
+        createBarChart("#{0}",self.data);
+        </script>
+        </div>"""
+        print data
+        return elementTempl.format(id, data)
 
     def renderSysInfos(self):
         templ = "<div class='tile'><table>{}</table></div>"
@@ -128,8 +188,8 @@ class Renderer(object):
                     res.append(self.data[fileName]["Sysinfos"][infoName])
                 else:
                     res.append('-')
-            content += rowTempl.format(infoName, *res)
-        return templ.format(content)
+                    content += rowTempl.format(infoName, *res)
+                    return templ.format(content)
 
     def loadBenchmarkData(self):
         """Loads the benchmark data. The data can be accessed by self.data.
