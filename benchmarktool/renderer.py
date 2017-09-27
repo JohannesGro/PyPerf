@@ -148,10 +148,9 @@ class Renderer(object):
         self.cur.execute("select max(CASE SysInfo.Name WHEN ? THEN Benchmark_SysInfo.Value END), max(CASE SysInfo.Name WHEN 'Current Time (UTC)' THEN Benchmark_SysInfo.Value END) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
         res = self.cur.fetchall()
         print res
-        measurements = {}
+        measurements = []
         for ele in res:
-            mearurements['value'] = ele[0]
-            mearurements['time'] = ele[1]
+            mearurements.append({'value': ele[0], 'time': ele[1]})
 
         return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, id)
 
