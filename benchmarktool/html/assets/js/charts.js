@@ -141,60 +141,100 @@ function createBarChart(DOMElement, data) {
         .text(function (d) { return d; });
 }
 
+
 function createTrendChart(DOMElement, data) {
-console.log(data)
-console.log(data.time)
-console.log(data.values)
 
-var margin = {top: 20, right: 30, bottom: 40, left: 200},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    data.meas.sort(function(a, b) {
+      return a.time.localeCompare(b.time, {sensitivity: "case"});
+    });
 
-var svg = d3.select(DOMElement).append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom),
-    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-//2017-09-23T08:16:03.777000
-var parseTime = d3.timeParse("%Y-%m-%dT%X");
+    console.log(data)
+    console.log(data.meas)
 
-var x = d3.scaleTime()
-    .rangeRound([0, width]);
+    var margin = {top: 20, right: 30, bottom: 40, left: 200},
+      width = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
 
-var y = d3.scaleLinear()
-    .rangeRound([height, 0]);
+      // Define the div for the tooltip
+      var div = d3.select("body").append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
 
-var line = d3.line()
-    .x(function(d) { console.log("TIME"+ d); return x(parseTime(d.time)); })
-    .y(function(d) { console.log("TIME"+ d); return y(d.values); });
-console.log(line);
+    var svg = d3.select(DOMElement).append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom),
+      g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    //2017-09-23T08:16:03.777000
+    var parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%L");
 
-  x.domain(d3.extent(data.time, function(d) { return parseTime(d); }));
-  y.domain(d3.extent(data.values, function(d) { return d; }));
+    var x = d3.scaleTime()
+      .rangeRound([0, width]);
 
-  g.append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-    .select(".domain")
-      .remove();
+    var y = d3.scaleLinear()
+      .rangeRound([height, 0]);
 
-  g.append("g")
-      .call(d3.axisLeft(y))
-    .append("text")
-      .attr("fill", "#000")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", "0.71em")
-      .attr("text-anchor", "end")
-      .text(data.name);
+    var line = d3.line()
+      .x(function(d) {return x(parseTime(d.time)); })
+      .y(function(d) {return y(d.value); });
 
-  g.append("path")
-      .datum(data.time.map(function(d){return d}))
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
-      .attr("stroke-width", 1.5)
-      .attr("d", line);
+    var area = d3.area()
+    .x(function(d) { return x(parseTime(d.time)); })
+    .y1(function(d) { return y(d.value); });
+
+    x.domain(d3.extent(data.meas, function(d) { return parseTime(d.time); }));
+    y.domain(d3.extent(data.meas, function(d) { return d.value; }));
+    area.y0(y(0));
+
+    g.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x).ticks(10))
+      .select(".domain")
+        .remove();
+
+    g.append("g")
+        .call(d3.axisLeft(y))
+      .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text(data.name);
+
+    g.append("path")
+        .datum(data.meas)
+        .attr("fill", "steelblue")
+        .attr("d", area);
+
+    // Add the scatterplot
+    g.selectAll("dot")
+        .data(data.meas)
+      .enter().append("circle")
+        .attr("r", 5)
+        .attr("cx", function(d) { return x(parseTime(d.time)); })
+        .attr("cy", function(d) { return y(d.value); })
+        .on("mouseover", function(d) {
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    div	.html("Time: " + d.time + " Value: " + d.value + "<br/>")
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                    })
+        .on("mouseout", function(d) {
+            div.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
+
+    // g.append("path")
+    //     .datum(data.meas)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "steelblue")
+    //     .attr("stroke-linejoin", "round")
+    //     .attr("stroke-linecap", "round")
+    //     .attr("stroke-width", 1.5)
+    //     .attr("d", line);
 
 
 }
