@@ -144,16 +144,16 @@ class Renderer(object):
         return result
 
     def createTrendDiagramForSysInfo(self, SysInfoName):
-        # self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? group by SysInfo.Name ;", (SysInfoName,))
-        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? OR Name = 'Current Time (UTC)' group by SysInfo.Name ;", (SysInfoName,))
+        # self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? OR Name = 'Current Time (UTC)' group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
+        self.cur.execute("select max(CASE SysInfo.Name WHEN ? THEN Benchmark_SysInfo.Value END), max(CASE SysInfo.Name WHEN 'Current Time (UTC)' THEN Benchmark_SysInfo.Value END) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
         res = self.cur.fetchall()
+        print res
+        measurements = {}
         for ele in res:
-            if ele[0] == 'Current Time (UTC)':
-                time = ele[1].split(',')
-            if ele[0] == SysInfoName:
-                values = ele[1].split(',')
+            mearurements['value'] = ele[0]
+            mearurements['time'] = ele[1]
 
-        return self.createTrendDiagramm({SysInfoName: values, 'time': time}, id)
+        return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, id)
 
     def createTrendDiagramm(self, data, id):
         """Produce html js code to display the data of a benchmark as diagramm.
@@ -166,7 +166,7 @@ class Renderer(object):
         <div id="{0}">
         <script>
         var data = {1};
-        createBarChart("#{0}",self.data);
+        createTrendChart("#{0}",self.data);
         </script>
         </div>"""
         print data
