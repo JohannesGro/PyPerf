@@ -12,7 +12,6 @@ function createBarChart(DOMElement, data) {
       return a.file.localeCompare(b.file, {sensitivity: "case"}) // ascending
     return b.name.localeCompare(a.name, {sensitivity: "case"});
   });
-  console.log(data)
 
   var files = [];
   for(var i = 0 ; i < data.length; i++) {
@@ -45,7 +44,6 @@ function createBarChart(DOMElement, data) {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
-
 
   // Define the div for the tooltip
   var div = d3.select("body").append("div")
@@ -144,14 +142,20 @@ function createBarChart(DOMElement, data) {
 }
 
 function createTrendChart(DOMElement, data) {
+console.log(data)
+console.log(data.time)
+console.log(data.values)
 
-var svg = d3.select(DOMElement),
-    margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom,
+var margin = {top: 20, right: 30, bottom: 40, left: 200},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var svg = d3.select(DOMElement).append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom),
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-var parseTime = d3.timeParse("%d-%b-%y");
+//2017-09-23T08:16:03.777000
+var parseTime = d3.timeParse("%Y-%m-%dT%X");
 
 var x = d3.scaleTime()
     .rangeRound([0, width]);
@@ -160,18 +164,12 @@ var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
 var line = d3.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.close); });
+    .x(function(d) { console.log("TIME"+ d); return x(parseTime(d.time)); })
+    .y(function(d) { console.log("TIME"+ d); return y(d.values); });
+console.log(line);
 
-d3.tsv("data.tsv", function(d) {
-  d.date = parseTime(d.date);
-  d.close = +d.close;
-  return d;
-}, function(error, data) {
-  if (error) throw error;
-
-  x.domain(d3.extent(data, function(d) { return d.date; }));
-  y.domain(d3.extent(data, function(d) { return d.close; }));
+  x.domain(d3.extent(data.time, function(d) { return parseTime(d); }));
+  y.domain(d3.extent(data.values, function(d) { return d; }));
 
   g.append("g")
       .attr("transform", "translate(0," + height + ")")
@@ -187,16 +185,16 @@ d3.tsv("data.tsv", function(d) {
       .attr("y", 6)
       .attr("dy", "0.71em")
       .attr("text-anchor", "end")
-      .text("Price ($)");
+      .text(data.name);
 
   g.append("path")
-      .datum(data)
+      .datum(data.time.map(function(d){return d}))
       .attr("fill", "none")
       .attr("stroke", "steelblue")
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
       .attr("stroke-width", 1.5)
       .attr("d", line);
-});
+
 
 }
