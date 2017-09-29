@@ -143,15 +143,11 @@ function createBarChart(DOMElement, data) {
 
 
 function createTrendChart(DOMElement, data) {
-
-    console.log(data)
-    console.log(data.meas)
-
     data.meas.sort(function(a, b) {
       return a.time.localeCompare(b.time, {sensitivity: "case"});
     });
 
-    var margin = {top: 20, right: 30, bottom: 40, left: 100},
+    var margin = {top: 20, right: 100, bottom: 40, left: 100},
       width = 560 - margin.left - margin.right,
       height = 300 - margin.top - margin.bottom;
 
@@ -173,10 +169,6 @@ function createTrendChart(DOMElement, data) {
     var y = d3.scaleLinear()
       .rangeRound([height, 0]);
 
-    var line = d3.line()
-      .x(function(d) {return x(parseTime(d.time)); })
-      .y(function(d) {return y(d.value); });
-
     var area = d3.area()
     .x(function(d) { return x(parseTime(d.time)); })
     .y0(height)
@@ -184,27 +176,40 @@ function createTrendChart(DOMElement, data) {
 
     x.domain(d3.extent(data.meas, function(d) { return parseTime(d.time); }));
     y.domain(d3.extent(data.meas, function(d) { return d.value; }));
-    //area.y0(y(0));
-    console.log(y(0));
 
-    g.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%H")))
-      .select(".domain")
-        .remove();
+    g.append("path")
+    .datum(data.meas)
+    .attr("class", "area")
+    .attr("d", area);
 
-        g.append("path")
+
+    var dataAvg = d3.mean(data.meas, function(d) { return d.value; });
+
+    var lineAvg = d3.line()
+      .x(function(d) {return x(parseTime(d.time)); })
+      .y(function(d) {return y(dataAvg); });
+
+    g.append("path")
         .datum(data.meas)
-        .attr("class", "area")
-        .attr("d", area);
-        // g.append("path")
-        //     .datum(data.meas)
-        //     .attr("fill", "none")
-        //     .attr("stroke", "steelblue")
-        //     .attr("stroke-linejoin", "round")
-        //     .attr("stroke-linecap", "round")
-        //     .attr("stroke-width", 1.5)
-        //     .attr("d", line);
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 1.5)
+        .attr("d", lineAvg);
+
+    var dataMed = d3.median(data.meas, function(d) { return d.value; });
+    console.log(dataMed);
+
+    var lineMed = d3.line()
+      .x(function(d) {return x(parseTime(d.time)); })
+      .y(function(d) {return y(dataMed); });
+
+    g.append("path")
+        .datum(data.meas)
+        .attr("fill", "none")
+        .attr("stroke", "orange")
+        .attr("stroke-width", 1.5)
+        .attr("d", lineMed);
+
 
     g.append("g")
         .call(d3.axisLeft(y))
@@ -215,7 +220,19 @@ function createTrendChart(DOMElement, data) {
         .attr("font-size", "14px")
         .attr("dy", "-4.71em")
         .attr("text-anchor", "end")
-        .text(data.name);
+        .text("Measurements");
+
+    g.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%Hh")))
+    .append("text")
+    .attr("fill", "#000")
+    .attr("y", 0)
+    .attr("x", width)
+    .attr("font-size", "14px")
+    .attr("dy", "2.5em")
+    .attr("text-anchor", "end")
+    .text("Time");
 
 
     // Add the scatterplot
@@ -240,15 +257,53 @@ function createTrendChart(DOMElement, data) {
                 .style("opacity", 0);
         });
 
-  function extractToolTip(tooltip) {
-    res = ""
-    for (tip in tooltip) {
-      console.log(tip);
-      console.log(tooltip[tip]);
-      res += "<br/>" + tip + ": "+ tooltip[tip];
-    }
-    console.log(tooltip);
-    return res;
-  }
+    // legend showing the different files.
+    var legendRectSize = 18,
+        legendSpacing  = 4,
+        spaceForLabels = 40;
 
+    var legend = svg.selectAll('.legend')
+        .data([{'name':"Median", "color":"orange"}, {'name':"Mean", "color":"red"}])
+        .enter()
+        .append('g');
+
+
+    // displayed color of the files
+    legend.append('rect')
+        .attr('width', legendRectSize)
+        .attr('height', legendRectSize)
+        .style('fill', function (d, i) { return d.color; })
+        .style('stroke', function (d, i) { return d.color; })
+        .attr("x",width + margin.left)
+        .attr("y",function (d, i) {
+            var height = legendRectSize + legendSpacing;
+            var vert = i * height - 0;
+            return vert;
+        })
+        .attr("dy", "2.5em");
+
+    // text of the file names
+    legend.append('text')
+        .attr('class', 'legend')
+        .attr('y', 0)
+        .attr("x",spaceForLabels + width+ margin.left)
+        .attr("y",function (d, i) {
+            var height = legendRectSize + legendSpacing;
+            var vert = i * height - 0;
+            return vert;
+        })
+        .attr("dy", "1.0em")
+        .text(function (d) { return d.name; });
+
+
+    function extractToolTip(tooltip) {
+      res = ""
+      for (tip in tooltip) {
+        console.log(tip);
+        console.log(tooltip[tip]);
+        res += "<br/>" + tip + ": "+ tooltip[tip];
+      }
+      console.log(tooltip);
+      return res;
+    }
 }
