@@ -189,7 +189,7 @@ function createTrendChart(DOMElement, data) {
 
     g.append("g")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(10))
+        .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%H")))
       .select(".domain")
         .remove();
 
@@ -230,9 +230,9 @@ function createTrendChart(DOMElement, data) {
                     div.transition()
                         .duration(200)
                         .style("opacity", .9);
-                    div	.html("Time: " + d.time + " Value: " + d.value + "<br/>")
+                    div	.html("Time: " + d.time + "<br/>Value: " + d.value +  extractToolTip(d.tooltip))
                         .style("left", (d3.event.pageX) + "px")
-                        .style("top", (d3.event.pageY - 28) + "px");
+                        .style("top", (d3.event.pageY + 28) + "px");
                     })
         .on("mouseout", function(d) {
             div.transition()
@@ -240,6 +240,15 @@ function createTrendChart(DOMElement, data) {
                 .style("opacity", 0);
         });
 
-
+  function extractToolTip(tooltip) {
+    res = ""
+    for (tip in tooltip) {
+      console.log(tip);
+      console.log(tooltip[tip]);
+      res += "<br/>" + tip + ": "+ tooltip[tip];
+    }
+    console.log(tooltip);
+    return res;
+  }
 
 }
