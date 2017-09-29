@@ -58,8 +58,8 @@ def getMemoryInfos():
     logger.info("Memory total {}MB".format(mem.total / mb))
     res['Memory total memory in MB'] = mem.total / mb
 
-    logger.info("Memory percent used memory: {}%".format(mem.percent))
-    res['Memory percent used memory'] = mem.percent
+    logger.info("Memory percent used: {}%".format(mem.percent))
+    res['Memory percent used'] = mem.percent
 
     logger.info("Memory used {}MB".format(mem.used / mb))
     res['Memory used in MB'] = mem.used / mb
@@ -153,7 +153,6 @@ def getSysInfo():
     logger.info("OS-Platform: %s", sys.platform)
     logger.info("OS-Platform version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
-    logger.info("CPU Count: %d", multiprocessing.cpu_count())
     res = {}
     res["Elements Version"] = version.getVersionDescription()
     res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat()
@@ -161,31 +160,32 @@ def getSysInfo():
     res["OS-Platform"] = sys.platform
     res["OS-Platform version"] = platform.platform()
     res["Processor"] = platform.processor()
-    res["CPU Count"] = multiprocessing.cpu_count()
     return res
 
 
 def getCPUInfo():
-        cpu_times = psutil.cpu_times()
-        logger.info("CPU time spent by processes in user mode: {}".format(cpu_times.user))
-        res["CPU time spent by processes in user mode"] = cpu_times.user
-        logger.info("CPU time spent by processes in kernel mode: {}".format(cpu_times.system))
-        res["CPU time spent by processes executing in kernel mode"] = cpu_times.system
-        logger.info("CPU time spent  doing nothing: {}".format(cpu_times.idle))
-        res["CPU time spent doing nothing"] = cpu_times.idle
+    res = {}
+    cpu_times = psutil.cpu_times()
+    logger.info("CPU time spent by processes in user mode: {}".format(cpu_times.user))
+    res["CPU time spent by processes in user mode"] = cpu_times.user
+    logger.info("CPU time spent by processes in kernel mode: {}".format(cpu_times.system))
+    res["CPU time spent by processes executing in kernel mode"] = cpu_times.system
+    logger.info("CPU time spent  doing nothing: {}".format(cpu_times.idle))
+    res["CPU time spent doing nothing"] = cpu_times.idle
 
-        logger.info('CPU Percent: {}'.format(psutil.cpu_percent(interval=1, percpu=True)))
-        res['CPU Percent'] = psutil.cpu_percent(interval=1, percpu=True)
-        logger.info('CPU Percent Time Spent: {}'.format(psutil.cpu_times_percent(interval=1.1, percpu=True)))
-        res['CPU Percent Time Spent'] = psutil.cpu_times_percent(interval=1.1, percpu=True)
+    logger.info('CPU Percent: {}'.format(psutil.cpu_percent(interval=1, percpu=False)))
+    res['CPU Percent'] = psutil.cpu_percent(interval=1, percpu=False)
+    logger.info('CPU Percent Time Spent: {}'.format(psutil.cpu_times_percent(interval=1.1, percpu=False)))
+    res['CPU Percent Time Spent'] = psutil.cpu_times_percent(interval=1.1, percpu=False)
 
-        logger.info('CPU count locial CPUs: {}'.format(psutil.cpu_count()))
-        res['CPU count locial CPUs'] = psutil.cpu_count()
-        logger.info('CPU count physical CPUs: {}'.format(psutil.cpu_count(ogical=False)))
-        res['CPU count physical CPUs'] = psutil.cpu_count(logical=False)
+    logger.info('CPU count locial CPUs: {}'.format(psutil.cpu_count()))
+    res['CPU count locial CPUs'] = psutil.cpu_count()
+    logger.info('CPU count physical CPUs: {}'.format(psutil.cpu_count(logical=False)))
+    res['CPU count physical CPUs'] = psutil.cpu_count(logical=False)
 
-        logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=True)))
-        res['CPU Frenquency'] = psutil.cpu_freq(percpu=True)
+    logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=False)))
+    res['CPU Frenquency'] = psutil.cpu_freq(percpu=False)
+    return res
 
 
 def getCADDOKINfos():
@@ -302,6 +302,7 @@ def getAllSysInfos():
     res = {}
     res.update(getSysInfo())
     res.update(getCADDOKINfos())
+    res.update(getCPUInfo())
     if 'CADDOK_SERVER' in res:
         res.update(traceroute(res['CADDOK_SERVER']))
     res.update(VMWareInfo())
