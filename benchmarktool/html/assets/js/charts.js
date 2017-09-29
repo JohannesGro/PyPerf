@@ -28,7 +28,7 @@ function createBarChart(DOMElement, data) {
   var gapBetweenGroups = 5;
   var numGroups = data.length / num_files;
 
-  var margin = {top: 20, right: 30, bottom: 40, left: 200},
+  var margin = {top: 20, right: 30, bottom: 40, left: 100},
       width = 960 - margin.left - margin.right,
       height = (500 / 15) * data.length + gapBetweenGroups * numGroups * (num_files - 1);
 
@@ -144,16 +144,16 @@ function createBarChart(DOMElement, data) {
 
 function createTrendChart(DOMElement, data) {
 
+    console.log(data)
+    console.log(data.meas)
+
     data.meas.sort(function(a, b) {
       return a.time.localeCompare(b.time, {sensitivity: "case"});
     });
 
-    console.log(data)
-    console.log(data.meas)
-
-    var margin = {top: 20, right: 30, bottom: 40, left: 200},
-      width = 960 - margin.left - margin.right,
-      height = 500 - margin.top - margin.bottom;
+    var margin = {top: 20, right: 30, bottom: 40, left: 100},
+      width = 560 - margin.left - margin.right,
+      height = 300 - margin.top - margin.bottom;
 
       // Define the div for the tooltip
       var div = d3.select("body").append("div")
@@ -179,11 +179,13 @@ function createTrendChart(DOMElement, data) {
 
     var area = d3.area()
     .x(function(d) { return x(parseTime(d.time)); })
+    .y0(height)
     .y1(function(d) { return y(d.value); });
 
     x.domain(d3.extent(data.meas, function(d) { return parseTime(d.time); }));
     y.domain(d3.extent(data.meas, function(d) { return d.value; }));
-    area.y0(y(0));
+    //area.y0(y(0));
+    console.log(y(0));
 
     g.append("g")
         .attr("transform", "translate(0," + height + ")")
@@ -191,25 +193,36 @@ function createTrendChart(DOMElement, data) {
       .select(".domain")
         .remove();
 
+        g.append("path")
+        .datum(data.meas)
+        .attr("class", "area")
+        .attr("d", area);
+        // g.append("path")
+        //     .datum(data.meas)
+        //     .attr("fill", "none")
+        //     .attr("stroke", "steelblue")
+        //     .attr("stroke-linejoin", "round")
+        //     .attr("stroke-linecap", "round")
+        //     .attr("stroke-width", 1.5)
+        //     .attr("d", line);
+
     g.append("g")
         .call(d3.axisLeft(y))
       .append("text")
         .attr("fill", "#000")
         .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", "0.71em")
+        .attr("y", 0)
+        .attr("font-size", "14px")
+        .attr("dy", "-4.71em")
         .attr("text-anchor", "end")
         .text(data.name);
 
-    g.append("path")
-        .datum(data.meas)
-        .attr("fill", "steelblue")
-        .attr("d", area);
 
     // Add the scatterplot
-    g.selectAll("dot")
+    svg.selectAll("dot")
         .data(data.meas)
       .enter().append("circle")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .attr("r", 5)
         .attr("cx", function(d) { return x(parseTime(d.time)); })
         .attr("cy", function(d) { return y(d.value); })
@@ -227,14 +240,6 @@ function createTrendChart(DOMElement, data) {
                 .style("opacity", 0);
         });
 
-    // g.append("path")
-    //     .datum(data.meas)
-    //     .attr("fill", "none")
-    //     .attr("stroke", "steelblue")
-    //     .attr("stroke-linejoin", "round")
-    //     .attr("stroke-linecap", "round")
-    //     .attr("stroke-width", 1.5)
-    //     .attr("d", line);
 
 
 }
