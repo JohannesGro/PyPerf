@@ -209,17 +209,21 @@ class Renderer(object):
             results = test[4].split('|')
             for test_result in results:
                     test_result = eval(test_result)
+                    test_result_value = test_result[0]
+                    test_time = test_result[1].encode('UTF-8')
                     if series_flag:
-                        if len(test_result[0]) == 0:
+                        if len(test_result_value) == 0:
                             continue
-                        sumTime = sum(test_result[0])
-                        avg = sumTime / len(test_result[0])
+                        sumTime = sum(test_result_value)
+                        avg = sumTime / len(test_result_value)
                         val = avg
-                        measurements.append({'value': avg, 'time': test_result[1].encode('UTF-8')})
+                        measurements.append({'value': avg, 'time': test_time})
                     else:
-                        measurements.append({'value': test_result[0], 'time': test_result[1].encode('UTF-8')})
-            ele_id = ("{}{}".format(benchName, test[1])).encode('base64').replace("\n", '').replace('=', '')
-            res += self.createTrendDiagramm({'name': test[1].encode('UTF-8'), 'meas': measurements}, ele_id, test[1].encode('UTF-8'))
+                        measurements.append({'value': test_result[0], 'time': test_time})
+            # concat benchname and testname and creates a id for the dom
+            testName = test[1].encode('UTF-8')
+            ele_id = createElementId("{}{}".format(benchName, testName))
+            res += self.createTrendDiagramm({'name': testName, 'meas': measurements}, ele_id, testName)
         return res
 
     def getAllBenchesTrend(self):
@@ -280,7 +284,7 @@ class Renderer(object):
         measurements = []
         for ele in res:
             measurements.append({'value': float(ele[0]), 'time': ele[1].encode('UTF-8')})
-        return self.createTrendDiagramm({'name': SysInfoName.encode('UTF-8'), 'meas': measurements}, SysInfoName.encode('Base64').replace('\n', '').replace('=', ''), SysInfoName)
+        return self.createTrendDiagramm({'name': SysInfoName.encode('UTF-8'), 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
 
     def createTrendDiagramm(self, data, element_id, title):
         """Produce html js code to display the data of a benchmark as diagramm.
@@ -670,3 +674,7 @@ def is_float(s):
         return True
     except ValueError:
         return False
+
+
+def createElementId(name):
+    return name.encode('Base64').replace('\n', '').replace('=', '')
