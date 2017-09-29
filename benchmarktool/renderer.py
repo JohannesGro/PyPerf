@@ -86,12 +86,11 @@ class Renderer(object):
         self.cur.execute("CREATE TABLE Benchmark_SysInfo(B_ID INT, S_ID INT, Value TEXT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(S_ID) REFERENCES SysInfo(S_ID))")
 
         self.cur.execute("CREATE TABLE Bench(BE_ID INTEGER PRIMARY KEY, Name TEXT)")
-        self.cur.execute("CREATE TABLE Test(T_ID INTEGER PRIMARY KEY, Name TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
+        self.cur.execute("CREATE TABLE Test(T_ID INTEGER PRIMARY KEY, Name TEXT, Type TEXT, Unit TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
         self.cur.execute("CREATE TABLE Arg(A_ID INTEGER PRIMARY KEY, Name TEXT, Value TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
-        self.cur.execute("CREATE TABLE Result(R_ID INTEGER PRIMARY KEY, Type TEXT, Unit TEXT, Value TEXT, T_ID INT, B_ID INT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(T_ID) REFERENCES Test(T_ID))")
+        self.cur.execute("CREATE TABLE Result(R_ID INTEGER PRIMARY KEY, Value TEXT, T_ID INT, B_ID INT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(T_ID) REFERENCES Test(T_ID))")
 
         for fileName, content in self.data.iteritems():
-            print fileName
             self.cur.execute("insert into Benchmark values (?, ?)", (None, fileName))
             B_ID = self.cur.lastrowid
             for sysinfo, val in content["Sysinfos"].iteritems():
@@ -101,17 +100,13 @@ class Renderer(object):
             for bench, bench_content in content["results"].iteritems():
                 self.cur.execute("insert into Bench select :id, :bench where not exists(select 1 from Bench where Bench.Name = :bench)", ({'id': None, 'bench': bench}))
                 for arg, val in bench_content['args'].iteritems():
-                    self.cur.execute("insert into Arg select :id, :arg, :val, (select 1 from Bench where Bench.Name = :bench) where not exists(select 1 from Arg where Arg.BE_ID = (select Bench.BE_ID from Bench where Bench.Name = :bench) and Arg.Name = :arg)", ({'id': None, 'arg': arg, 'val': unicode(val), 'bench': bench}))
+                    # insert a arg if no arg exists for the given benchname
+                    self.cur.execute("insert into Arg select :id, :arg, :val, (select BE_ID from Bench where Bench.Name = :bench) where not exists(select 1 from Arg where Arg.BE_ID = (select Bench.BE_ID from Bench where Bench.Name = :bench) and Arg.Name = :arg)", ({'id': None, 'arg': arg, 'val': unicode(val), 'bench': bench}))
 
                 for test, test_content in bench_content['data'].iteritems():
-                    self.cur.execute("insert into Test select :id, :test, (select 1 from Bench where Bench.Name = :bench) where not exists(select 1 from Test where Test.Name = :test)", ({'id': None, 'test': test, 'bench': bench}))
-                    self.cur.execute("insert into Result values (?, ?, ?, ?, (SELECT Test.T_ID from Test where Test.Name = ?), ?)", (None, test_content['type'], test_content['unit'], unicode(test_content['value']), test, B_ID))
-
-            # for line in con.iterdump():
-            #     print "{}\n".format(line)
-
-            # self.cur.execute("select SysInfo.Name from Benchmark inner join Benchmark_SysInfo on Benchmark.B_ID = Benchmark_SysInfo.B_ID INNER JOIN SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID;")
-            # print self.cur.fetchall()
+                    # insert a test if no test exists for the given benchname
+                    self.cur.execute("insert into Test select :id, :test, :type, :unit, (select BE_ID from Bench where Bench.Name = :bench) where not exists(select 1 from Test inner join Bench on Test.BE_ID = Bench.BE_ID where Test.Name = :test AND Bench.Name = :bench)", ({'id': None, 'test': test, 'bench': bench, 'type': test_content['type'], 'unit': test_content['unit']}))
+                    self.cur.execute("insert into Result values (:id, :value, (SELECT Test.T_ID from Test inner join Bench on Bench.BE_ID = Test.BE_ID where Test.Name = :test AND Bench.Name = :bench), :B_ID)", ({'id': None, 'value': unicode(test_content['value']), 'test': test, 'bench': bench, 'B_ID': B_ID}))
 
     def renderTrend(self):
         """Iterates over each bench and calls a render function to display the data.
@@ -122,39 +117,172 @@ class Renderer(object):
         d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
         chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
         body = self.sysInfoTrend()
-        # benches = self.getAllBenches()
-        # for benchKey in benches:
-        #     logger.info("Render bench: " + benchKey)
-        #     body += self.renderBench(benchKey)
+        benches = self.getAllBenchesTrend()
+        for benchName in benches:
+            logger.info("Render bench: {}".format(benchName[0]))
+            body += self.renderBenchTrend(benchName)
         ioservice.writeToFile(self.template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
 
-    def sysInfoTrend(self):
-        templ = "<div class='tile'><table>{}</table></div>"
-        content = ""
+    def renderBenchTrend(self, benchName):
+        """Generates html code of the given bench name to display its data.
+        This function will display a heading, the arguments, table and diagramms.
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
-        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
-        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by SysInfo.Name;")
-        res = self.cur.fetchall()
-        for row in res:
-            infoname = row[0]
-            values = row[1].split(',')
-            content += rowTempl.format(infoname, *values)
-        result = templ.format(content) + self.createTrendDiagramForSysInfo('Memory free in MB')
+        :param benchKey: the name of the benchmark
+        :returns: string with html code
+        """
+        title = "<h2>{0}</h2>".format(benchName)
+        tileTempl = "<div class='tile'>{0}</div>"
+        args = self.renderBenchArgsTrend(benchName)
+        measurements = self.renderBenchMeasurementsTrend(benchName)
+        return tileTempl.format(title + args + measurements)
+
+    def renderBenchArgsTrend(self, benchName):
+        """Displays the arguments of a benchmark in a table.
+
+        :param benchName: name of the benchmark
+        :returns: html table with arguments of the given bench
+        """
+        result = """
+            <table>
+                <tr>
+                    <th>Argument</th>
+                    <th>Value</th>
+                </tr>
+                {0}
+            </table>
+        """
+        args = self.getBenchArgsTrend(benchName)
+        rows = ""
+        for arg in args:
+            rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(arg[0], arg[1])
+        result = result.format(rows)
         return result
 
+    def getBenchArgsTrend(self, benchName):
+        """Helper function to return the arguments of a benchmark.  If no file name
+        is applied the data is token from the first file.
+
+        :param benchName: name of the benchmark
+        :param fileName: file where the information shall be taken from
+        :returns: a dict of arguments
+        """
+        self.cur.execute("select Arg.Name, Value from Arg inner join Bench on Bench.BE_ID = Arg.BE_ID where Bench.Name = ? order by Arg.Name asc;", benchName)
+        res = self.cur.fetchall()
+        return res
+
+    def renderBenchMeasurementsTrend(self, benchName):
+        """Produces html code for the data of the given bench name.
+        A diagramm and tables are created.
+
+        :param benchName: name of the bench
+        :returns: html code of the data
+        """
+        res = ""
+        body = self.createTrendDiagramForBenchName(benchName)
+    #    body += self.renderTablesByTypes(benchName)
+        return body
+
+    def createTrendDiagramForBenchName(self, benchName):
+        """Produce html js code to display the data of a benchmark as diagramm.
+        The javascript function can be find in chart.js.
+
+        :param benchName: name of the benchmark
+        :returns: html/js code of the diagramm.
+        """
+        sql_query = """
+        select Test.T_ID, Test.Name, Test.Type, Test.Unit, GROUP_CONCAT( ( '(' || Result.Value || ',' || '\"' || Benchmark_SysInfo.Value || '\"' || ')'), '|' )
+        from Bench
+        inner join Test on Test.BE_ID = Bench.BE_ID
+        inner join Result on Result.T_ID = Test.T_ID
+        inner join Benchmark on Benchmark.B_ID = Result.B_ID
+        inner join Benchmark_SysInfo on Benchmark.B_ID = Benchmark_SysInfo.B_ID
+        inner join SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID
+        where SysInfo.Name = 'Current Time (UTC)' and Bench.Name = ?
+        group by Test.T_ID, Bench.BE_ID;"""
+
+        self.cur.execute(sql_query, benchName)
+        tests = self.cur.fetchall()
+        res = ""
+        for test in tests:
+            measurements = []
+            series_flag = test[2] == "time_series"
+            results = test[4].split('|')
+            for test_result in results:
+                    test_result = eval(test_result)
+                    if series_flag:
+                        if len(test_result[0]) == 0:
+                            continue
+                        sumTime = sum(test_result[0])
+                        avg = sumTime / len(test_result[0])
+                        val = avg
+                        measurements.append({'value': avg, 'time': test_result[1].encode('UTF-8')})
+                    else:
+                        measurements.append({'value': test_result[0], 'time': test_result[1].encode('UTF-8')})
+            ele_id = ("{}{}".format(benchName, test[1])).encode('base64').replace("\n", '').replace('=', '')
+            res += self.createTrendDiagramm({'name': test[1].encode('UTF-8'), 'meas': measurements}, ele_id, test[1].encode('UTF-8'))
+        return res
+
+    def getAllBenchesTrend(self):
+        self.cur.execute("select Name from Bench;")
+        res = self.cur.fetchall()
+        return res
+
+    def sysInfoTrend(self):
+        templ = "<div class='tile'>{}</div>"
+        content = ""
+
+        rowTempl = "<tr><td>{}</td><td>{}</td></tr>"
+        tableTemp = "<table><tr><th>System Info</th><th>Value</th></tr>{}</table>"
+        groupsTemp = "<details><summary>{0}</summary>{1}</details>"
+
+        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value, '|') from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where not Benchmark_SysInfo.Value = '' group by SysInfo.Name;")
+        res = self.cur.fetchall()
+
+        groups = ""
+        groups_keywords = ['Memory', 'CPU', 'CADDOK', 'Disk', 'Swap']
+        for group in groups_keywords:
+            graphs = ""
+            group_rows = ""
+            # all elements with the group prefix
+            elements = [item for item in res if item[0].find(group) == 0]
+            print "ELEMENTS: {}".format(elements)
+            for ele in elements:
+                values = ele[1].split('|')
+                # not the same columns
+                if not len(set(values)) == 1:
+                    if is_float(values[0]):
+                        graphs += self.createTrendDiagramForSysInfo(ele[0])
+                    else:
+                        group_rows += rowTempl.format(ele[0], values)
+                    continue
+                group_rows += rowTempl.format(ele[0], values[0])
+            groups += groupsTemp.format(group, graphs + tableTemp.format(group_rows))
+            # remove the elements from the list
+            res = [item for item in res if item not in elements]
+
+        for row in res:
+            infoname = row[0]
+            values = row[1].split('|')
+            # not the same columns
+            if not len(set(values)) == 1:
+                if is_float(values[0]):
+                    graphs += self.createTrendDiagramForSysInfo(values[0])
+                else:
+                    content += rowTempl.format(infoname, values)
+                continue
+            content += rowTempl.format(infoname, values[0])
+        result = groups + groupsTemp.format("Other", tableTemp.format(content))
+        return templ.format(result)
+
     def createTrendDiagramForSysInfo(self, SysInfoName):
-        # self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where Name = ? OR Name = 'Current Time (UTC)' group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
         self.cur.execute("select max(CASE SysInfo.Name WHEN ? THEN Benchmark_SysInfo.Value END), max(CASE SysInfo.Name WHEN 'Current Time (UTC)' THEN Benchmark_SysInfo.Value END) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
         res = self.cur.fetchall()
-        print res
         measurements = []
         for ele in res:
-            mearurements.append({'value': ele[0], 'time': ele[1]})
+            measurements.append({'value': float(ele[0]), 'time': ele[1].encode('UTF-8')})
+        return self.createTrendDiagramm({'name': SysInfoName.encode('UTF-8'), 'meas': measurements}, SysInfoName.encode('Base64').replace('\n', '').replace('=', ''), SysInfoName)
 
-        return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, id)
-
-    def createTrendDiagramm(self, data, id):
+    def createTrendDiagramm(self, data, element_id, title):
         """Produce html js code to display the data of a benchmark as diagramm.
         The javascript function can be find in chart.js.
         :param benchName: name of the benchmark
@@ -162,14 +290,14 @@ class Renderer(object):
         :returns: html/js code of the diagramm.
         """
         elementTempl = """
-        <div id="{0}">
+        <div id="{0}" class="trendDiag">
+        <h4>{2}</h4>
         <script>
         var data = {1};
         createTrendChart("#{0}",self.data);
         </script>
         </div>"""
-        print data
-        return elementTempl.format(id, data)
+        return elementTempl.format(element_id, data, title)
 
     def renderSysInfos(self):
         templ = "<div class='tile'><table>{}</table></div>"
@@ -324,14 +452,11 @@ class Renderer(object):
                 val = self.getTestResult(fileName, benchName, benchTestName)["value"]
                 if content["type"] == "time_series":
                     timeList = val
-                    print "#" * 80
                     if len(timeList) == 0:
                         continue
                     sumTime = sum(timeList)
                     avg = sumTime / len(timeList)
                     val = avg
-                    print "avg {0} val {1} sum {2}".format(avg, val, sumTime)
-                print "#" * 80
                 tableContent.append({"file": fileName, "name": benchTestName.encode('UTF-8'), "value": val})
         return elementTempl.format(benchName, tableContent)
 
@@ -537,3 +662,11 @@ class Renderer(object):
                 else:
                     midOutlier.append(d)
         return {'midOutlier': midOutlier, 'extremeOutlier': extremeOutlier}
+
+
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
