@@ -51,59 +51,59 @@ def getMemoryInfos():
         stat = MEMORYSTATUSEX()
         ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
 
-        logger.info("Memory total virtual: %dMB" % (stat.ullTotalVirtual / mb))
-        res['Memory total virtual in MB'] = stat.ullTotalVirtual / mb
+        logger.info("Memory Total Virtual: {}MB".format(stat.ullTotalVirtual / mb))
+        res['Memory Total Virtual (MB)'] = stat.ullTotalVirtual / mb
 
     mem = psutil.virtual_memory()
-    logger.info("Memory total {}MB".format(mem.total / mb))
-    res['Memory total memory in MB'] = mem.total / mb
+    logger.info("Memory Total {}MB".format(mem.total / mb))
+    res['Memory Total (MB)'] = mem.total / mb
 
     logger.info("Memory Percent: {}%".format(mem.percent))
-    res['Memory percent used'] = mem.percent
+    res['Memory Percent'] = mem.percent
 
-    logger.info("Memory used {}MB".format(mem.used / mb))
-    res['Memory used in MB'] = mem.used / mb
+    logger.info("Memory Used {}MB".format(mem.used / mb))
+    res['Memory Used (MB)'] = mem.used / mb
 
-    logger.info("Memory free {}MB".format(mem.free / mb))
-    res['Memory free in MB'] = mem.free / mb
+    logger.info("Memory Free {}MB".format(mem.free / mb))
+    res['Memory Free (MB)'] = mem.free / mb
 
-    logger.info("Memory available {}MB".format(mem.available / mb))
-    res['Memory available in MB'] = mem.available / mb
+    logger.info("Memory Available {}MB".format(mem.available / mb))
+    res['Memory Available (MB)'] = mem.available / mb
     if(psutil.POSIX):
-        logger.info("Memory active {}MB".format(mem.active / mb))
-        res['Memory active in MB'] = mem.active / mb
+        logger.info("Memory Active {}MB".format(mem.active / mb))
+        res['Memory Active (MB)'] = mem.active / mb
 
-        logger.info("Inactive {}MB".format(mem.inactive / mb))
-        res['Memory inactive in MB'] = mem.inactive / mb
+        logger.info("Memory Inactive {}MB".format(mem.inactive / mb))
+        res['Memory Inactive (MB)'] = mem.inactive / mb
 
     if(psutil.POSIX or psutil.BSD):
-        logger.info("Memory buffers {}MB".format(mem.buffers / mb))
-        res['Memory buffers in MB'] = mem.buffers / mb
+        logger.info("Memory Buffers {}MB".format(mem.buffers / mb))
+        res['Memory Buffers (MB)'] = mem.buffers / mb
 
-        logger.info("Memory shared {}MB".format(mem.shared / mb))
-        res['Memory shared in MB'] = mem.shared / mb
+        logger.info("Memory Shared {}MB".format(mem.shared / mb))
+        res['Memory Shared (MB)'] = mem.shared / mb
 
-        logger.info("Memory cached {}MB".format(mem.cached / mb))
-        res['Memory cached in MB'] = mem.cached / mb
+        logger.info("Memory Cached {}MB".format(mem.cached / mb))
+        res['Memory Cached (MB)'] = mem.cached / mb
     if(psutil.OSX or psutil.BSD):
-        logger.info("Memory wired {}MB".format(mem.wired / mb))
-        res['Memory wired in MB'] = mem.wired / mb
+        logger.info("Memory Wired {}MB".format(mem.wired / mb))
+        res['Memory Wired (MB)'] = mem.wired / mb
 
     swap = psutil.swap_memory()
-    logger.info('Swap total memory {}MB'.format(swap.total / mb))
-    res['Swap total memory in MB'] = swap.total / mb
-    logger.info('Swap used memory {}MB'.format(swap.used / mb))
-    res['Swap total used in MB'] = swap.used / mb
-    logger.info('Swap free memory {}MB'.format(swap.free / mb))
-    res['Swap free memory in MB'] = swap.free / mb
-    logger.info('Swap percent memory {}'.format(swap.percent))
-    res['Swap percent memory'] = swap.percent
+    logger.info('Swap Total {}MB'.format(swap.total / mb))
+    res['Swap Total (MB)'] = swap.total / mb
+    logger.info('Swap Used {}MB'.format(swap.used / mb))
+    res['Swap Used (MB)'] = swap.used / mb
+    logger.info('Swap Free {}MB'.format(swap.free / mb))
+    res['Swap (Free MB)'] = swap.free / mb
+    logger.info('Swap Percent {}'.format(swap.percent))
+    res['Swap Percent'] = swap.percent
     if not psutil.WINDOWS:
-        logger.info('Swap in memory {}MB'.format(swap.sin / mb))
-        res['Swap in memory in MB'] = swap.sin / mb
+        logger.info('Swap In {}MB'.format(swap.sin / mb))
+        res['Swap In (MB)'] = swap.sin / mb
 
-        logger.info('Swaped out memory {}MB'.format(swap.sout / mb))
-        res['Swaped out memory'] = swap.sout / mb
+        logger.info('Swaped Out {}MB'.format(swap.sout / mb))
+        res['Swaped Out (MB)'] = swap.sout / mb
     return res
 
 
@@ -114,7 +114,7 @@ def getMac():
 
 
 def getMacInfo():
-    logger.info("MAC-Adress: %s" % (getMac()))
+    logger.info("MAC-Adress: {}".format(getMac()))
     return {"MAC-Adress": getMac()}
 
 
@@ -131,18 +131,18 @@ def diskIOCounter():
     # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L, write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
     res = {}
     diskcounters = psutil.disk_io_counters(perdisk=False)
-    logger.info('Disk IO read_count: {}'.format(diskcounters.read_count))
-    res['Disk IO read_count'] = diskcounters.read_count
-    logger.info('Disk IO write_count: {}'.format(diskcounters.write_count))
-    res['Disk IO write_count'] = diskcounters.write_count
-    logger.info('Disk IO read_bytes: {}'.format(diskcounters.read_bytes))
-    res['Disk IO read_bytes'] = diskcounters.read_bytes
-    logger.info('Disk IO write_bytes: {}'.format(diskcounters.write_bytes))
-    res['Disk IO write_bytes'] = diskcounters.write_bytes
-    logger.info('Disk IO read_time: {}'.format(diskcounters.read_time))
-    res['Disk IO read_time'] = diskcounters.read_time
-    logger.info('Disk IO write_time: {}'.format(diskcounters.write_time))
-    res['Disk IO write_time'] = diskcounters.write_time
+    logger.info('Disk IO read (count): {}'.format(diskcounters.read_count))
+    res['Disk IO read (count)'] = diskcounters.read_count
+    logger.info('Disk IO write (count): {}'.format(diskcounters.write_count))
+    res['Disk IO write (count)'] = diskcounters.write_count
+    logger.info('Disk IO read (MB): {}'.format(diskcounters.read_bytes / 1024))
+    res['Disk IO read (MB)'] = diskcounters.read_bytes
+    logger.info('Disk IO write (MB): {}'.format(diskcounters.write_bytes / 1024))
+    res['Disk IO write (MB)'] = diskcounters.write_bytes
+    logger.info('Disk IO read (time): {}'.format(diskcounters.read_time))
+    res['Disk IO read (time)'] = diskcounters.read_time
+    logger.info('Disk IO write (time): {}'.format(diskcounters.write_time))
+    res['Disk IO write (time)'] = diskcounters.write_time
     return res
 
 
@@ -151,14 +151,14 @@ def getSysInfo():
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
     logger.info("Current User: %s", getpass.getuser())
     logger.info("OS-Platform: %s", sys.platform)
-    logger.info("OS-Platform version: %s", platform.platform())
+    logger.info("OS-Platform Version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
     res = {}
     res["Elements Version"] = version.getVersionDescription()
     res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat()
     res["Current User"] = getpass.getuser()
     res["OS-Platform"] = sys.platform
-    res["OS-Platform version"] = platform.platform()
+    res["OS-Platform Version"] = platform.platform()
     res["Processor"] = platform.processor()
     return res
 
@@ -166,22 +166,22 @@ def getSysInfo():
 def getCPUInfo():
     res = {}
     cpu_times = psutil.cpu_times()
-    logger.info("CPU time spent by processes in user mode: {}".format(cpu_times.user))
-    res["CPU time spent by processes in user mode"] = cpu_times.user
-    logger.info("CPU time spent by processes in kernel mode: {}".format(cpu_times.system))
-    res["CPU time spent by processes executing in kernel mode"] = cpu_times.system
-    logger.info("CPU time spent  doing nothing: {}".format(cpu_times.idle))
-    res["CPU time spent doing nothing"] = cpu_times.idle
+    logger.info("CPU Time (spent by processes in user mode): {}".format(cpu_times.user))
+    res["CPU Time (spent by processes in user mode)"] = cpu_times.user
+    logger.info("CPU Time (spent by processes in kernel mode): {}".format(cpu_times.system))
+    res["CPU Time (spent by processes executing in kernel mode)"] = cpu_times.system
+    logger.info("CPU Time (spent doing nothing): {}".format(cpu_times.idle))
+    res["CPU Time (spent doing nothing)"] = cpu_times.idle
 
     logger.info('CPU Percent: {}'.format(psutil.cpu_percent(interval=1, percpu=False)))
     res['CPU Percent'] = psutil.cpu_percent(interval=1, percpu=False)
     logger.info('CPU Percent Time Spent: {}'.format(psutil.cpu_times_percent(interval=1.1, percpu=False)))
     res['CPU Percent Time Spent'] = psutil.cpu_times_percent(interval=1.1, percpu=False)
 
-    logger.info('CPU count locial CPUs: {}'.format(psutil.cpu_count()))
-    res['CPU count locial CPUs'] = psutil.cpu_count()
-    logger.info('CPU count physical CPUs: {}'.format(psutil.cpu_count(logical=False)))
-    res['CPU count physical CPUs'] = psutil.cpu_count(logical=False)
+    logger.info('CPU Count (locial CPUs): {}'.format(psutil.cpu_count()))
+    res['CPU Count (locial CPUs)'] = psutil.cpu_count()
+    logger.info('CPU Count (physical CPUs): {}'.format(psutil.cpu_count(logical=False)))
+    res['CPU Count (physical CPUs)'] = psutil.cpu_count(logical=False)
 
     logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=False)))
     res['CPU Frenquency'] = psutil.cpu_freq(percpu=False)
