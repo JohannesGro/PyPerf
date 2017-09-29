@@ -184,7 +184,7 @@ div.tooltip {
   color: white;
   border: 1px solid lightgray;
   position: absolute;
-  text-align: center;
+  text-align: left;
   padding: 2px;
   font: 12px sans-serif;
   background: rgb(0, 50, 84);
