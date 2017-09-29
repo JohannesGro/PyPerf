@@ -58,7 +58,7 @@ def getMemoryInfos():
     logger.info("Memory total {}MB".format(mem.total / mb))
     res['Memory total memory in MB'] = mem.total / mb
 
-    logger.info("Memory percent used: {}%".format(mem.percent))
+    logger.info("Memory Percent: {}%".format(mem.percent))
     res['Memory percent used'] = mem.percent
 
     logger.info("Memory used {}MB".format(mem.used / mb))
