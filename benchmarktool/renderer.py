@@ -211,15 +211,29 @@ class Renderer(object):
                     test_result = eval(test_result)
                     test_result_value = test_result[0]
                     test_time = test_result[1].encode('UTF-8')
+
+                    sql_query = """select SysInfo.Name, Benchmark_SysInfo.Value from Benchmark_SysInfo inner join SysInfo on Benchmark_SysInfo.S_ID = SysInfo.S_ID
+                    where (SysInfo.Name = ? OR SysInfo.Name = ?) AND (Benchmark_SysInfo.B_ID =
+                    (select Benchmark_SysInfo.B_ID from Benchmark_SysInfo
+                    inner join SysInfo on Benchmark_SysInfo.S_ID = SysInfo.S_ID
+                    where Benchmark_SysInfo.Value = ? AND SysInfo.Name = "Current Time (UTC)"
+                    group by Benchmark_SysInfo.B_ID))"""
+                    self.cur.execute(sql_query, ("CPU Percent", "Memory Percent", test_time))
+                    Sysinfo = self.cur.fetchall()
+
+                    tooltip = {}
+                    for ele in Sysinfo:
+                        tooltip[ele[0].encode("UTF-8")] = ele[1].encode("UTF-8") + "%"
+
                     if series_flag:
                         if len(test_result_value) == 0:
                             continue
                         sumTime = sum(test_result_value)
                         avg = sumTime / len(test_result_value)
                         val = avg
-                        measurements.append({'value': avg, 'time': test_time})
+                        measurements.append({'value': avg, 'time': test_time, 'tooltip': tooltip})
                     else:
-                        measurements.append({'value': test_result[0], 'time': test_time})
+                        measurements.append({'value': test_result[0], 'time': test_time, 'tooltip': tooltip})
             # concat benchname and testname and creates a id for the dom
             testName = test[1].encode('UTF-8')
             ele_id = createElementId("{}{}".format(benchName, testName))
@@ -249,7 +263,6 @@ class Renderer(object):
             group_rows = ""
             # all elements with the group prefix
             elements = [item for item in res if item[0].find(group) == 0]
-            print "ELEMENTS: {}".format(elements)
             for ele in elements:
                 values = ele[1].split('|')
                 # not the same columns
