@@ -36,6 +36,7 @@ class Renderer(object):
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--trend", "-t", default=False, action="store_true")
 
     template = """
     <html>
@@ -74,9 +75,16 @@ class Renderer(object):
 
         self.loadBenchmarkData()
         self.createTempSqlDB()
-        self.renderTrend()
-        return
-        self.iterateBenches()
+        if self.args.trend:
+            self.renderTrend()
+        else:
+            self.iterateBenches()
+
+    def organizeData(self):
+        self.fileList = []
+        self.sysIfnos = {}
+        for fileName, content in self.data.iteritems():
+            fileList.append(fileName)
 
     def createTempSqlDB(self):
         con = sqlite3.connect(':memory:')
@@ -210,7 +218,7 @@ class Renderer(object):
             for test_result in results:
                     test_result = eval(test_result)
                     test_result_value = test_result[0]
-                    test_time = test_result[1].encode('UTF-8')
+                    test_time = test_result[1]
 
                     sql_query = """select SysInfo.Name, Benchmark_SysInfo.Value from Benchmark_SysInfo inner join SysInfo on Benchmark_SysInfo.S_ID = SysInfo.S_ID
                     where (SysInfo.Name = ? OR SysInfo.Name = ?) AND (Benchmark_SysInfo.B_ID =
@@ -223,7 +231,7 @@ class Renderer(object):
 
                     tooltip = {}
                     for ele in Sysinfo:
-                        tooltip[ele[0].encode("UTF-8")] = ele[1].encode("UTF-8") + "%"
+                        tooltip[ele[0]] = ele[1] + "%"
 
                     if series_flag:
                         if len(test_result_value) == 0:
@@ -235,7 +243,7 @@ class Renderer(object):
                     else:
                         measurements.append({'value': test_result[0], 'time': test_time, 'tooltip': tooltip})
             # concat benchname and testname and creates a id for the dom
-            testName = test[1].encode('UTF-8')
+            testName = test[1]
             ele_id = createElementId("{}{}".format(benchName, testName))
             res += self.createTrendDiagramm({'name': testName, 'meas': measurements}, ele_id, testName)
         return res
@@ -296,8 +304,8 @@ class Renderer(object):
         res = self.cur.fetchall()
         measurements = []
         for ele in res:
-            measurements.append({'value': float(ele[0]), 'time': ele[1].encode('UTF-8')})
-        return self.createTrendDiagramm({'name': SysInfoName.encode('UTF-8'), 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
+            measurements.append({'value': ele[0], 'time': ele[1]})
+        return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
 
     def createTrendDiagramm(self, data, element_id, title):
         """Produce html js code to display the data of a benchmark as diagramm.
@@ -314,7 +322,7 @@ class Renderer(object):
         createTrendChart("#{0}",self.data);
         </script>
         </div>"""
-        return elementTempl.format(element_id, data, title)
+        return elementTempl.format(element_id, json.dumps(data), title)
 
     def renderSysInfos(self):
         templ = "<div class='tile'><table>{}</table></div>"
@@ -474,7 +482,7 @@ class Renderer(object):
                     sumTime = sum(timeList)
                     avg = sumTime / len(timeList)
                     val = avg
-                tableContent.append({"file": fileName, "name": benchTestName.encode('UTF-8'), "value": val})
+                tableContent.append({"file": fileName, "name": benchTestName, "value": val})
         return elementTempl.format(benchName, tableContent)
 
     def renderTablesByTypes(self, benchName):
