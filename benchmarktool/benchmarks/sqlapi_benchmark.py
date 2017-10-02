@@ -20,7 +20,7 @@ import sys
 
 
 from benchmarktool.bench import Bench
-from cdb import cdbtime, ddl, misc, rte, sqlapi
+from cdb import cdbtime, ddl, misc, rte, sqlapi, transaction
 from benchmarktool.timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - SqlApiBenchmark]")
@@ -170,10 +170,10 @@ class SqlApiBenchmark(Bench):
         %(wsp_lock_id)s, %(cdb_object_id)s, %(cdb_classname)s, %(bom_method)s,
         %(wsm_is_cad)s, %(standard_library)s, %(generated_from)s)""" % rec)
 
-    def do_inserts(self, anzahl, table):
+    def do_inserts(self, rows, table):
         def _quote(val):
             return "'%s'" % val
-        logger.info("\nCreating %d Records", anzahl)
+        logger.info("\nCreating %d Records", rows)
         rec = collections.defaultdict(lambda: _quote(""))
         rec["z_status"] = 10
         rec["z_status_txt"] = _quote("in Arbeit")
@@ -210,23 +210,23 @@ class SqlApiBenchmark(Bench):
         rec["schriftkopf_ok"] = 1
 
         res = []
-        for i in xrange(anzahl):
+        for i in xrange(rows):
             rec["z_nummer"] = _quote("%d" % i)
             # rec["z_index"] = _quote("%d" % i)
             with Timer() as t:
                 self.do_single_insert(table, rec)
             res.append(t.elapsed.total_seconds())
-        # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
+        # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
         self.storeResult(res, type="time_series")
 
-    def do_select_one_by_one(self, anzahl, table):
-        logger.info("\nSelect row by row for %d rows", anzahl)
+    def do_select_one_by_one(self, rows, table):
+        logger.info("\nSelect row by row for %d rows", rows)
         res = []
-        for i in xrange(anzahl):
+        for i in xrange(rows):
             with Timer() as t:
                 sqlapi.SQLselect("* from %s where z_nummer='%d'" % (table, i))
             res.append(t.elapsed.total_seconds())
-        # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
+        # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
         self.storeResult(res, type="time_series")
 
     def do_select_in_one_statement(self, table):
@@ -241,15 +241,15 @@ class SqlApiBenchmark(Bench):
             sqlapi.SQLselect("z_nummer, z_index from %s" % table)
         self.storeResult(t.elapsed.total_seconds())
 
-    def update_one_by_one(self, anzahl, table):
-        logger.info("\nUpdate row by row for %d rows", anzahl)
+    def update_one_by_one(self, rows, table):
+        logger.info("\nUpdate row by row for %d rows", rows)
         res = []
-        for i in xrange(anzahl):
+        for i in xrange(rows):
             with Timer() as t:
                 sqlapi.SQLupdate("%s set z_status=20 where z_nummer='%d'"
                                  % (table, i))
             res.append(t.elapsed.total_seconds())
-        # logger.info(u"Stmts / second: %.2f stmts", anzahl / t.elapsed.total_seconds())
+        # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
         self.storeResult(res, type="time_series")
 
     def warmup(self, table, cycles=10):
@@ -270,13 +270,13 @@ class SqlApiBenchmark(Bench):
         logger.setLevel(prevlog)
 
     def test_run(self, table, rows):
-        res = {}
-        res["do_inserts"] = self.do_inserts(rows, table)
-        res["update_one_by_one"] = self.update_one_by_one(rows, table)
-        res["do_PKs_select_in_one_statement"] = self.do_PKs_select_in_one_statement(table)
-        res["do_select_in_one_statement"] = self.do_select_in_one_statement(table)
-        res["do_select_one_by_one"] = self.do_select_one_by_one(rows, table)
-        # self.storeResult(res)
+        self.do_inserts(rows, table)
+        self.update_one_by_one(rows, table)
+        self.do_PKs_select_in_one_statement(table)
+        self.do_select_in_one_statement(table)
+        self.do_select_one_by_one(rows, table)
+        self.select_cdbkeys(rows / 10)
+        self.nope_statement(rows)
 
     def bench_main(self):
         logger.info("Bench_main")
@@ -285,75 +285,32 @@ class SqlApiBenchmark(Bench):
 
         # self.storeResult(res)
 
-    '''
-    def bench_recordSet2(self):
-        res = []
-        logger.info("bench_recordSet2")
-        start = time.time()
-        recset = sqlapi.RecordSet2("benchmark_table")
-        end = time.time()
-        res.append({"type": "time", "time": {"val": end - start, "unit": "seconds"}})
-        self.storeResult(res)
+    def select_cdbkeys(self, rows):
+        # cdb_keys is a view based on system tables/views and through some
+        # circumstances this view is sometimes very slow.
+        logger.info("\nselect %d times from cdb_keys" % rows)
+        with Timer() as t:
+            for i in xrange(rows):
+                sqlapi.SQLselect("table_name, column_name FROM cdb_keys ORDER BY table_name, keyno")
+        logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
 
-    def bench_select(self):
-        pass
-
-    def bench_insert(self):
-        logger.info("bench_insert")
-        res = []
-        for i in range(self.args['iterations']):
-            total = []
-            start = time.time()
-            for i in self.insert_generator(self.args['rows']):
-                pre_time = time.time()
-                sqlapi.SQL("insert into benchmark_table (bench_string, bench_num) values " + str(i))
-                post_time = time.time()
-                total.append(post_time - pre_time)
-            end = time.time()
-            res.append({"type": "time series", "time": {"val": total, "unit": "seconds"}, "totalTime": end - start})
-        self.storeResult(res)
-
-    def bench_SQLinsert(self):
-        logger.info("bench_insert")
-        res = []
-        for i in range(self.args['iterations']):
-            total = []
-            start = time.time()
-            for i in self.insert_generator(self.args['rows']):
-                pre_time = time.time()
-                sqlapi.SQLinsert("into benchmark_table (bench_string, bench_num) values " + str(i))
-                post_time = time.time()
-                total.append(post_time - pre_time)
-            end = time.time()
-            res.append({"type": "time series", "time": {"val": total, "unit": "seconds"}, "totalTime": end - start})
-        self.storeResult(res)
-
-    def bench_update(self):
-        logger.info("bench_update")
-
-        for i in self.insert_generator(self.args['rows']):
-            sqlapi.SQL("insert into benchmark_table (bench_string, bench_num) values " + str(i))
-        total = []
-        for i in range(self.args['iterations']):
-            start_time = time.time()
-            sqlapi.SQL("update benchmark_table set bench_num=bench_num*2")
-            end_time = time.time()
-            total.append(end_time - start_time)
-        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
-
-    def bench_SQLupdate(self):
-        logger.info("bench_update")
-
-        for i in self.insert_generator(self.args['rows']):
-            sqlapi.SQL("insert into benchmark_table (bench_string, bench_num) values " + str(i))
-        total = []
-        for i in range(self.args['iterations']):
-            start_time = time.time()
-            sqlapi.SQLupdate("benchmark_table set bench_num=bench_num*2")
-            end_time = time.time()
-            total.append(end_time - start_time)
-        self.storeResult({"type": "time series", "time": {"val": total, "unit": "seconds"}})
-'''
+    def nope_statement(self, rows):
+        logger.info("\nRun a nope SQL statement, %d times", rows)
+        if sqlapi.SQLdbms() == sqlapi.DBMS_SQLITE:
+            logger.info("\nSkipped with SQLite")
+            return
+        with transaction.Transaction():
+            if sqlapi.SQLdbms() == sqlapi.DBMS_MSSQL:
+                # Because of weired tx handling we need at least one real select
+                # stmt with mssql
+                sqlapi.SQL("select 1 from angestellter where 1=2")
+            with Timer() as t:
+                for i in xrange(rows):
+                    if sqlapi.SQLdbms() == sqlapi.DBMS_ORACLE:
+                        sqlapi.SQLselect("1 from DUAL")
+                    elif sqlapi.SQLdbms() == sqlapi.DBMS_MSSQL:
+                            sqlapi.SQLselect("1")
+        logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
 
 if __name__ == "__main__":
     print SqlApiBenchmark().run({"rows": 1000, "iterations": 10, "tablename": "x_cdb_testperf", "warmup": 100})
