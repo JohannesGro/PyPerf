@@ -29,7 +29,7 @@ class Renderer(object):
     currentDir = os.path.dirname(__file__)
     benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
-    logging_file = 'renderer.log'
+    loggingFile = 'renderer.log'
 
     # CLI
     parser = argparse.ArgumentParser(description=__doc__)
@@ -68,115 +68,45 @@ class Renderer(object):
 
     def main(self):
         global logger
-        logger = customlogging.init_logging("[Renderer]", configFile=self.args.logconfig, fileName=self.logging_file)
+        logger = customlogging.init_logging("[Renderer]", configFile=self.args.logconfig, fileName=self.loggingFile)
         logger.debug("benchmarks files: {}".format(self.args.benchmarks))
         logger.debug("output file: {}".format(self.args.outfile))
         logger.debug("logger conf file: " + str(self.args.logconfig))
 
         self.loadBenchmarkData()
-        self.createTempSqlDB()
-        if self.args.trend:
-            self.renderTrend()
-        else:
-            self.iterateBenches()
+        self.organizeData()
+        self.renderAllData()
 
     def organizeData(self):
         self.fileList = []
-        self.sysIfnos = {}
-        for fileName, content in self.data.iteritems():
-            fileList.append(fileName)
+        self.sysInfos = {}
+        self.benchmarkData = {}
 
-    def createTempSqlDB(self):
-        con = sqlite3.connect(':memory:')
-        self.cur = con.cursor()
-        self.cur.execute("CREATE TABLE Benchmark(B_ID INTEGER PRIMARY KEY unique, Name TEXT)")
-        self.cur.execute("CREATE TABLE SysInfo(S_ID INTEGER PRIMARY KEY, Name TEXT)")
-        self.cur.execute("CREATE TABLE Benchmark_SysInfo(B_ID INT, S_ID INT, Value TEXT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(S_ID) REFERENCES SysInfo(S_ID))")
+        firstFile = self.data.keys()[0]
+        for fileName in self.data.keys():
+            self.fileList.append(fileName)
 
-        self.cur.execute("CREATE TABLE Bench(BE_ID INTEGER PRIMARY KEY, Name TEXT)")
-        self.cur.execute("CREATE TABLE Test(T_ID INTEGER PRIMARY KEY, Name TEXT, Type TEXT, Unit TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
-        self.cur.execute("CREATE TABLE Arg(A_ID INTEGER PRIMARY KEY, Name TEXT, Value TEXT, BE_ID INT, FOREIGN KEY(BE_ID) REFERENCES Bench(BE_ID))")
-        self.cur.execute("CREATE TABLE Result(R_ID INTEGER PRIMARY KEY, Value TEXT, T_ID INT, B_ID INT, FOREIGN KEY(B_ID) REFERENCES Benchmark(B_ID), FOREIGN KEY(T_ID) REFERENCES Test(T_ID))")
+        for sysinfo, val in self.data[firstFile]["Sysinfos"].iteritems():
+            attributeValues = []
+            for fileName in self.fileList:
+                if sysinfo in self.data[fileName]["Sysinfos"]:
+                    attributeValues.append(self.data[fileName]["Sysinfos"][sysinfo])
+                else:
+                    attributeValues.append('-')
+            self.sysInfos[sysinfo] = attributeValues
 
-        for fileName, content in self.data.iteritems():
-            self.cur.execute("insert into Benchmark values (?, ?)", (None, fileName))
-            B_ID = self.cur.lastrowid
-            for sysinfo, val in content["Sysinfos"].iteritems():
-                self.cur.execute("insert into SysInfo select :id, :info where not exists(select 1 from SysInfo where SysInfo.Name = :info)", ({'id': None, 'info': sysinfo}))
-                self.cur.execute("insert into Benchmark_SysInfo values (?, (select SysInfo.S_ID from SysInfo where SysInfo.Name = ?), ?)", (B_ID, sysinfo, unicode(val)))
+        for bench, benchContent in self.data[firstFile]["results"].iteritems():
+            self.benchmarkData[bench] = {}
+            self.benchmarkData[bench]['args'] = benchContent['args']
 
-            for bench, bench_content in content["results"].iteritems():
-                self.cur.execute("insert into Bench select :id, :bench where not exists(select 1 from Bench where Bench.Name = :bench)", ({'id': None, 'bench': bench}))
-                for arg, val in bench_content['args'].iteritems():
-                    # insert a arg if no arg exists for the given benchname
-                    self.cur.execute("insert into Arg select :id, :arg, :val, (select BE_ID from Bench where Bench.Name = :bench) where not exists(select 1 from Arg where Arg.BE_ID = (select Bench.BE_ID from Bench where Bench.Name = :bench) and Arg.Name = :arg)", ({'id': None, 'arg': arg, 'val': unicode(val), 'bench': bench}))
-
-                for test, test_content in bench_content['data'].iteritems():
-                    # insert a test if no test exists for the given benchname
-                    self.cur.execute("insert into Test select :id, :test, :type, :unit, (select BE_ID from Bench where Bench.Name = :bench) where not exists(select 1 from Test inner join Bench on Test.BE_ID = Bench.BE_ID where Test.Name = :test AND Bench.Name = :bench)", ({'id': None, 'test': test, 'bench': bench, 'type': test_content['type'], 'unit': test_content['unit']}))
-                    self.cur.execute("insert into Result values (:id, :value, (SELECT Test.T_ID from Test inner join Bench on Bench.BE_ID = Test.BE_ID where Test.Name = :test AND Bench.Name = :bench), :B_ID)", ({'id': None, 'value': unicode(test_content['value']), 'test': test, 'bench': bench, 'B_ID': B_ID}))
-
-    def renderTrend(self):
-        """Iterates over each bench and calls a render function to display the data.
-        The render functions will produce html code. This code will be put together and
-        saved as .html file./TODO
-        """
-        inline_css = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
-        d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
-        chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
-        body = self.sysInfoTrend()
-        benches = self.getAllBenchesTrend()
-        for benchName in benches:
-            logger.info("Render bench: {}".format(benchName[0]))
-            body += self.renderBenchTrend(benchName)
-        ioservice.writeToFile(self.template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
-
-    def renderBenchTrend(self, benchName):
-        """Generates html code of the given bench name to display its data.
-        This function will display a heading, the arguments, table and diagramms.
-
-        :param benchKey: the name of the benchmark
-        :returns: string with html code
-        """
-        title = "<h2>{0}</h2>".format(benchName)
-        tileTempl = "<div class='tile'>{0}</div>"
-        args = self.renderBenchArgsTrend(benchName)
-        measurements = self.renderBenchMeasurementsTrend(benchName)
-        return tileTempl.format(title + args + measurements)
-
-    def renderBenchArgsTrend(self, benchName):
-        """Displays the arguments of a benchmark in a table.
-
-        :param benchName: name of the benchmark
-        :returns: html table with arguments of the given bench
-        """
-        result = """
-            <table>
-                <tr>
-                    <th>Argument</th>
-                    <th>Value</th>
-                </tr>
-                {0}
-            </table>
-        """
-        args = self.getBenchArgsTrend(benchName)
-        rows = ""
-        for arg in args:
-            rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(arg[0], arg[1])
-        result = result.format(rows)
-        return result
-
-    def getBenchArgsTrend(self, benchName):
-        """Helper function to return the arguments of a benchmark.  If no file name
-        is applied the data is token from the first file.
-
-        :param benchName: name of the benchmark
-        :param fileName: file where the information shall be taken from
-        :returns: a dict of arguments
-        """
-        self.cur.execute("select Arg.Name, Value from Arg inner join Bench on Bench.BE_ID = Arg.BE_ID where Bench.Name = ? order by Arg.Name asc;", benchName)
-        res = self.cur.fetchall()
-        return res
+            for test, testContent in benchContent['data'].iteritems():
+                resultValues = []
+                self.benchmarkData[bench][test] = {}
+                self.benchmarkData[bench][test]['unit'] = testContent['unit']
+                self.benchmarkData[bench][test]['type'] = testContent['type']
+                for fileName in self.fileList:
+                    resultValues.append(self.data[fileName]["results"][bench]['data'][test]['value'])
+                self.benchmarkData[bench][test]['values'] = resultValues
 
     def renderBenchMeasurementsTrend(self, benchName):
         """Produces html code for the data of the given bench name.
@@ -197,117 +127,82 @@ class Renderer(object):
         :param benchName: name of the benchmark
         :returns: html/js code of the diagramm.
         """
-        sql_query = """
-        select Test.T_ID, Test.Name, Test.Type, Test.Unit, GROUP_CONCAT( ( '(' || Result.Value || ',' || '\"' || Benchmark_SysInfo.Value || '\"' || ')'), '|' )
-        from Bench
-        inner join Test on Test.BE_ID = Bench.BE_ID
-        inner join Result on Result.T_ID = Test.T_ID
-        inner join Benchmark on Benchmark.B_ID = Result.B_ID
-        inner join Benchmark_SysInfo on Benchmark.B_ID = Benchmark_SysInfo.B_ID
-        inner join SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID
-        where SysInfo.Name = 'Current Time (UTC)' and Bench.Name = ?
-        group by Test.T_ID, Bench.BE_ID;"""
-
-        self.cur.execute(sql_query, benchName)
-        tests = self.cur.fetchall()
-        res = ""
-        for test in tests:
+        htmlCode = ""
+        # iterate over all tests within in a bench
+        for benchTestName, benchTestData in self.benchmarkData[benchName].iteritems():
             measurements = []
-            series_flag = test[2] == "time_series"
-            results = test[4].split('|')
-            for test_result in results:
-                    test_result = eval(test_result)
-                    test_result_value = test_result[0]
-                    test_time = test_result[1]
+            if benchTestName == 'args':
+                continue
+            # iterate over all results
+            for index, testResult in enumerate(benchTestData['values']):
+                # find infos which will be displayed as tooltip
+                tooltip = {}
+                tooltipSysInfos = ["CPU Percent", "Memory Percent"]
+                for tooltipSysInfo in tooltipSysInfos:
+                    tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
 
-                    sql_query = """select SysInfo.Name, Benchmark_SysInfo.Value from Benchmark_SysInfo inner join SysInfo on Benchmark_SysInfo.S_ID = SysInfo.S_ID
-                    where (SysInfo.Name = ? OR SysInfo.Name = ?) AND (Benchmark_SysInfo.B_ID =
-                    (select Benchmark_SysInfo.B_ID from Benchmark_SysInfo
-                    inner join SysInfo on Benchmark_SysInfo.S_ID = SysInfo.S_ID
-                    where Benchmark_SysInfo.Value = ? AND SysInfo.Name = "Current Time (UTC)"
-                    group by Benchmark_SysInfo.B_ID))"""
-                    self.cur.execute(sql_query, ("CPU Percent", "Memory Percent", test_time))
-                    Sysinfo = self.cur.fetchall()
+                utcTime = self.sysInfos['Current Time (UTC)'][index]
 
-                    tooltip = {}
-                    for ele in Sysinfo:
-                        tooltip[ele[0]] = ele[1] + "%"
+                # if the result is a time series, it will be aggregated
+                if benchTestData['type'] == "time_series":
+                    if len(testResult) == 0:
+                        continue
+                    sumTime = sum(testResult)
+                    avg = sumTime / len(testResult)
+                    val = avg
+                    measurements.append({'value': avg, 'time': utcTime, 'tooltip': tooltip})
+                else:
+                    measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
+            # creates a base64 id for the element. test names could be invalid.
+            eleId = createElementId("{}{}".format(benchName, benchTestName))
+            htmlCode += self.createTrendDiagramm({'name': benchTestName, 'meas': measurements}, eleId, benchTestName)
+        return htmlCode
 
-                    if series_flag:
-                        if len(test_result_value) == 0:
-                            continue
-                        sumTime = sum(test_result_value)
-                        avg = sumTime / len(test_result_value)
-                        val = avg
-                        measurements.append({'value': avg, 'time': test_time, 'tooltip': tooltip})
-                    else:
-                        measurements.append({'value': test_result[0], 'time': test_time, 'tooltip': tooltip})
-            # concat benchname and testname and creates a id for the dom
-            testName = test[1]
-            ele_id = createElementId("{}{}".format(benchName, testName))
-            res += self.createTrendDiagramm({'name': testName, 'meas': measurements}, ele_id, testName)
-        return res
-
-    def getAllBenchesTrend(self):
-        self.cur.execute("select Name from Bench;")
-        res = self.cur.fetchall()
-        return res
-
-    def sysInfoTrend(self):
+    def renderSysInfosTrend(self):
         templ = "<div class='tile'>{}</div>"
-        content = ""
-
         rowTempl = "<tr><td>{}</td><td>{}</td></tr>"
         tableTemp = "<table><tr><th>System Info</th><th>Value</th></tr>{}</table>"
         groupsTemp = "<details><summary>{0}</summary>{1}</details>"
 
-        self.cur.execute("select Name, GROUP_CONCAT(Benchmark_SysInfo.Value, '|') from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID where not Benchmark_SysInfo.Value = '' group by SysInfo.Name;")
-        res = self.cur.fetchall()
-
+        sysinfosList = self.sysInfos
+        print sysinfosList
+        graphs = ""
         groups = ""
-        groups_keywords = ['Memory', 'CPU', 'CADDOK', 'Disk', 'Swap']
-        for group in groups_keywords:
-            graphs = ""
-            group_rows = ""
-            # all elements with the group prefix
-            elements = [item for item in res if item[0].find(group) == 0]
-            for ele in elements:
-                values = ele[1].split('|')
+        groupsKeywords = ['Memory', 'CPU', 'CADDOK', 'Disk', 'Swap', 'Other']
+        for group in groupsKeywords:
+            if group == 'Other':
+                groupElements = sysinfosList
+            else:
+                # find the element for the current group
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.find(group) == 0}
+            groupRows = ""
+            for sysinfoname, values in groupElements.iteritems():
                 # not the same columns
-                if not len(set(values)) == 1:
-                    if is_float(values[0]):
-                        graphs += self.createTrendDiagramForSysInfo(ele[0])
+                if not values[1:] == values[:-1]:
+                    # are the values valid for the chart
+                    if not type(values) is list and isFloat(values[0]):
+                        graphs += self.createTrendDiagramForSysInfo(sysinfoname)
                     else:
-                        group_rows += rowTempl.format(ele[0], values)
+                        groupRows += rowTempl.format(sysinfoname, values)
                     continue
-                group_rows += rowTempl.format(ele[0], values[0])
-            groups += groupsTemp.format(group, graphs + tableTemp.format(group_rows))
+                groupRows += rowTempl.format(sysinfoname, values[0])
+            groups += groupsTemp.format(group, graphs + tableTemp.format(groupRows))
             # remove the elements from the list
-            res = [item for item in res if item not in elements]
+            sysinfosList = {key: val for key, val in sysinfosList.iteritems() if key not in groupElements.keys()}
 
-        for row in res:
-            infoname = row[0]
-            values = row[1].split('|')
-            # not the same columns
-            if not len(set(values)) == 1:
-                if is_float(values[0]):
-                    graphs += self.createTrendDiagramForSysInfo(values[0])
-                else:
-                    content += rowTempl.format(infoname, values)
-                continue
-            content += rowTempl.format(infoname, values[0])
-        result = groups + groupsTemp.format("Other", tableTemp.format(content))
-        return templ.format(result)
+        return templ.format(groups)
 
     def createTrendDiagramForSysInfo(self, SysInfoName):
-        self.cur.execute("select max(CASE SysInfo.Name WHEN ? THEN Benchmark_SysInfo.Value END), max(CASE SysInfo.Name WHEN 'Current Time (UTC)' THEN Benchmark_SysInfo.Value END) from SysInfo inner join Benchmark_SysInfo on SysInfo.S_ID = Benchmark_SysInfo.S_ID group by Benchmark_SysInfo.B_ID ;", (SysInfoName,))
-        res = self.cur.fetchall()
+        sysinfovalues = self.sysInfos[SysInfoName]
+        timeList = self.sysInfos['Current Time (UTC)']
+
         measurements = []
-        for ele in res:
-            measurements.append({'value': ele[0], 'time': ele[1]})
+        for index, value in enumerate(sysinfovalues):
+            measurements.append({'value': value, 'time': timeList[index]})
+
         return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
 
-    def createTrendDiagramm(self, data, element_id, title):
+    def createTrendDiagramm(self, data, elementId, title):
         """Produce html js code to display the data of a benchmark as diagramm.
         The javascript function can be find in chart.js.
         :param benchName: name of the benchmark
@@ -322,26 +217,19 @@ class Renderer(object):
         createTrendChart("#{0}",self.data);
         </script>
         </div>"""
-        return elementTempl.format(element_id, json.dumps(data), title)
+        return elementTempl.format(elementId, json.dumps(data), title)
 
     def renderSysInfos(self):
         templ = "<div class='tile'><table>{}</table></div>"
-        content = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
-        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
+        numFiles = len(self.fileList)
+        headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 1) + "</tr>"
+        rowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        content += headerTempl.format("System Info", *self.data.keys())
-        infos = self.data[self.data.keys()[0]]["Sysinfos"]
-        for infoName in sorted(infos):
-            res = []
-            for fileName in sorted(self.data):
-                if infoName in self.data[fileName]["Sysinfos"]:
-                    res.append(self.data[fileName]["Sysinfos"][infoName])
-                else:
-                    res.append('-')
-                    content += rowTempl.format(infoName, *res)
-                    return templ.format(content)
+        tableContent = headerTempl.format("System Info", *self.fileList)
+        for infoName, values in sorted(self.sysInfos.iteritems()):
+            tableContent += rowTempl.format(infoName, *values)
+        return templ.format(tableContent)
 
     def loadBenchmarkData(self):
         """Loads the benchmark data. The data can be accessed by self.data.
@@ -363,30 +251,34 @@ class Renderer(object):
         :raises RuntimeError: if the strucutre of the benchmarks is unequal
         """
 
-        # self.getAllBenches returns the benches of the first element
-        f0Benches = self.getAllBenches()
+        firstFile = self.data.keys()[0]
+        firstFileBenches = self.data[firstFile]['results']
         for fileName in benchmarks:
-            fnBenches = self.getAllBenches(fileName).keys()
-            if f0Benches.keys() != fnBenches:
+            fnBenches = self.data[fileName]['results'].keys()
+            if firstFileBenches.keys() != fnBenches:
                 raise RuntimeError("Can not compare given benchmarks! Different benches.")
             for benchKey in fnBenches:
-                if self.getBenchArgs(benchKey) != self.getBenchArgs(benchKey, fileName):
+                print firstFile, benchKey
+                if self.getBenchArgs(firstFile, benchKey) != self.getBenchArgs(fileName, benchKey):
                     raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
-    def iterateBenches(self):
+    def renderAllData(self):
         """Iterates over each bench and calls a render function to display the data.
         The render functions will produce html code. This code will be put together and
         saved as .html file.
         """
-        inline_css = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
+        inlineCss = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
         d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
         chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
-        body = self.renderSysInfos()
-        benches = self.getAllBenches()
+        if self.args.trend:
+            body = self.renderSysInfosTrend()
+        else:
+            body = self.renderSysInfos()
+        benches = self.benchmarkData
         for benchKey in benches:
             logger.info("Render bench: " + benchKey)
             body += self.renderBench(benchKey)
-        ioservice.writeToFile(self.template.format(inline_css, d3Lib, chartsJS, body), self.args.outfile)
+        ioservice.writeToFile(self.template.format(inlineCss, d3Lib, chartsJS, body), self.args.outfile)
 
     def renderBench(self, benchKey):
         """Generates html code of the given bench name to display its data.
@@ -398,7 +290,10 @@ class Renderer(object):
         title = "<h2>{0}</h2>".format(benchKey)
         tileTempl = "<div class='tile'>{0}</div>"
         args = self.renderBenchArgs(benchKey)
-        measurements = self.renderBenchMeasurements(benchKey)
+        if self.args.trend:
+            measurements = self.renderBenchMeasurementsTrend(benchKey)
+        else:
+            measurements = self.renderBenchMeasurements(benchKey)
         return tileTempl.format(title + args + measurements)
 
     def renderBenchMeasurements(self, benchName):
@@ -413,37 +308,7 @@ class Renderer(object):
         body += self.renderTablesByTypes(benchName)
         return body
 
-    def getTestResult(self, fileName, benchName, benchTest):
-        """Helper function to return the result of a bench test.
-
-        :param fileName: name of the file
-        :param benchName: name of the benchmark
-        :param benchTest: name of the test
-        :returns: the selected data from specified file name
-        """
-        return self.getAllBenches(fileName)[benchName]["data"][benchTest]
-
-    def getAllBenches(self, fileName=""):
-        """Helper function to return all benchmarks. If no file name is applied the
-        data is token from the first file.
-
-        :param fileName: file where the information shall be taken from
-        :returns: a dict of all benchmarks
-        """
-        if fileName == "":
-            fileName = self.data.keys()[0]
-        return self.data[fileName]["results"]
-
-    def getAllBenchTests(self, benchName):
-        """Helper function to return all test of a benchmark.
-
-        :param benchName: name of the benchmark
-        :returns: a dict of all test of a benchmark
-        """
-        fileName = self.data.keys()[0]
-        return self.getAllBenches(fileName)[benchName]['data']
-
-    def getBenchArgs(self, benchName, fileName=""):
+    def getBenchArgs(self, fileName, benchName):
         """Helper function to return the arguments of a benchmark.  If no file name
         is applied the data is token from the first file.
 
@@ -451,7 +316,7 @@ class Renderer(object):
         :param fileName: file where the information shall be taken from
         :returns: a dict of arguments
         """
-        return self.getAllBenches(fileName)[benchName]["args"]
+        return self.data[fileName]["results"][benchName]["args"]
 
     def createDiagramm(self, benchName):
         """Produce html js code to display the data of a benchmark as diagramm.
@@ -468,22 +333,25 @@ class Renderer(object):
             </script>
          </div>"""
         tableContent = []
-        allTests = self.getAllBenchTests(benchName)
+        benchTests = self.benchmarkData[benchName]
         # not data available
-        if allTests is None or allTests == {}:
+        if benchTests is None or benchTests == {}:
             return ""
-        for (benchTestName, content) in allTests.iteritems():
-            for fileName in self.data:
-                val = self.getTestResult(fileName, benchName, benchTestName)["value"]
-                if content["type"] == "time_series":
-                    timeList = val
-                    if len(timeList) == 0:
+        for (benchTestName, testData) in benchTests.iteritems():
+            if benchTestName == 'args':
+                continue
+
+            values = testData["values"]
+            for index, val in enumerate(values):
+                if testData["type"] == "time_series":
+                    testResultList = val
+                    if len(testResultList) == 0:
                         continue
-                    sumTime = sum(timeList)
-                    avg = sumTime / len(timeList)
+                    sumTime = sum(testResultList)
+                    avg = sumTime / len(testResultList)
                     val = avg
-                tableContent.append({"file": fileName, "name": benchTestName, "value": val})
-        return elementTempl.format(benchName, tableContent)
+                tableContent.append({"file": self.fileList[index], "name": benchTestName, "value": val})
+        return elementTempl.format(benchName, json.dumps(tableContent))
 
     def renderTablesByTypes(self, benchName):
         """Creates tables for each type of bench test.
@@ -497,32 +365,35 @@ class Renderer(object):
             res += self.renderTableByType(benchName, t)
         return res
 
-    def renderTableByType(self, benchName, type):
+    def renderTableByType(self, benchName, dataType):
         """Creates a table of specific type of bench tests.
 
         :param benchName: name of the benchmark
         :param type: type of the benchmark (e.g. 'time', 'time_series')
         :returns: html code of the table.
         """
-        header = "<h4>Tabelle {}</h4>".format(type)
-        allTests = self.getAllBenchTests(benchName)
+        header = "<h4>Tabelle {}</h4>".format(dataType)
+        benchTests = self.benchmarkData[benchName]
+
         # not data available
-        if allTests is None or allTests == {}:
+        if benchTests is None or benchTests == {}:
             return ""
-        elements = dict((benchTestName, content) for (benchTestName, content) in allTests.iteritems() if content["type"] == type)
-        if len(elements) == 0:
+
+        # filter tests by type
+        tests = {benchTestName: testData for benchTestName, testData in benchTests.iteritems() if not benchTestName == 'args' and testData["type"] == dataType}
+        if len(tests) == 0:
             return ""
 
         content = "<table>"
-        if type == "time_series":
-            content += self.renderTimeSeriesRows(benchName, elements)
-        elif type == "time":
-            content += self.renderTimeRows(benchName, elements)
+        if dataType == "time_series":
+            content += self.renderTimeSeriesRows(benchName, tests)
+        elif dataType == "time":
+            content += self.renderTimeRows(benchName, tests)
 
         content += "</table>"
         return header + content
 
-    def renderTimeRows(self, benchName, elements):
+    def renderTimeRows(self, benchName, test):
         """Creates the rows for the table. Each row display data of type 'time'.
         The elements parameter contains a dict which is already filtered by this type.
 
@@ -530,20 +401,18 @@ class Renderer(object):
         :param elements: filtered dict which is containing test
         :returns: string containing the rows
         """
-        content = ""
+        htmlCode = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 1) + "</tr>"
-        rowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
+        numFiles = len(self.fileList)
+        headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 1) + "</tr>"
+        rowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        content += headerTempl.format("Test", *self.data.keys())
-        for benchTestName in sorted(elements):
-            res = []
-            for fileName in sorted(self.data):
-                res.append(self.getTestResult(fileName, benchName, benchTestName)["value"])
-            content += rowTempl.format(benchTestName, *res)
-        return content
+        htmlCode += headerTempl.format("Test", *self.fileList)
+        for benchTestName, testData in sorted(test.iteritems()):
+            htmlCode += rowTempl.format(benchTestName, *testData['values'])
+        return htmlCode
 
-    def renderTimeSeriesRows(self, benchName, elements):
+    def renderTimeSeriesRows(self, benchName, tests):
         """Creates the rows for the table. Each row display data of type 'time_series'.
         The elements parameter contains a dict which is already filtered by this type.
 
@@ -551,90 +420,44 @@ class Renderer(object):
         :param elements: filtered dict which is containing test
         :returns: string containing the rows
         """
-        content = ""
+        htmlCode = ""
 
-        headerTempl = "<tr>" + "<th>{}</th>" * (len(self.data) + 2) + "</tr>"
+        numFiles = len(self.fileList)
+        headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 2) + "</tr>"
         outerRowTempl = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
-        innerRowTempl = "<tr>" + "<td>{}</td>" * (len(self.data) + 1) + "</tr>"
+        innerRowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        content += headerTempl.format("Test", "Aggregation", *self.data.keys())
-        for benchTestName in sorted(elements):
-            innerContent = ""
-            resMax = []
-            resMin = []
-            resSum = []
-            resAvg = []
-            resMidOutl = []
-            resExtrOutl = []
-            for fileName in sorted(self.data):
-                timeList = self.getTestResult(fileName, benchName, benchTestName)["value"]
+        htmlCode += headerTempl.format("Test", "Aggregation", *self.fileList)
+        for benchTestName, testData in sorted(tests.iteritems()):
+            innerhtmlCode = ""
+            listMax = []
+            listMin = []
+            listSum = []
+            listAvg = []
+
+            for timeList in testData['values']:
                 if len(timeList) == 0:
-                    resMax.append([])
-                    resMin.append([])
-                    resSum.append([])
-                    resAvg.append([])
-                    resMidOutl.append([])
-                    resExtrOutl.append([])
+                    listMax.append([])
+                    listMin.append([])
+                    listSum.append([])
+                    listAvg.append([])
                     continue
-                outlier = self.findOutlier(sorted(timeList))
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
                 avgVal = sumVal / len(timeList)
-                resMax.append(maxVal)
-                resMin.append(minVal)
-                resSum.append(sumVal)
-                resAvg.append(avgVal)
-                resMidOutl.append(outlier['midOutlier'])
-                resExtrOutl.append(outlier['extremeOutlier'])
-            if len(resMax) == 0:
+                listMax.append(maxVal)
+                listMin.append(minVal)
+                listSum.append(sumVal)
+                listAvg.append(avgVal)
+            if len(listMax) == 0:
                 continue
-            innerContent += innerRowTempl.format("Max", *resMax)
-            innerContent += innerRowTempl.format("Min", *resMin)
-            innerContent += innerRowTempl.format("Sum", *resSum)
-            innerContent += innerRowTempl.format("Average", *resAvg)
-            # if len(outlier['midOutlier']) > 0:
-            innerContent += innerRowTempl.format("Mid Outlier", *resMidOutl)
-            innerContent += innerRowTempl.format("Extreme Outlier", *resExtrOutl)
-
-            content += outerRowTempl.format(benchTestName, (len(self.data) + 1), innerContent)
-        return content
-
-    def renderTextByType(self, content):
-        """Produce html code to display the given data as text.
-
-        :param content: data which shall be shown.
-        :returns: html code
-        """
-        res = "<h4>{}</h4>".format(content["type"])
-        dlTempl = """
-            <dl>
-            {0}
-           </dl>
-        """
-        dlInnerTempl = "<dt>{0}</dt><dd>{1}</dd>"
-        if content["type"] == "time_series":
-            timeList = content["value"]
-            lenTimeList = len(timeList)
-            if lenTimeList > 0:
-                maxVal = max(timeList)
-                minVal = min(timeList)
-                minVal = sum(timeList)
-                avgVal = minVal / len(timeList)
-                dlInner = ""
-                dlInner += dlInnerTempl.format("Unit:", content["unit"])
-                dlInner += dlInnerTempl.format("Max:", maxVal)
-                dlInner += dlInnerTempl.format("Min:", minVal)
-                dlInner += dlInnerTempl.format("Sum:", minVal)
-                if "totalTime" in content:
-                    dlInner += dlInnerTempl.format("Total Time:", content["totalTime"])
-                dlInner += dlInnerTempl.format("Average:", avgVal)
-                res += dlTempl.format(dlInner)
-        if content["type"] == "time":
-            dlInner = ""
-            dlInner += dlInnerTempl.format("Result:", str(content["value"]) + " " + content["unit"])
-            res += dlTempl.format(dlInner)
-        return res
+            innerhtmlCode += innerRowTempl.format("Max", *listMax)
+            innerhtmlCode += innerRowTempl.format("Min", *listMin)
+            innerhtmlCode += innerRowTempl.format("Sum", *listSum)
+            innerhtmlCode += innerRowTempl.format("Average", *listAvg)
+            htmlCode += outerRowTempl.format(benchTestName, (len(self.fileList) + 1), innerhtmlCode)
+        return htmlCode
 
     def renderBenchArgs(self, benchName):
         """Displays the arguments of a benchmark in a table.
@@ -651,45 +474,15 @@ class Renderer(object):
                 {0}
             </table>
         """
-        args = self.getBenchArgs(benchName)
+        args = self.benchmarkData[benchName]['args']
         rows = ""
         for key, val in sorted(args.iteritems()):
             rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
         result = result.format(rows)
         return result
 
-    def calcMedian(self, data):
-        size = len(data)
-        if not (size % 2 == 0):
-            return (data[(size - 1) / 2] + data[(size + 1) / 2]) / 2
-        else:
-            return data[size / 2]
 
-    def findOutlier(self, data):
-        size = len(data)
-        if size < 10:
-            return {'midOutlier': [], 'extremeOutlier': []}
-        median = self.calcMedian(data)
-        q1 = self.calcMedian(data[: size / 2])
-        q3 = self.calcMedian(data[size / 2:])
-        diffQ = q3 - q1
-        lowerInnerLimit = q1 - diffQ * 1.5
-        upperInnerLimit = q3 + diffQ * 1.5
-        lowerOuterLimit = q1 - diffQ * 3
-        upperOuterLimit = q3 + diffQ * 3
-
-        midOutlier = []
-        extremeOutlier = []
-        for d in data:
-            if d < lowerInnerLimit or d > upperInnerLimit:
-                if d < lowerOuterLimit or d > upperOuterLimit:
-                    extremeOutlier.append(d)
-                else:
-                    midOutlier.append(d)
-        return {'midOutlier': midOutlier, 'extremeOutlier': extremeOutlier}
-
-
-def is_float(s):
+def isFloat(s):
     try:
         float(s)
         return True
