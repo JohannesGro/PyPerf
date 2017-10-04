@@ -260,7 +260,8 @@ function createTrendChart(DOMElement, data) {
     // legend showing the different files.
     var legendRectSize = 18,
         legendSpacing  = 4,
-        spaceForLabels = 40;
+        spaceForLabels = 25,
+        leftSpacing = 10;
 
     var legend = svg.selectAll('.legend')
         .data([{'name':"Median", "color":"orange"}, {'name':"Mean", "color":"red"}])
@@ -274,7 +275,7 @@ function createTrendChart(DOMElement, data) {
         .attr('height', legendRectSize)
         .style('fill', function (d, i) { return d.color; })
         .style('stroke', function (d, i) { return d.color; })
-        .attr("x",width + margin.left)
+        .attr("x",width + margin.left + leftSpacing)
         .attr("y",function (d, i) {
             var height = legendRectSize + legendSpacing;
             var vert = i * height - 0;
@@ -286,7 +287,7 @@ function createTrendChart(DOMElement, data) {
     legend.append('text')
         .attr('class', 'legend')
         .attr('y', 0)
-        .attr("x",spaceForLabels + width+ margin.left)
+        .attr("x",spaceForLabels + width+ margin.left + leftSpacing)
         .attr("y",function (d, i) {
             var height = legendRectSize + legendSpacing;
             var vert = i * height - 0;
