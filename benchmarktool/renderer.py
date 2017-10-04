@@ -35,14 +35,17 @@ class Renderer(object):
 
     # CLI
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
+    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks or a folder.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
     parser.add_argument("--trend", "-t", default=False, action="store_true")
 
     template = """
+    <!DOCTYPE html>
     <html>
     <head>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <style>
         {}
         </style>
@@ -240,9 +243,14 @@ class Renderer(object):
         <div id="{0}" class="diagrammAlignment">
         <h4>{2}</h4>
         <script>
-        var data = {1};
-        createTrendChart("#{0}",self.data);
+        var {0} = {1};
+        createTrendChart("#{0}",self.{0}, 1);
         </script>
+        <select name="ab" onchange='var svg = this.parentNode.getElementsByTagName("svg")[0]; svg.parentNode.removeChild(svg); createTrendChart("#{0}",self.{0}, this.selectedIndex);console.log(this)'>
+        <option value="1">option 1</option>
+        <option value="2">option 2</option>
+        <option value="3">option 3</option>
+        </select>
         </div>"""
         return elementTempl.format(elementId, json.dumps(data), title)
 
@@ -286,6 +294,11 @@ class Renderer(object):
             # Loads a bunch of benchmarks.
             data = {}
             for fileName in self.args.benchmarks:
+                if os.path.isdir(fileName):
+                    (_, _, fileNames) = os.walk(fileName).next()
+                    for fn in fileNames:
+                        data[fn] = ioservice.loadJSONData(fn)
+                    continue
                 data[fileName] = ioservice.loadJSONData(fileName)
             self.areBenchmarksComparable(data)
         else:
