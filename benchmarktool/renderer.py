@@ -165,11 +165,10 @@ class Renderer(object):
         groupsTemp = "<details><summary>{0}</summary>{1}</details>"
 
         sysinfosList = self.sysInfos
-        print sysinfosList
-        graphs = ""
         groups = ""
         groupsKeywords = ['Memory', 'CPU', 'CADDOK', 'Disk', 'Swap', 'Other']
         for group in groupsKeywords:
+            graphs = ""
             if group == 'Other':
                 groupElements = sysinfosList
             else:
@@ -179,8 +178,9 @@ class Renderer(object):
             for sysinfoname, values in groupElements.iteritems():
                 # not the same columns
                 if not values[1:] == values[:-1]:
+                    print '#' * 80
                     # are the values valid for the chart
-                    if not type(values) is list and isFloat(values[0]):
+                    if not type(values[0]) is list and isFloat(values[0]):
                         graphs += self.createTrendDiagramForSysInfo(sysinfoname)
                     else:
                         groupRows += rowTempl.format(sysinfoname, values)
@@ -258,7 +258,6 @@ class Renderer(object):
             if firstFileBenches.keys() != fnBenches:
                 raise RuntimeError("Can not compare given benchmarks! Different benches.")
             for benchKey in fnBenches:
-                print firstFile, benchKey
                 if self.getBenchArgs(firstFile, benchKey) != self.getBenchArgs(fileName, benchKey):
                     raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
