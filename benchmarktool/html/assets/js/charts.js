@@ -43,7 +43,8 @@ function createBarChart(DOMElement, data) {
   var yAxis = d3.axisLeft()
       .scale(y)
       .tickSize(0)
-      .tickPadding(6);
+      .tickPadding(6)
+      .tickFormat("");
 
   // Define the div for the tooltip
   var div = d3.select("body").append("div")
@@ -57,10 +58,9 @@ function createBarChart(DOMElement, data) {
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
-    x.domain(d3.extent(data, function(d) { return d.value; })).nice();
-    y.domain(data.map(function(d) { return d.name; }));
-  var barHeight = (y.bandwidth() - (gapBetweenGroups * (num_files - 1))) / num_files;
+  x.domain(d3.extent(data, function(d) {return d.value; })).nice();
+  y.domain(data.map(function(d) { return d.file; }));
+  var barHeight = y.bandwidth();
 
     // prepare chart
     var bar = svg.selectAll(".bar")
@@ -71,8 +71,8 @@ function createBarChart(DOMElement, data) {
     // create the bars
     bar.append("rect")
         .attr("x", 0)
-        .attr("y", function(d, i) { return y(d.name) + ((i%num_files)  * (barHeight + gapBetweenGroups))})
-        .attr("width", function(d) { return x(d.value) - x(0); })
+        .attr("y", function(d, i) { return y(d.file);})
+        .attr("width", function(d) { return x(d.value);})
         .attr("height", barHeight)
         .attr("fill", function(d,i) { return color(i % num_files); })
         .on("mouseover", function(d) {
@@ -93,7 +93,7 @@ function createBarChart(DOMElement, data) {
     var formatVal = d3.format(".5f");
     bar.append("text")
         .attr("x", function(d) { return x(d.value) + 1 ; })
-        .attr("y", function(d, i) { return y(d.name) + ((i%num_files)  * (barHeight + gapBetweenGroups)) + barHeight / 2 ;})
+        .attr("y", function(d, i) { return y(d.file) + barHeight / 2 ;})
         .attr("dy", ".35em")
         .attr("alignment-baseline", "baseline")
         .text(function(d) { return formatVal(d.value); });
@@ -102,12 +102,58 @@ function createBarChart(DOMElement, data) {
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
+        .call(xAxis)
+        .append("text")
+          .attr("fill", "#000")
+          .attr("y", 0)
+          .attr("x", width)
+          .attr("font-size", "14px")
+          .attr("dy", "2.5em")
+          .attr("text-anchor", "end")
+          .text("Values");;
 
     svg.append("g")
         .attr("class", "y axis")
-        .call(yAxis);
+        .call(yAxis)
+        .append("text")
+          .attr("fill", "#000")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 0)
+          .attr("font-size", "14px")
+          .attr("dy", "-1.0em")
+          .attr("text-anchor", "end")
+          .text("Files");;
 
+
+    var dataAvg = d3.mean(data, function(d) { return d.value; });
+
+    var lineAvg = d3.line()
+      .x(function(d) {return x(dataAvg); })
+      .y(function(d, i) {if (i > 0) {return y(d.file)} else {return y(d.file) + barHeight;} }) //include the height of bar
+      .curve(d3.curveLinear);
+
+    svg.append("path")
+        .datum(data)
+        .attr("d", lineAvg)
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-dasharray", 5,5);
+
+    var dataMed = d3.median(data, function(d) { return d.value; });
+
+    var lineMed = d3.line()
+      .x(function(d) {return x(dataMed); })
+      .y(function(d, i) {if (i > 0) {return y(d.file)} else {return y(d.file) + barHeight;} }) //include the height of bar
+      .curve(d3.curveStepBefore);
+
+    svg.append("path")
+        .datum(data)
+        .attr("d", lineMed)
+        .attr("fill", "none")
+        .attr("stroke", "orange")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-dasharray", 5,5);
 
     // legend showing the different files.
     var legendRectSize = 18,
@@ -122,7 +168,7 @@ function createBarChart(DOMElement, data) {
             var height = legendRectSize + legendSpacing;
             var offset = -gapBetweenGroups/2;
             var horz = spaceForLabels + width + 40 - legendRectSize;
-            var vert = i * height - offset;
+            var vert = i * height - offset + 50;
             return 'translate(' + horz + ',' + vert + ')';
         });
 
@@ -139,6 +185,37 @@ function createBarChart(DOMElement, data) {
         .attr('x', legendRectSize + legendSpacing)
         .attr('y', legendRectSize - legendSpacing)
         .text(function (d) { return d; });
+
+    var legend2 = svg.selectAll('.legend2')
+        .data([{'name':"Median", "color":"orange"}, {'name':"Mean", "color":"red"}])
+        .enter()
+        .append('g')
+        .attr('transform', function (d, i) {
+            var height = legendRectSize + legendSpacing;
+            var offset = -gapBetweenGroups/2;
+            var horz = spaceForLabels + width + 40 - legendRectSize;
+            var vert = i * height - offset;
+            return 'translate(' + horz + ',' + vert + ')';
+        });;
+
+
+    // displayed color of the entries
+    legend2.append('rect')
+        .attr('width', legendRectSize)
+        .attr('height', legendRectSize)
+        .style('fill', function (d, i) { return d.color; })
+        .style('stroke', function (d, i) { return d.color; })
+        .attr('width', legendRectSize)
+        .attr('height', legendRectSize);
+
+    // text of the entry names
+    legend2.append('text')
+        .attr('class', 'legend')
+        .attr('y', 0)
+        .attr('x', legendRectSize + legendSpacing)
+        .attr('y', legendRectSize - legendSpacing)
+        .text(function (d) { return d.name; });
+
 }
 
 
@@ -194,10 +271,10 @@ function createTrendChart(DOMElement, data) {
         .attr("fill", "none")
         .attr("stroke", "red")
         .attr("stroke-width", 1.5)
-        .attr("d", lineAvg);
+        .attr("d", lineAvg)
+        .attr("stroke-dasharray", 5,5);
 
     var dataMed = d3.median(data.meas, function(d) { return d.value; });
-    console.log(dataMed);
 
     var lineMed = d3.line()
       .x(function(d) {return x(parseTime(d.time)); })
@@ -208,7 +285,8 @@ function createTrendChart(DOMElement, data) {
         .attr("fill", "none")
         .attr("stroke", "orange")
         .attr("stroke-width", 1.5)
-        .attr("d", lineMed);
+        .attr("d", lineMed)
+        .attr("stroke-dasharray", 5,5);
 
 
     g.append("g")
@@ -269,7 +347,7 @@ function createTrendChart(DOMElement, data) {
         .append('g');
 
 
-    // displayed color of the files
+    // displayed color of the entries
     legend.append('rect')
         .attr('width', legendRectSize)
         .attr('height', legendRectSize)
@@ -283,7 +361,7 @@ function createTrendChart(DOMElement, data) {
         })
         .attr("dy", "2.5em");
 
-    // text of the file names
+    // text of the entry names
     legend.append('text')
         .attr('class', 'legend')
         .attr('y', 0)
@@ -297,14 +375,12 @@ function createTrendChart(DOMElement, data) {
         .text(function (d) { return d.name; });
 
 
+    // extracts tooltip from json object and return a html string for the div
     function extractToolTip(tooltip) {
       res = ""
       for (tip in tooltip) {
-        console.log(tip);
-        console.log(tooltip[tip]);
         res += "<br/>" + tip + ": "+ tooltip[tip];
       }
-      console.log(tooltip);
       return res;
     }
 }
