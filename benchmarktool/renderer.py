@@ -22,7 +22,7 @@ from benchmarktool.log import customlogging
 
 class Renderer(object):
     """The module renderer reads the results of one or several benchmarks and
-    creates a human readable output for example showing table or diagramms. The renderer provides to
+    creates a human readable output for example showing table or diagrams. The renderer provides to
     use cases. Firstly, a comparison between a plurality of benchmarks. Secondly, a analysis and
     determine a trend of a single system.
     A json file created by the benchrunner can be taken as a input. Currently this
@@ -122,26 +122,28 @@ class Renderer(object):
 
     def renderBenchMeasurementsTrend(self, benchName):
         """Produces html code for the data of the given bench name.
-        Diagramms are created.
+        Diagrams are created.
 
         :param benchName: name of the bench
         :returns: html code of the data
         """
         res = ""
-        body = self.createTrendDiagramForBenchName(benchName)
+        # no diagram for a one entr
+        if len(self.fileList) > 1:
+            body = self.createTrendDiagramForBenchName(benchName)
     #    body += self.renderTablesByTypes(benchName)
         return body
 
     def createTrendDiagramForBenchName(self, benchName):
-        """Produce html/js code to display the data of a benchmark as diagramm.
+        """Produce html/js code to display the data of a benchmark as diagram.
         The javascript function can be find in chart.js.
 
         :param benchName: name of the benchmark
-        :returns: html/js code of the diagramm.
+        :returns: html/js code of the diagram.
         """
         htmlCode = ""
         # iterate over all tests within in a bench
-        for benchTestName, benchTestData in self.benchmarkData[benchName].iteritems():
+        for benchTestName, benchTestData in sorted(self.benchmarkData[benchName].iteritems()):
             measurements = []
             if benchTestName == 'args':
                 continue
@@ -167,7 +169,7 @@ class Renderer(object):
                     measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
             # creates a base64 id for the element. test names could be invalid.
             eleId = createElementId("{}{}".format(benchName, benchTestName))
-            htmlCode += self.createTrendDiagramm({'name': benchTestName, 'meas': measurements}, eleId, benchTestName)
+            htmlCode += self.createTrendDiagram({'name': benchTestName, 'meas': measurements}, eleId, benchTestName)
         return htmlCode
 
     def renderSysInfosTrend(self):
@@ -193,15 +195,17 @@ class Renderer(object):
                 # find the element for the current group
                 groupElements = {key: val for key, val in sysinfosList.iteritems() if key.find(group) == 0}
             groupRows = ""
-            for sysinfoname, values in groupElements.iteritems():
-                # not the same columns
-                if not values[1:] == values[:-1]:
-                    # are the values valid for the chart
-                    if not type(values[0]) is list and isFloat(values[0]):
-                        graphs += self.createTrendDiagramForSysInfo(sysinfoname)
-                    else:
-                        groupRows += rowTempl.format(sysinfoname, values)
-                    continue
+            for sysinfoname, values in sorted(groupElements.iteritems()):
+                # no diagram for one entry
+                if len(self.fileList) > 1:
+                    # not the same columns
+                    if not values[1:] == values[:-1]:
+                        # are the values valid for the chart
+                        if not type(values[0]) is list and isFloat(values[0]):
+                            graphs += self.createTrendDiagramForSysInfo(sysinfoname)
+                        else:
+                            groupRows += rowTempl.format(sysinfoname, values)
+                        continue
                 groupRows += rowTempl.format(sysinfoname, values[0])
             groups += groupsTemp.format(group, graphs + tableTemp.format(groupRows))
             # remove the elements from the list
@@ -210,7 +214,7 @@ class Renderer(object):
         return templ.format(groups)
 
     def createTrendDiagramForSysInfo(self, SysInfoName):
-        """Some system infos can be shown as a diagramm. This method produces the
+        """Some system infos can be shown as a diagram. This method produces the
         html/js for the given system info.
 
         :returns: html code for displaying system infos"""
@@ -221,19 +225,19 @@ class Renderer(object):
         for index, value in enumerate(sysinfovalues):
             measurements.append({'value': value, 'time': timeList[index]})
 
-        return self.createTrendDiagramm({'name': SysInfoName, 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
+        return self.createTrendDiagram({'name': SysInfoName, 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
 
-    def createTrendDiagramm(self, data, elementId, title):
-        """Produce html js code to display the data of a benchmark as diagramm.
+    def createTrendDiagram(self, data, elementId, title):
+        """Produce html js code to display the data of a benchmark as diagram.
         The javascript function can be find in chart.js.
         :param benchName: name of the benchmark
-        :param elementId: if of the dom element of the diagramm
-        :param title: displayed title for the diagramm
+        :param elementId: if of the dom element of the diagram
+        :param title: displayed title for the diagram
 
-        :returns: html/js code of the diagramm.
+        :returns: html/js code of the diagram.
         """
         elementTempl = """
-        <div id="{0}" class="trendDiag">
+        <div id="{0}" class="diagrammAlignment">
         <h4>{2}</h4>
         <script>
         var data = {1};
@@ -247,16 +251,31 @@ class Renderer(object):
 
         :returns: html code for displaying the system infos.
         """
-        templ = "<div class='tile'><table>{}</table></div>"
-
         numFiles = len(self.fileList)
+        templ = "<div class='tile'>{}</div>"
+        groupsTemp = "<details><summary>{0}</summary>{1}</details>"
+
+        tableTemp = "<table>{}{}</table>"
         headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 1) + "</tr>"
         rowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
+        sysinfosList = self.sysInfos
 
-        tableContent = headerTempl.format("System Info", *self.fileList)
-        for infoName, values in sorted(self.sysInfos.iteritems()):
-            tableContent += rowTempl.format(infoName, *values)
-        return templ.format(tableContent)
+        groups = ""
+        groupsKeywords = ['CADDOK', 'CPU', 'Disk', 'Memory', 'Swap', 'Other']
+        for group in groupsKeywords:
+            if group == 'Other':
+                groupElements = sysinfosList
+            else:
+                # find the element for the current group
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.find(group) == 0}
+            groupRows = ""
+            for sysinfoname, values in sorted(groupElements.iteritems()):
+                groupRows += rowTempl.format(sysinfoname, *values)
+            groups += groupsTemp.format(group, tableTemp.format(headerTempl.format("System Info", *self.fileList), groupRows))
+            # remove the elements from the list
+            sysinfosList = {key: val for key, val in sysinfosList.iteritems() if key not in groupElements.keys()}
+
+        return templ.format(groups)
 
     def loadBenchmarkData(self):
         """Loads the benchmark data. The Format is a dict of the benchmark result
@@ -312,7 +331,7 @@ class Renderer(object):
 
     def renderBench(self, benchKey):
         """Generates html code of the given bench name to display its data.
-        This function will display a heading, the arguments, table and diagramms.
+        This function will display a heading, the arguments, table and diagrams.
 
         :param benchKey: the name of the benchmark
         :returns: string with html code
@@ -328,43 +347,34 @@ class Renderer(object):
 
     def renderBenchMeasurements(self, benchName):
         """Produces html code for the data of the given bench name.
-        A diagramm and tables are created.
+        A diagram and tables are created.
 
         :param benchName: name of the bench
         :returns: html code of the data
         """
         res = ""
-        body = self.createDiagramm(benchName)
+        # no diagram for one entry
+        if len(self.fileList) > 1:
+            body = self.createDiagramForBenchName(benchName)
         body += self.renderTablesByTypes(benchName)
         return body
 
-    def createDiagramm(self, benchName):
-        """Produce html js code to display the data of a benchmark as diagramm.
-        The javascript function can be find in chart.js.
-
-        :param benchName: name of the benchmark
-        :returns: html/js code of the diagramm.
-        """
-        elementTempl = """
-        <div id="{0}">
-            <script>
-                var data = {1};
-                createBarChart("#{0}",self.data);
-            </script>
-         </div>"""
-        tableContent = []
+    def createDiagramForBenchName(self, benchName):
         benchTests = self.benchmarkData[benchName]
         # not data available
         if benchTests is None or benchTests == {}:
             return ""
-        for (benchTestName, testData) in benchTests.iteritems():
+
+        htmlCode = ""
+        for (benchTestName, testData) in sorted(benchTests.iteritems()):
+            diagramData = []
             # one entry represents the args for the bench
             if benchTestName == 'args':
                 continue
 
             values = testData["values"]
             for index, val in enumerate(values):
-                # aggreagte time series and use that value for the diagramm
+                # aggreagte time series and use that value for the diagram
                 if testData["type"] == "time_series":
                     testResultList = val
                     if len(testResultList) == 0:
@@ -372,8 +382,30 @@ class Renderer(object):
                     sumTime = sum(testResultList)
                     avg = sumTime / len(testResultList)
                     val = avg
-                tableContent.append({"file": self.fileList[index], "name": benchTestName, "value": val})
-        return elementTempl.format(benchName, json.dumps(tableContent))
+                diagramData.append({"file": self.fileList[index], "name": benchTestName, "value": val})
+                elementId = createElementId(benchName + benchTestName)
+            htmlCode += self.createBarDiagram(diagramData, elementId, benchTestName)
+
+        return htmlCode
+
+    def createBarDiagram(self, data, elementId, title):
+        """Produce html js code to display the data of a benchmark as diagram.
+        The javascript function can be find in chart.js.
+        :param benchName: name of the benchmark
+        :param elementId: if of the dom element of the diagram
+        :param title: displayed title for the diagram
+
+        :returns: html/js code of the diagram.
+        """
+        elementTempl = """
+        <div id="{0}" class="diagrammAlignment">
+        <h4>{2}</h4>
+        <script>
+        var data = {1};
+        createBarChart("#{0}",self.data);
+        </script>
+        </div>"""
+        return elementTempl.format(elementId, json.dumps(data), title)
 
     def renderTablesByTypes(self, benchName):
         """Creates tables for each type of bench test.
