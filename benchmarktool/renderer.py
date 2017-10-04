@@ -22,8 +22,10 @@ from benchmarktool.log import customlogging
 
 class Renderer(object):
     """The module renderer reads the results of one or several benchmarks and
-    create a human readable output for example showing table or diagramms.
-    A json file created by the benchrunner can be taken as a input. self.currently this
+    creates a human readable output for example showing table or diagramms. The renderer provides to
+    use cases. Firstly, a comparison between a plurality of benchmarks. Secondly, a analysis and
+    determine a trend of a single system.
+    A json file created by the benchrunner can be taken as a input. Currently this
     module supports html output only.
     """
     currentDir = os.path.dirname(__file__)
@@ -73,44 +75,54 @@ class Renderer(object):
         logger.debug("output file: {}".format(self.args.outfile))
         logger.debug("logger conf file: " + str(self.args.logconfig))
 
-        self.loadBenchmarkData()
-        self.organizeData()
+        data = self.loadBenchmarkData()
+        self.organizeData(data)
         self.renderAllData()
 
-    def organizeData(self):
+    def organizeData(self, data):
+        """Takes the read-in data and puts the data in a format for further processing.
+        :param data: a dict with the data of benchmark files.
+        """
+
+        # three parts
         self.fileList = []
         self.sysInfos = {}
         self.benchmarkData = {}
 
-        firstFile = self.data.keys()[0]
-        for fileName in self.data.keys():
+        # create a list of all files
+        firstFile = data.keys()[0]
+        for fileName in data.keys():
             self.fileList.append(fileName)
 
-        for sysinfo, val in self.data[firstFile]["Sysinfos"].iteritems():
+        # create dict of all sysinfos. The values of all files are represented as a list.
+        for sysinfo, val in data[firstFile]["Sysinfos"].iteritems():
             attributeValues = []
             for fileName in self.fileList:
-                if sysinfo in self.data[fileName]["Sysinfos"]:
-                    attributeValues.append(self.data[fileName]["Sysinfos"][sysinfo])
+                if sysinfo in data[fileName]["Sysinfos"]:
+                    attributeValues.append(data[fileName]["Sysinfos"][sysinfo])
                 else:
                     attributeValues.append('-')
             self.sysInfos[sysinfo] = attributeValues
 
-        for bench, benchContent in self.data[firstFile]["results"].iteritems():
+        # create dict of all benches->test->results. The values all files are represented as a list.
+        for bench, benchContent in data[firstFile]["results"].iteritems():
             self.benchmarkData[bench] = {}
+            # argument list of a bench
             self.benchmarkData[bench]['args'] = benchContent['args']
 
+            # iterate over all bench tests
             for test, testContent in benchContent['data'].iteritems():
                 resultValues = []
                 self.benchmarkData[bench][test] = {}
                 self.benchmarkData[bench][test]['unit'] = testContent['unit']
                 self.benchmarkData[bench][test]['type'] = testContent['type']
                 for fileName in self.fileList:
-                    resultValues.append(self.data[fileName]["results"][bench]['data'][test]['value'])
+                    resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
                 self.benchmarkData[bench][test]['values'] = resultValues
 
     def renderBenchMeasurementsTrend(self, benchName):
         """Produces html code for the data of the given bench name.
-        A diagramm and tables are created.
+        Diagramms are created.
 
         :param benchName: name of the bench
         :returns: html code of the data
@@ -121,7 +133,7 @@ class Renderer(object):
         return body
 
     def createTrendDiagramForBenchName(self, benchName):
-        """Produce html js code to display the data of a benchmark as diagramm.
+        """Produce html/js code to display the data of a benchmark as diagramm.
         The javascript function can be find in chart.js.
 
         :param benchName: name of the benchmark
@@ -159,6 +171,12 @@ class Renderer(object):
         return htmlCode
 
     def renderSysInfosTrend(self):
+        """Produces the html code for the system infos. The infos are separated into 6 different groups.
+        This groups are determined by prefix. There are 5 default prefixes ('Memory', 'CPU', 'CADDOK', 'Disk', 'Swap').
+        The infos that could not be assigned to a group will be placed under 'Others'.
+
+        :returns: html code for displaying the system infos.
+        """
         templ = "<div class='tile'>{}</div>"
         rowTempl = "<tr><td>{}</td><td>{}</td></tr>"
         tableTemp = "<table><tr><th>System Info</th><th>Value</th></tr>{}</table>"
@@ -178,7 +196,6 @@ class Renderer(object):
             for sysinfoname, values in groupElements.iteritems():
                 # not the same columns
                 if not values[1:] == values[:-1]:
-                    print '#' * 80
                     # are the values valid for the chart
                     if not type(values[0]) is list and isFloat(values[0]):
                         graphs += self.createTrendDiagramForSysInfo(sysinfoname)
@@ -193,6 +210,10 @@ class Renderer(object):
         return templ.format(groups)
 
     def createTrendDiagramForSysInfo(self, SysInfoName):
+        """Some system infos can be shown as a diagramm. This method produces the
+        html/js for the given system info.
+
+        :returns: html code for displaying system infos"""
         sysinfovalues = self.sysInfos[SysInfoName]
         timeList = self.sysInfos['Current Time (UTC)']
 
@@ -206,6 +227,8 @@ class Renderer(object):
         """Produce html js code to display the data of a benchmark as diagramm.
         The javascript function can be find in chart.js.
         :param benchName: name of the benchmark
+        :param elementId: if of the dom element of the diagramm
+        :param title: displayed title for the diagramm
 
         :returns: html/js code of the diagramm.
         """
@@ -220,6 +243,10 @@ class Renderer(object):
         return elementTempl.format(elementId, json.dumps(data), title)
 
     def renderSysInfos(self):
+        """Produces the html code for the system infos.
+
+        :returns: html code for displaying the system infos.
+        """
         templ = "<div class='tile'><table>{}</table></div>"
 
         numFiles = len(self.fileList)
@@ -232,33 +259,37 @@ class Renderer(object):
         return templ.format(tableContent)
 
     def loadBenchmarkData(self):
-        """Loads the benchmark data. The data can be accessed by self.data.
-        The Format is a list of the benchmark result produced by the benchmark runner."""
+        """Loads the benchmark data. The Format is a dict of the benchmark result
+        produced by the benchmark runner.
+
+        :returns: a dict of files which contain the benchmarks"""
         if isinstance(self.args.benchmarks, list):
             # Loads a bunch of benchmarks.
+            data = {}
             for fileName in self.args.benchmarks:
-                self.data[fileName] = ioservice.loadJSONData(fileName)
-            self.areBenchmarksComparable(self.data)
+                data[fileName] = ioservice.loadJSONData(fileName)
+            self.areBenchmarksComparable(data)
         else:
             # Loads a single benchmark
-            self.data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
+            data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
+        return data
 
     def areBenchmarksComparable(self, benchmarks):
         """Checks the structure of each benchmark result. The same benchsuite is
         necessary for comparison. The benches and the arguments are therefore checked.
 
-        :param benchmarks: list with all benchmarks
+        :param benchmarks: dict with all benchmarks
         :raises RuntimeError: if the strucutre of the benchmarks is unequal
         """
 
-        firstFile = self.data.keys()[0]
-        firstFileBenches = self.data[firstFile]['results']
+        firstFile = benchmarks.keys()[0]
+        firstFileBenches = benchmarks[firstFile]['results']
         for fileName in benchmarks:
-            fnBenches = self.data[fileName]['results'].keys()
+            fnBenches = benchmarks[fileName]['results'].keys()
             if firstFileBenches.keys() != fnBenches:
                 raise RuntimeError("Can not compare given benchmarks! Different benches.")
             for benchKey in fnBenches:
-                if self.getBenchArgs(firstFile, benchKey) != self.getBenchArgs(fileName, benchKey):
+                if benchmarks[firstFile]["results"][benchKey]["args"] != benchmarks[fileName]["results"][benchKey]["args"]:
                     raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
 
     def renderAllData(self):
@@ -307,16 +338,6 @@ class Renderer(object):
         body += self.renderTablesByTypes(benchName)
         return body
 
-    def getBenchArgs(self, fileName, benchName):
-        """Helper function to return the arguments of a benchmark.  If no file name
-        is applied the data is token from the first file.
-
-        :param benchName: name of the benchmark
-        :param fileName: file where the information shall be taken from
-        :returns: a dict of arguments
-        """
-        return self.data[fileName]["results"][benchName]["args"]
-
     def createDiagramm(self, benchName):
         """Produce html js code to display the data of a benchmark as diagramm.
         The javascript function can be find in chart.js.
@@ -337,11 +358,13 @@ class Renderer(object):
         if benchTests is None or benchTests == {}:
             return ""
         for (benchTestName, testData) in benchTests.iteritems():
+            # one entry represents the args for the bench
             if benchTestName == 'args':
                 continue
 
             values = testData["values"]
             for index, val in enumerate(values):
+                # aggreagte time series and use that value for the diagramm
                 if testData["type"] == "time_series":
                     testResultList = val
                     if len(testResultList) == 0:
@@ -356,7 +379,7 @@ class Renderer(object):
         """Creates tables for each type of bench test.
 
         :param benchName: name of the benchmark
-        :return: the html code
+        :return: the html code of all tables
         """
         types = ["time", "time_series"]
         res = ""
@@ -368,7 +391,7 @@ class Renderer(object):
         """Creates a table of specific type of bench tests.
 
         :param benchName: name of the benchmark
-        :param type: type of the benchmark (e.g. 'time', 'time_series')
+        :param dataType: type of the benchmark (e.g. 'time', 'time_series')
         :returns: html code of the table.
         """
         header = "<h4>Tabelle {}</h4>".format(dataType)
@@ -413,11 +436,11 @@ class Renderer(object):
 
     def renderTimeSeriesRows(self, benchName, tests):
         """Creates the rows for the table. Each row display data of type 'time_series'.
-        The elements parameter contains a dict which is already filtered by this type.
+        The values are aggregated and displayed as a single value.
 
         :param benchName: name of the benchmark
-        :param elements: filtered dict which is containing test
-        :returns: string containing the rows
+        :param tests: filtered dict which is containing test
+        :returns: string containing the html rows
         """
         htmlCode = ""
 
@@ -482,6 +505,7 @@ class Renderer(object):
 
 
 def isFloat(s):
+    """A helper function for determining if a value (string) could be converted to to float."""
     try:
         float(s)
         return True
@@ -490,4 +514,8 @@ def isFloat(s):
 
 
 def createElementId(name):
+    """ A helper function for creating a dom element id. This is useful if the
+    name contains not allowed characters.
+    :param name: name of the element
+    :returns: base64 encoded string without newline and '='"""
     return name.encode('Base64').replace('\n', '').replace('=', '')
