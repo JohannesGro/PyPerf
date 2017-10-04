@@ -200,18 +200,18 @@ function createBarChart(DOMElement, data) {
 
 
     // displayed color of the entries
-    legend2.append('rect')
-        .attr('width', legendRectSize)
-        .attr('height', legendRectSize)
-        .style('fill', function (d, i) { return d.color; })
-        .style('stroke', function (d, i) { return d.color; })
-        .attr('width', legendRectSize)
-        .attr('height', legendRectSize);
+    legend2.append('line')
+        .attr('x1', 0)
+        .attr('x2', legendRectSize)
+        .attr('y1', '0.5em')
+        .attr('y2', '0.5em')
+        .attr("stroke-width", 2.5)
+        .style("stroke-dasharray","4,2") //dashed array for line
+        .style('stroke', function (d, i) { return d.color; });
 
     // text of the entry names
     legend2.append('text')
         .attr('class', 'legend')
-        .attr('y', 0)
         .attr('x', legendRectSize + legendSpacing)
         .attr('y', legendRectSize - legendSpacing)
         .text(function (d) { return d.name; });
@@ -219,10 +219,29 @@ function createBarChart(DOMElement, data) {
 }
 
 
-function createTrendChart(DOMElement, data) {
+function createTrendChart(DOMElement, data, option) {
+    console.log(option);
+
+
+
     data.meas.sort(function(a, b) {
       return a.time.localeCompare(b.time, {sensitivity: "case"});
     });
+
+   var parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%L");
+    if(option == 1) {
+      var formatTime = d3.timeFormat("0000-00-00T%H:%M:%S.%L%L");
+      var copy = data.meas;
+      for (var x of data.meas) {
+        // Shows only the explicitly set index of "5", and ignores 0-4
+
+        console.log((x.time))
+        console.log(parseTime(x.time))
+        console.log(formatTime(x.time))
+
+        console.log(x);
+      }
+    }
 
     var margin = {top: 20, right: 100, bottom: 40, left: 100},
       width = 560 - margin.left - margin.right,
@@ -238,7 +257,7 @@ function createTrendChart(DOMElement, data) {
       .attr("height", height + margin.top + margin.bottom),
       g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     //2017-09-23T08:16:03.777000
-    var parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%L");
+
 
     var x = d3.scaleTime()
       .rangeRound([0, width]);
@@ -262,31 +281,29 @@ function createTrendChart(DOMElement, data) {
 
     var dataAvg = d3.mean(data.meas, function(d) { return d.value; });
 
-    var lineAvg = d3.line()
-      .x(function(d) {return x(parseTime(d.time)); })
-      .y(function(d) {return y(dataAvg); });
-
-    g.append("path")
-        .datum(data.meas)
-        .attr("fill", "none")
-        .attr("stroke", "red")
-        .attr("stroke-width", 1.5)
-        .attr("d", lineAvg)
-        .attr("stroke-dasharray", 5,5);
+      // displayed avg
+      g.append('line')
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', y(dataAvg))
+      .attr('y2', y(dataAvg))
+      .attr("stroke-width", 1.5)
+      .style("stroke-dasharray", "5,5") //dashed array for line
+      .style('fill', 'red')
+      .style('stroke', 'red');
 
     var dataMed = d3.median(data.meas, function(d) { return d.value; });
 
-    var lineMed = d3.line()
-      .x(function(d) {return x(parseTime(d.time)); })
-      .y(function(d) {return y(dataMed); });
-
-    g.append("path")
-        .datum(data.meas)
-        .attr("fill", "none")
-        .attr("stroke", "orange")
-        .attr("stroke-width", 1.5)
-        .attr("d", lineMed)
-        .attr("stroke-dasharray", 5,5);
+      // displayed median
+      g.append('line')
+          .attr('x1', 0)
+          .attr('x2', width)
+          .attr('y1', y(dataMed))
+          .attr('y2', y(dataMed))
+          .attr("stroke-width", 1.5)
+          .style("stroke-dasharray", "5,5") //dashed array for line
+          .style('fill', 'orange')
+          .style('stroke', 'orange');
 
 
     g.append("g")
@@ -320,7 +337,7 @@ function createTrendChart(DOMElement, data) {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .attr("r", 5)
         .attr("cx", function(d) { return x(parseTime(d.time)); })
-        .attr("cy", function(d) { return y(d.value); })
+        .attr("cy", function(d) { if (isNaN(d.value)){console.log(d.value, d.time, data.name)} ;return y(d.value); })
         .on("mouseover", function(d) {
                     div.transition()
                         .duration(200)
@@ -336,42 +353,40 @@ function createTrendChart(DOMElement, data) {
         });
 
     // legend showing the different files.
-    var legendRectSize = 18,
+    var legendLineSize = 18,
         legendSpacing  = 4,
         spaceForLabels = 25,
         leftSpacing = 10;
+  var gapBetweenGroups = 5;
 
     var legend = svg.selectAll('.legend')
         .data([{'name':"Median", "color":"orange"}, {'name':"Mean", "color":"red"}])
         .enter()
-        .append('g');
-
+        .append('g')
+        .attr('transform', function (d, i) {
+            var height = legendLineSize + legendSpacing;
+            var offset = -gapBetweenGroups/2;
+            var horz = spaceForLabels + width + margin.left - legendLineSize;
+            var vert = i * height - offset;
+            return 'translate(' + horz + ',' + vert + ')';
+        });
 
     // displayed color of the entries
-    legend.append('rect')
-        .attr('width', legendRectSize)
-        .attr('height', legendRectSize)
+    legend.append('line')
+        .attr('x1', 0)
+        .attr('x2', legendLineSize)
+        .attr('y1', '0.5em')
+        .attr('y2', '0.5em')
+        .attr("stroke-width", 2.5)
+        .style("stroke-dasharray","4,2") //dashed array for line
         .style('fill', function (d, i) { return d.color; })
-        .style('stroke', function (d, i) { return d.color; })
-        .attr("x",width + margin.left + leftSpacing)
-        .attr("y",function (d, i) {
-            var height = legendRectSize + legendSpacing;
-            var vert = i * height - 0;
-            return vert;
-        })
-        .attr("dy", "2.5em");
+        .style('stroke', function (d, i) { return d.color; });
 
     // text of the entry names
     legend.append('text')
         .attr('class', 'legend')
-        .attr('y', 0)
-        .attr("x",spaceForLabels + width+ margin.left + leftSpacing)
-        .attr("y",function (d, i) {
-            var height = legendRectSize + legendSpacing;
-            var vert = i * height - 0;
-            return vert;
-        })
-        .attr("dy", "1.0em")
+        .attr('x', legendLineSize + legendSpacing)
+        .attr('y', legendLineSize - legendSpacing)
         .text(function (d) { return d.name; });
 
 
