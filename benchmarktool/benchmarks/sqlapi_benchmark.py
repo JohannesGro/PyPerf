@@ -13,15 +13,14 @@ all Records will be read at once, and then they will be read row by row.
 
 import collections
 import logging
+import sys
 import time
 from random import choice
 from string import lowercase
-import sys
-
 
 from benchmarktool.bench import Bench
-from cdb import cdbtime, ddl, misc, rte, sqlapi, transaction
 from benchmarktool.timer import Timer
+from cdb import cdbtime, ddl, misc, rte, sqlapi, transaction
 
 logger = logging.getLogger("[" + __name__ + " - SqlApiBenchmark]")
 

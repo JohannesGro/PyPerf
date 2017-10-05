@@ -7,9 +7,10 @@
 """Helper module for initalizing the logger for the pkg.
 """
 
-from .. import ioservice
 import logging
 import sys
+
+from .. import ioservice
 
 
 def init_logging(logger_name, configFile="", fileName=""):

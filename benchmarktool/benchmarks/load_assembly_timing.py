@@ -1,14 +1,14 @@
 #!demoLauncher.cmd
 # -*- coding: iso-8859-1 -*-
 import logging
-import time
 import sys
+import time
 
 from benchmarktool.bench import Bench
+from benchmarktool.timer import Timer
 from cdb import rte
 from cdb.storage import blob
 from cs.documents import Document
-from benchmarktool.timer import Timer
 
 logger = logging.getLogger("[" + __name__ + " - LoadAssemblyTiming]")
 

@@ -14,9 +14,10 @@ import getpass
 import logging
 import multiprocessing
 import platform
-import psutil
 import subprocess
 import sys
+
+import psutil
 
 from cdb import rte, version
 from cdb.uberserver import usutil

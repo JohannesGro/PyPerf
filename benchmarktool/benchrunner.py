@@ -8,19 +8,18 @@
 """
 
 import argparse
-import time
 import getpass
 import importlib
-
 import logging.config
 import multiprocessing
 import os
 import platform
 import sys
+import time
 
 import ioservice
-from benchmarktool.log import customlogging
 import systemInfos
+from benchmarktool.log import customlogging
 
 
 class Benchrunner(object):
