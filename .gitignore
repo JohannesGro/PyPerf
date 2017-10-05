@@ -5,6 +5,5 @@ __pycache__/
 *.db
 benchmarkResults.json
 *.html
-*.css
 doc/_build/*
 *.pyc

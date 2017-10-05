@@ -31,12 +31,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(help='Available subcommands')
     for subc in sorted(bm.subcommands.items()):
-        command = subparsers.add_parser(subc[0], help=subc[1].__doc__)
+        command = subparsers.add_parser(subc[0], description=subc[1].__doc__)
         command.set_defaults(command=subc[0])
         for action in subc[1].parser._actions:
-            if type(action) == argparse._StoreAction:
+            if type(action) == argparse._StoreAction or type(action) == argparse._StoreTrueAction:
                 command._add_action(action)
-    #subparsers.add_argument("args", nargs=argparse.REMAINDER, help="Argument list for the sub command to run.")
     # Grab the self.args from argv
     args = parser.parse_args()
     return bm._main(args)
