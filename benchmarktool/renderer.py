@@ -4,7 +4,6 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
-
 """
 """
 
@@ -21,8 +20,8 @@ from benchmarktool.log import customlogging
 
 
 class Renderer(object):
-    """The module renderer reads the results of one or several benchmarks and
-    creates a human readable output for example showing table or diagrams. The renderer provides to
+    """The class renderer reads the results of one or several benchmarks and
+    creates a human readable output for example showing table or diagrams. The renderer provides two
     use cases. Firstly, a comparison between a plurality of benchmarks. Secondly, a analysis and
     determine a trend of a single system.
     A json file created by the benchrunner can be taken as a input. Currently this
