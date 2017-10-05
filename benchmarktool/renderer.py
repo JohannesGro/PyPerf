@@ -189,7 +189,7 @@ class Renderer(object):
 
         sysinfosList = self.sysInfos
         groups = ""
-        groupsKeywords = ['Memory', 'CPU', 'CADDOK', 'Disk', 'Swap', 'Other']
+        groupsKeywords = ['CADDOK', 'CPU', 'Disk', 'Memory', 'Swap', 'Other']
         for group in groupsKeywords:
             graphs = ""
             if group == 'Other':
@@ -240,16 +240,16 @@ class Renderer(object):
         :returns: html/js code of the diagram.
         """
         elementTempl = """
-        <div id="{0}" class="diagrammAlignment">
+        <div id="{0}" class="diagramContainer">
         <h4>{2}</h4>
         <script>
         var {0} = {1};
-        createTrendChart("#{0}",self.{0}, 1);
+        createTrendChart("#{0}",self.{0}, 0);
         </script>
-        <select name="ab" onchange='var svg = this.parentNode.getElementsByTagName("svg")[0]; svg.parentNode.removeChild(svg); createTrendChart("#{0}",self.{0}, this.selectedIndex);console.log(this)'>
-        <option value="1">option 1</option>
-        <option value="2">option 2</option>
-        <option value="3">option 3</option>
+        <select class="selection" onchange='var svg = this.parentNode.getElementsByTagName("svg")[0]; svg.parentNode.removeChild(svg); createTrendChart("#{0}",self.{0}, this.selectedIndex);'>
+        <option value="0" selected>All</option>
+        <option value="1">24h</option>
+        <option value="2">Weekdays</option>
         </select>
         </div>"""
         return elementTempl.format(elementId, json.dumps(data), title)
@@ -297,7 +297,7 @@ class Renderer(object):
                 if os.path.isdir(fileName):
                     (_, _, fileNames) = os.walk(fileName).next()
                     for fn in fileNames:
-                        data[fn] = ioservice.loadJSONData(fn)
+                        data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
                     continue
                 data[fileName] = ioservice.loadJSONData(fileName)
             self.areBenchmarksComparable(data)
@@ -411,7 +411,7 @@ class Renderer(object):
         :returns: html/js code of the diagram.
         """
         elementTempl = """
-        <div id="{0}" class="diagrammAlignment">
+        <div id="{0}" class="diagramContainer">
         <h4>{2}</h4>
         <script>
         var data = {1};
