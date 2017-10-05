@@ -221,31 +221,83 @@ function createBarChart(DOMElement, data) {
 
 function createTrendChart(DOMElement, data, option) {
     console.log(option);
+    console.log(data);
 
-
-
-    data.meas.sort(function(a, b) {
-      return a.time.localeCompare(b.time, {sensitivity: "case"});
-    });
-
-   var parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%L");
-    if(option == 1) {
-      var formatTime = d3.timeFormat("0000-00-00T%H:%M:%S.%L%L");
-      var copy = data.meas;
-      for (var x of data.meas) {
-        // Shows only the explicitly set index of "5", and ignores 0-4
-
-        console.log((x.time))
-        console.log(parseTime(x.time))
-        console.log(formatTime(x.time))
-
-        console.log(x);
-      }
-    }
 
     var margin = {top: 20, right: 100, bottom: 40, left: 100},
       width = 560 - margin.left - margin.right,
       height = 300 - margin.top - margin.bottom;
+    var x = d3.scaleTime().rangeRound([0, width]);
+
+    var y = d3.scaleLinear().rangeRound([height, 0]);
+
+    var xAxis = d3.axisBottom(x);
+
+    // working with a clone
+    var data = JSON.parse(JSON.stringify(data));
+    var parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%L");
+
+    var tooltipFlag = (data.meas.length <= 20 && option == 0);
+
+    // 24 hours option
+    if(option == 1) {
+      var timeDict = {} // dict for storing time and index. the index is used for aggregation.
+      var newMeas = [] // create a new meas list
+      for (var i = 0; i < data.meas.length; i++) {
+
+        var timeString = data.meas[i].time.split('T')[1];
+        // set the same date for every entry
+        var newDate = "1971-01-01T"+timeString
+
+        // check if an entry for this time exist
+        if (newDate in timeDict) {
+            // aggregate value for this time
+            newMeas[timeDict[newDate]].value = (newMeas[timeDict[newDate]].value + data.meas[i].value) / 2
+        }else {
+          // add a new entry for this time
+          var index = newMeas.push({'time':  newDate, 'value':  data.meas[i].value}) -1;
+          timeDict[newDate] = index;
+        }
+      }
+      // replace the data
+      data.meas = newMeas;
+      // set the tick format for the xAxis
+      xAxis =  xAxis.tickFormat(d3.timeFormat("%Hh"))
+      // option 2 = Weekdays
+    }else if(option == 2) {
+          var timeDict = {} // dict for storing time and index. the index is used for aggregation.
+          var newMeas = [] // create a new meas list
+          for (var i = 0; i < data.meas.length; i++) {
+            // get weekday as int
+            var weekday = new Date(data.meas[i].time).getDay();
+            // new date dummy
+            var dateString = "1971-01-00"
+            // 1971-01-04 -> monday
+            var weekdayString = '' + (weekday + 4)
+            // set the time to "00:00:00.000000" and set the weekday
+            var newDate = dateString.substring(0,dateString.length - weekdayString.length) + weekdayString + "T" + "00:00:00.000000";
+
+            // check if an entry for this time/weekday exist
+            if (newDate in timeDict) {
+                // aggregate value for this date
+                newMeas[timeDict[newDate]].value = (newMeas[timeDict[newDate]].value + data.meas[i].value) / 2
+            }else {
+              // add a new entry for this date
+              var index = newMeas.push({'time':  newDate, 'value':  data.meas[i].value}) -1;
+              timeDict[newDate] = index;
+            }
+          }
+          // replace the data
+          data.meas = newMeas;
+          // set the tick format for the xAxis
+          xAxis =  xAxis.ticks(d3.timeDay,1).tickFormat(d3.timeFormat("%a"))
+        }
+
+    // sort data by date
+    data.meas.sort(function(a, b) {
+      return a.time.localeCompare(b.time, {sensitivity: "case"});
+    });
+
 
       // Define the div for the tooltip
       var div = d3.select("body").append("div")
@@ -256,14 +308,6 @@ function createTrendChart(DOMElement, data, option) {
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom),
       g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    //2017-09-23T08:16:03.777000
-
-
-    var x = d3.scaleTime()
-      .rangeRound([0, width]);
-
-    var y = d3.scaleLinear()
-      .rangeRound([height, 0]);
 
     var area = d3.area()
     .x(function(d) { return x(parseTime(d.time)); })
@@ -305,7 +349,7 @@ function createTrendChart(DOMElement, data, option) {
           .style('fill', 'orange')
           .style('stroke', 'orange');
 
-
+    // y axis
     g.append("g")
         .call(d3.axisLeft(y))
       .append("text")
@@ -317,9 +361,11 @@ function createTrendChart(DOMElement, data, option) {
         .attr("text-anchor", "end")
         .text("Measurements");
 
+
+    // x axis
     g.append("g")
     .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x).ticks(10).tickFormat(d3.timeFormat("%Hh")))
+    .call(xAxis)
     .append("text")
     .attr("fill", "#000")
     .attr("y", 0)
@@ -330,27 +376,29 @@ function createTrendChart(DOMElement, data, option) {
     .text("Time");
 
 
-    // Add the scatterplot
-    svg.selectAll("dot")
-        .data(data.meas)
-      .enter().append("circle")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-        .attr("r", 5)
-        .attr("cx", function(d) { return x(parseTime(d.time)); })
-        .attr("cy", function(d) { if (isNaN(d.value)){console.log(d.value, d.time, data.name)} ;return y(d.value); })
-        .on("mouseover", function(d) {
-                    div.transition()
-                        .duration(200)
-                        .style("opacity", .9);
-                    div	.html("Time: " + d.time + "<br/>Value: " + d.value +  extractToolTip(d.tooltip))
-                        .style("left", (d3.event.pageX) + "px")
-                        .style("top", (d3.event.pageY + 28) + "px");
-                    })
-        .on("mouseout", function(d) {
-            div.transition()
-                .duration(500)
-                .style("opacity", 0);
-        });
+    if (tooltipFlag){
+      // Add the scatterplot
+      svg.selectAll("dot")
+          .data(data.meas)
+        .enter().append("circle")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+          .attr("r", 5)
+          .attr("cx", function(d) { return x(parseTime(d.time)); })
+          .attr("cy", function(d) { if (isNaN(d.value)){console.log(d.value, d.time, data.name)} ;return y(d.value); })
+          .on("mouseover", function(d) {
+                      div.transition()
+                          .duration(200)
+                          .style("opacity", .9);
+                      div	.html("Time: " + d.time + "<br/>Value: " + d.value +  extractToolTip(d.tooltip))
+                          .style("left", (d3.event.pageX) + "px")
+                          .style("top", (d3.event.pageY + 28) + "px");
+                      })
+          .on("mouseout", function(d) {
+              div.transition()
+                  .duration(500)
+                  .style("opacity", 0);
+          });
+      }
 
     // legend showing the different files.
     var legendLineSize = 18,
