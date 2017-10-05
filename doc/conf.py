@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 #
 # BenchmarkTool documentation build configuration file, created by
 # sphinx-quickstart on Wed Aug 23 14:38:51 2017.

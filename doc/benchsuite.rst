@@ -10,6 +10,6 @@ contains serveral benchmarks.
 
 Each benchmark has three attribute.
 
-:file: The *file* which includes the benchmark. These file is imported like modules in pyhton. Subpackage names are separated from their parent package name by dots.
-:className: Name of the benchmark class.
+:file: The *file* which contains the benchmark. This file could be a absolute path.
+:className: Name of the benchmark class in the file.
 :args: *args* includes a dict to configure the benchmark. The arguments listed here can be used within the bench (*self.args*). 

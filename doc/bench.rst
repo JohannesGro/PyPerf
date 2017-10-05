@@ -1,6 +1,6 @@
 Bench
 ***********
 
-.. autoclass:: benchmarktool.bench.bench.Bench
+.. autoclass:: benchmarktool.bench.Bench
 	:members:
 	:noindex:
