@@ -55,54 +55,54 @@ def getMemoryInfos():
         res['Memory Total Virtual (MB)'] = stat.ullTotalVirtual / mb
 
     mem = psutil.virtual_memory()
-    logger.info("Memory Total {}MB".format(mem.total / mb))
+    logger.info("Memory Total: {}MB".format(mem.total / mb))
     res['Memory Total (MB)'] = mem.total / mb
 
     logger.info("Memory Percent: {}%".format(mem.percent))
     res['Memory Percent'] = mem.percent
 
-    logger.info("Memory Used {}MB".format(mem.used / mb))
+    logger.info("Memory Used: {}MB".format(mem.used / mb))
     res['Memory Used (MB)'] = mem.used / mb
 
-    logger.info("Memory Free {}MB".format(mem.free / mb))
+    logger.info("Memory Free: {}MB".format(mem.free / mb))
     res['Memory Free (MB)'] = mem.free / mb
 
-    logger.info("Memory Available {}MB".format(mem.available / mb))
+    logger.info("Memory Available: {}MB".format(mem.available / mb))
     res['Memory Available (MB)'] = mem.available / mb
     if(psutil.POSIX):
-        logger.info("Memory Active {}MB".format(mem.active / mb))
+        logger.info("Memory Active: {}MB".format(mem.active / mb))
         res['Memory Active (MB)'] = mem.active / mb
 
-        logger.info("Memory Inactive {}MB".format(mem.inactive / mb))
+        logger.info("Memory Inactive: {}MB".format(mem.inactive / mb))
         res['Memory Inactive (MB)'] = mem.inactive / mb
 
     if(psutil.POSIX or psutil.BSD):
-        logger.info("Memory Buffers {}MB".format(mem.buffers / mb))
+        logger.info("Memory Buffers: {}MB".format(mem.buffers / mb))
         res['Memory Buffers (MB)'] = mem.buffers / mb
 
-        logger.info("Memory Shared {}MB".format(mem.shared / mb))
+        logger.info("Memory Shared: {}MB".format(mem.shared / mb))
         res['Memory Shared (MB)'] = mem.shared / mb
 
-        logger.info("Memory Cached {}MB".format(mem.cached / mb))
+        logger.info("Memory Cached: {}MB".format(mem.cached / mb))
         res['Memory Cached (MB)'] = mem.cached / mb
     if(psutil.OSX or psutil.BSD):
         logger.info("Memory Wired {}MB".format(mem.wired / mb))
         res['Memory Wired (MB)'] = mem.wired / mb
 
     swap = psutil.swap_memory()
-    logger.info('Swap Total {}MB'.format(swap.total / mb))
+    logger.info('Swap Total: {}MB'.format(swap.total / mb))
     res['Swap Total (MB)'] = swap.total / mb
-    logger.info('Swap Used {}MB'.format(swap.used / mb))
+    logger.info('Swap Used: {}MB'.format(swap.used / mb))
     res['Swap Used (MB)'] = swap.used / mb
-    logger.info('Swap Free {}MB'.format(swap.free / mb))
+    logger.info('Swap Free: {}MB'.format(swap.free / mb))
     res['Swap (Free MB)'] = swap.free / mb
-    logger.info('Swap Percent {}'.format(swap.percent))
+    logger.info('Swap Percent: {}'.format(swap.percent))
     res['Swap Percent'] = swap.percent
     if not psutil.WINDOWS:
-        logger.info('Swap In {}MB'.format(swap.sin / mb))
+        logger.info('Swap In: {}MB'.format(swap.sin / mb))
         res['Swap In (MB)'] = swap.sin / mb
 
-        logger.info('Swaped Out {}MB'.format(swap.sout / mb))
+        logger.info('Swaped Out: {}MB'.format(swap.sout / mb))
         res['Swaped Out (MB)'] = swap.sout / mb
     return res
 
@@ -264,20 +264,26 @@ def VMWareInfo():
 def msinfo32():
     res = {}
     if(psutil.WINDOWS):
-        import xml.etree.ElementTree as ElementTree
+        import io
         import os
+        import xml.etree.ElementTree as ElementTree
+        from lxml import etree
 
-        fileName = "msinfo.xml"
+        fileName = "msinfo32.xml"
         proc = subprocess.Popen(['msinfo32', "/nfo", fileName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.stdout.read()
 
-        root = ElementTree.parse(fileName).getroot()
+        with io.open(fileName, encoding="UTF-16le") as fd:
+            xml_string = fd.read().encode("utf-8", "ignore")
 
-        cat_list = ['Systemübersicht', 'Datenträger']
-        for cat in root.iter("Category"):
+        root = etree.fromstring(xml_string)
+
+        cat_list = [u'Systemübersicht', u'Datenträger']
+        for cat in root.findall("Category"):
             if cat.get('name') in cat_list:
                 for data in cat.findall("Data"):
                     res[data.find('Element').text] = data.find('Wert').text
+                    logger.info("{}: {}".format(data.find('Element').text, data.find('Wert').text))
         os.unlink(fileName)
     return res
 
