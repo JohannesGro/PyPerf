@@ -4,13 +4,8 @@
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
-
 """
 """
-
-# TODO
-__revision__ = "$Id: benchrunner.py ? 2017-08-21 10:23:29Z ? $"
-
 
 import argparse
 import time
@@ -48,7 +43,7 @@ class Benchrunner(object):
     parser = argparse.ArgumentParser(description=__doc__, prog="Benchrunner")
     parser.add_argument("--suite", "-s", nargs='?', default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
     parser.add_argument("--outfile", "-o", nargs='?', default=output_file, help="The results will be stored in this file. (default: %(default)s)")
-    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--logconfig", "-l", nargs='?', default=logging_file, help="Configuration file for the logger. (default: %(default)s)")
 
     def __init__(self, args):
         # Grab the self.args from argv
@@ -119,5 +114,3 @@ class Benchrunner(object):
         results of the benchmarks.
         """
         self.results['Sysinfos'] = systemInfos.getAllSysInfos()
-        logger.info("Script Version: %s", __revision__)
-        self.results['Sysinfos']['Script Version'] = __revision__

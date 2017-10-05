@@ -28,13 +28,13 @@ class Renderer(object):
     currentDir = os.path.dirname(__file__)
     benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
-    logging_file = 'renderer.log'
+    loggingFile = 'renderer.log'
 
     # CLI
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
-    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--logconfig", "-l", nargs='?', default=loggingFile, help="Configuration file for the logger. (default: %(default)s)")
 
     template = """
     <html>
@@ -66,7 +66,7 @@ class Renderer(object):
 
     def main(self):
         global logger
-        logger = customlogging.init_logging("[Renderer]", configFile=self.args.logconfig, fileName=self.logging_file)
+        logger = customlogging.init_logging("[Renderer]", configFile=self.args.logconfig, fileName=self.loggingFile)
         logger.debug("benchmarks files: {}".format(self.args.benchmarks))
         logger.debug("output file: {}".format(self.args.outfile))
         logger.debug("logger conf file: " + str(self.args.logconfig))
