@@ -13,7 +13,6 @@ import json
 import logging
 import sys
 
-
 logger = logging.getLogger("[" + __name__ + " - I/O Service]")
 
 
