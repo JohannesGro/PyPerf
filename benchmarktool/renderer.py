@@ -36,7 +36,8 @@ class Renderer(object):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks or a folder.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
-    parser.add_argument("--logconfig", "-l", nargs='?', default=loggingFile, help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--reference", "-r", nargs='?', help="The Reference for the comparision.")
+    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
     parser.add_argument("--trend", "-t", default=False, action="store_true")
 
     template = """
@@ -45,6 +46,7 @@ class Renderer(object):
     <head>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
         <style>
         {}
         </style>
@@ -76,6 +78,8 @@ class Renderer(object):
         logger.debug("benchmarks files: {}".format(self.args.benchmarks))
         logger.debug("output file: {}".format(self.args.outfile))
         logger.debug("logger conf file: " + str(self.args.logconfig))
+        logger.debug("trend: " + str(self.args.trend))
+        logger.debug("reference: " + str(self.args.reference))
 
         data = self.loadBenchmarkData()
         self.organizeData(data)
@@ -161,14 +165,8 @@ class Renderer(object):
 
                 # if the result is a time series, it will be aggregated
                 if benchTestData['type'] == "time_series":
-                    if len(testResult) == 0:
-                        continue
-                    sumTime = sum(testResult)
-                    avg = sumTime / len(testResult)
-                    val = avg
-                    measurements.append({'value': avg, 'time': utcTime, 'tooltip': tooltip})
-                else:
-                    measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
+                    testResult = calcAvg(testResult)
+                measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
             # creates a base64 id for the element. test names could be invalid.
             eleId = createElementId("{}{}".format(benchName, benchTestName))
             htmlCode += self.createTrendDiagram({'name': benchTestName, 'meas': measurements}, eleId, benchTestName)
@@ -240,7 +238,7 @@ class Renderer(object):
         """
         elementTempl = """
         <div id="{0}" class="diagramContainer">
-        <h4>{2}</h4>
+        <h3>{2}</h3>
         <script>
         var {0} = {1};
         createTrendChart("#{0}",self.{0}, 0);
@@ -289,6 +287,10 @@ class Renderer(object):
         produced by the benchmark runner.
 
         :returns: a dict of files which contain the benchmarks"""
+
+        if self.args.reference:
+            self.reference = ioservice.loadJSONData(self.args.reference)
+
         if isinstance(self.args.benchmarks, list):
             # Loads a bunch of benchmarks.
             data = {}
@@ -315,13 +317,18 @@ class Renderer(object):
 
         firstFile = benchmarks.keys()[0]
         firstFileBenches = benchmarks[firstFile]['results']
+        if self.args.reference and firstFileBenches.keys() != self.reference['results'].keys():
+            raise RuntimeError("Can not compare given benchmarks with reference! Different benches.")
         for fileName in benchmarks:
             fnBenches = benchmarks[fileName]['results'].keys()
             if firstFileBenches.keys() != fnBenches:
                 raise RuntimeError("Can not compare given benchmarks! Different benches.")
-            for benchKey in fnBenches:
-                if benchmarks[firstFile]["results"][benchKey]["args"] != benchmarks[fileName]["results"][benchKey]["args"]:
-                    raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchKey)
+
+            for benchName in fnBenches:
+                if benchmarks[firstFile]["results"][benchName]["args"] != benchmarks[fileName]["results"][benchName]["args"]:
+                    raise RuntimeError("Can not compare given benchmarks! Different args in bench: %s" % benchName)
+                if self.args.reference and benchmarks[fileName]["results"][benchName]["args"] != self.reference['results'][benchName]['args']:
+                    raise RuntimeError("Can not compare given benchmarks with reference! Different args in bench: %s" % benchName)
 
     def renderAllData(self):
         """Iterates over each bench and calls a render function to display the data.
@@ -336,25 +343,25 @@ class Renderer(object):
         else:
             body = self.renderSysInfos()
         benches = self.benchmarkData
-        for benchKey in benches:
-            logger.info("Render bench: " + benchKey)
-            body += self.renderBench(benchKey)
+        for benchName in benches:
+            logger.info("Render bench: " + benchName)
+            body += self.renderBench(benchName)
         ioservice.writeToFile(self.template.format(inlineCss, d3Lib, chartsJS, body), self.args.outfile)
 
-    def renderBench(self, benchKey):
+    def renderBench(self, benchName):
         """Generates html code of the given bench name to display its data.
         This function will display a heading, the arguments, table and diagrams.
 
-        :param benchKey: the name of the benchmark
+        :param benchName: the name of the benchmark
         :returns: string with html code
         """
-        title = "<h2>{0}</h2>".format(benchKey)
+        title = "<h2>{0}</h2>".format(benchName)
         tileTempl = "<div class='tile'>{0}</div>"
-        args = self.renderBenchArgs(benchKey)
+        args = self.renderBenchArgs(benchName)
         if self.args.trend:
-            measurements = self.renderBenchMeasurementsTrend(benchKey)
+            measurements = self.renderBenchMeasurementsTrend(benchName)
         else:
-            measurements = self.renderBenchMeasurements(benchKey)
+            measurements = self.renderBenchMeasurements(benchName)
         return tileTempl.format(title + args + measurements)
 
     def renderBenchMeasurements(self, benchName):
@@ -366,7 +373,7 @@ class Renderer(object):
         """
         res = ""
         # no diagram for one entry
-        if len(self.fileList) > 1:
+        if len(self.fileList) > 1 or self.args.reference:
             body = self.createDiagramForBenchName(benchName)
         body += self.renderTablesByTypes(benchName)
         return body
@@ -384,16 +391,19 @@ class Renderer(object):
             if benchTestName == 'args':
                 continue
 
+            # reference data
+            if self.args.reference:
+                val = self.reference['results'][benchName]['data'][benchTestName]['value']
+                if testData["type"] == "time_series":
+                    val = calcAvg(val)
+                diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
+
+            # benchmarks data
             values = testData["values"]
             for index, val in enumerate(values):
                 # aggreagte time series and use that value for the diagram
                 if testData["type"] == "time_series":
-                    testResultList = val
-                    if len(testResultList) == 0:
-                        continue
-                    sumTime = sum(testResultList)
-                    avg = sumTime / len(testResultList)
-                    val = avg
+                    val = calcAvg(val)
                 diagramData.append({"file": self.fileList[index], "name": benchTestName, "value": val})
                 elementId = createElementId(benchName + benchTestName)
             htmlCode += self.createBarDiagram(diagramData, elementId, benchTestName)
@@ -411,7 +421,7 @@ class Renderer(object):
         """
         elementTempl = """
         <div id="{0}" class="diagramContainer">
-        <h4>{2}</h4>
+        <h3>{2}</h3>
         <script>
         var data = {1};
         createBarChart("#{0}",self.data);
@@ -438,7 +448,7 @@ class Renderer(object):
         :param dataType: type of the benchmark (e.g. 'time', 'time_series')
         :returns: html code of the table.
         """
-        header = "<h4>Tabelle {}</h4>".format(dataType)
+        header = "<h3>Tabelle {}</h3>".format(dataType)
         benchTests = self.benchmarkData[benchName]
 
         # not data available
@@ -470,12 +480,24 @@ class Renderer(object):
         htmlCode = ""
 
         numFiles = len(self.fileList)
+        if self.args.reference:
+            numFiles += 1
+
         headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 1) + "</tr>"
         rowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        htmlCode += headerTempl.format("Test", *self.fileList)
+        if self.args.reference:
+            htmlCode += headerTempl.format("Test", "reference", *self.fileList)
+        else:
+            htmlCode += headerTempl.format("Test", *self.fileList)
+
         for benchTestName, testData in sorted(test.iteritems()):
-            htmlCode += rowTempl.format(benchTestName, *testData['values'])
+            if self.args.reference:
+                referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
+                self.markBounds(referenceValue, testData['values'], testData['type'])
+                htmlCode += rowTempl.format(benchTestName, referenceValue, *testData['values'])
+            else:
+                htmlCode += rowTempl.format(benchTestName, *testData['values'])
         return htmlCode
 
     def renderTimeSeriesRows(self, benchName, tests):
@@ -489,11 +511,18 @@ class Renderer(object):
         htmlCode = ""
 
         numFiles = len(self.fileList)
+        if self.args.reference:
+            numFiles += 1
+
         headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 2) + "</tr>"
         outerRowTempl = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
         innerRowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        htmlCode += headerTempl.format("Test", "Aggregation", *self.fileList)
+        if self.args.reference:
+            htmlCode += headerTempl.format("Test", "Aggregation", "reference", *self.fileList)
+        else:
+            htmlCode += headerTempl.format("Test", "Aggregation", *self.fileList)
+
         for benchTestName, testData in sorted(tests.iteritems()):
             innerhtmlCode = ""
             listMax = []
@@ -518,11 +547,30 @@ class Renderer(object):
                 listAvg.append(avgVal)
             if len(listMax) == 0:
                 continue
-            innerhtmlCode += innerRowTempl.format("Max", *listMax)
-            innerhtmlCode += innerRowTempl.format("Min", *listMin)
-            innerhtmlCode += innerRowTempl.format("Sum", *listSum)
-            innerhtmlCode += innerRowTempl.format("Average", *listAvg)
-            htmlCode += outerRowTempl.format(benchTestName, (len(self.fileList) + 1), innerhtmlCode)
+
+            # reference data
+            if self.args.reference:
+                timeList = self.reference['results'][benchName]['data'][benchTestName]['value']
+                maxVal = max(timeList)
+                minVal = min(timeList)
+                sumVal = sum(timeList)
+                avgVal = sumVal / len(timeList)
+
+                self.markBounds(maxVal, listMax, testData['type'])
+                self.markBounds(minVal, listMin, testData['type'])
+                self.markBounds(sumVal, listSum, testData['type'])
+                self.markBounds(avgVal, listAvg, testData['type'])
+
+                innerhtmlCode += innerRowTempl.format("Max", maxVal, *listMax)
+                innerhtmlCode += innerRowTempl.format("Min", minVal, *listMin)
+                innerhtmlCode += innerRowTempl.format("Sum", sumVal, *listSum)
+                innerhtmlCode += innerRowTempl.format("Average", avgVal, *listAvg)
+            else:
+                innerhtmlCode += innerRowTempl.format("Max", *listMax)
+                innerhtmlCode += innerRowTempl.format("Min", *listMin)
+                innerhtmlCode += innerRowTempl.format("Sum", *listSum)
+                innerhtmlCode += innerRowTempl.format("Average", *listAvg)
+            htmlCode += outerRowTempl.format(benchTestName, (numFiles + 1), innerhtmlCode)
         return htmlCode
 
     def renderBenchArgs(self, benchName):
@@ -547,6 +595,54 @@ class Renderer(object):
         result = result.format(rows)
         return result
 
+    def markBounds(self, referenceValue, data, testType):
+        """Iterate through the data and compare it to the reference value.
+        The data will be marked with red or green if several bounds are reached.
+
+        :param referenceValue: reference value for the comparison
+        :param data: a list with values
+        :param testType: type of the test. important to determine the upper/lower bounds.
+            E.g. the smaller time the better but the more operations per minute the better."""
+        # there is two upper and lower bounds.
+        firstInterval = 0.3
+        secondInterval = 0.5
+
+        # the order of the color represents the bounds [1. upper, 2.upper, 1. lower , 2.lower]
+        # light-red, red, light-green, green
+        colors = ['#e57373', '#D00000', '#d2e175', '#ADC902']
+
+        if testType == 'time' or testType == 'time_series':
+            # determine the bounds
+            firstLowerBound = referenceValue
+            secondLowerBound = referenceValue * (1 - firstInterval)
+            firstUpperBound = referenceValue * (1 + firstInterval)
+            secondUpperBound = referenceValue * (1 + secondInterval)
+        else:
+            # light-green, green, light-red, red
+            colors = ['#d2e175', '#ADC902', '#e57373', '#D00000']
+            # determine the bounds
+            firstLowerBound = referenceValue * (1 - firstInterval)
+            secondLowerBound = referenceValue * (1 - secondInterval)
+            firstUpperBound = referenceValue
+            secondUpperBound = referenceValue * (1 + firstInterval)
+
+        # check if the values reached the bounds and setting the color for this section.
+        for i, value in enumerate(data):
+            colorIndex = -1
+            if value > firstUpperBound:
+                if value > secondUpperBound:
+                    colorIndex = 1
+                else:
+                    colorIndex = 0
+            elif value < firstLowerBound:
+                if value < secondLowerBound:
+                    colorIndex = 3
+                else:
+                    colorIndex = 2
+            # change the value if a bound is reached
+            if not colorIndex == -1:
+                data[i] = "<span style='background-color: {};'>{}</span>".format(colors[colorIndex], value)
+
 
 def isFloat(s):
     """A helper function for determining if a value (string) could be converted to to float."""
@@ -563,3 +659,12 @@ def createElementId(name):
     :param name: name of the element
     :returns: base64 encoded string without newline and '='"""
     return name.encode('Base64').replace('\n', '').replace('=', '')
+
+
+def calcAvg(values):
+    """ A helper function for calculating the average of a list of values."""
+    if len(values) == 0:
+        return
+    sumTime = sum(values)
+    avg = sumTime / len(values)
+    return avg
