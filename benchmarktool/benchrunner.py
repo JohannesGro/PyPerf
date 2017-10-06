@@ -42,7 +42,7 @@ class Benchrunner(object):
     parser = argparse.ArgumentParser(description=__doc__, prog="Benchrunner")
     parser.add_argument("--suite", "-s", nargs='?', default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
     parser.add_argument("--outfile", "-o", nargs='?', default=output_file, help="The results will be stored in this file. (default: %(default)s)")
-    parser.add_argument("--logconfig", "-l", nargs='?', default=logging_file, help="Configuration file for the logger. (default: %(default)s)")
+    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
 
     def __init__(self, args):
         # Grab the self.args from argv
