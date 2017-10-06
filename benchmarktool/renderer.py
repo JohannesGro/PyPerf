@@ -36,9 +36,10 @@ class Renderer(object):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks or a folder.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
-    parser.add_argument("--reference", "-r", nargs='?', help="The Reference for the comparision.")
+    parser.add_argument("--reference", "-r", nargs='?', help="""A referenced benchmark for the comparision. Uses the reference to mark some benchmarks result
+                                                                as positiv or negativ. This option will be ignored if the -trend option is active.""")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
-    parser.add_argument("--trend", "-t", default=False, action="store_true")
+    parser.add_argument("--trend", "-t", default=False, action="store_true", help="Using the benchmarks to show a trend of a system.")
 
     template = """
     <!DOCTYPE html>
@@ -87,6 +88,7 @@ class Renderer(object):
 
     def organizeData(self, data):
         """Takes the read-in data and puts the data in a format for further processing.
+
         :param data: a dict with the data of benchmark files.
         """
 
@@ -128,7 +130,7 @@ class Renderer(object):
 
     def renderBenchMeasurementsTrend(self, benchName):
         """Produces html code for the data of the given bench name.
-        Diagrams are created.
+        Diagrams are created only.
 
         :param benchName: name of the bench
         :returns: html code of the data
@@ -230,6 +232,7 @@ class Renderer(object):
     def createTrendDiagram(self, data, elementId, title):
         """Produce html js code to display the data of a benchmark as diagram.
         The javascript function can be find in chart.js.
+
         :param benchName: name of the benchmark
         :param elementId: if of the dom element of the diagram
         :param title: displayed title for the diagram
@@ -374,11 +377,15 @@ class Renderer(object):
         res = ""
         # no diagram for one entry
         if len(self.fileList) > 1 or self.args.reference:
-            body = self.createDiagramForBenchName(benchName)
+            body = self.createDiagramsForBenchName(benchName)
         body += self.renderTablesByTypes(benchName)
         return body
 
-    def createDiagramForBenchName(self, benchName):
+    def createDiagramsForBenchName(self, benchName):
+        """Creates a diagramm for every test within the bench.
+
+        :param benchName: name of the bench.
+        :returns: html/js code containing all diagrams for the given benchmark."""
         benchTests = self.benchmarkData[benchName]
         # not data available
         if benchTests is None or benchTests == {}:
@@ -413,6 +420,7 @@ class Renderer(object):
     def createBarDiagram(self, data, elementId, title):
         """Produce html js code to display the data of a benchmark as diagram.
         The javascript function can be find in chart.js.
+
         :param benchName: name of the benchmark
         :param elementId: if of the dom element of the diagram
         :param title: displayed title for the diagram
@@ -645,7 +653,10 @@ class Renderer(object):
 
 
 def isFloat(s):
-    """A helper function for determining if a value (string) could be converted to to float."""
+    """A helper function for determining if a value (string) could be converted to to float.
+
+    :param s: the string to be checked
+    :returns: boolean if the string can be cast to float"""
     try:
         float(s)
         return True
@@ -654,15 +665,19 @@ def isFloat(s):
 
 
 def createElementId(name):
-    """ A helper function for creating a dom element id. This is useful if the
+    """A helper function for creating a dom element id. This is useful if the
     name contains not allowed characters.
+
     :param name: name of the element
     :returns: base64 encoded string without newline and '='"""
     return name.encode('Base64').replace('\n', '').replace('=', '')
 
 
 def calcAvg(values):
-    """ A helper function for calculating the average of a list of values."""
+    """A helper function for calculating the average of a list of values.
+
+    :param values: a list of floats
+    :returns: average of the list"""
     if len(values) == 0:
         return
     sumTime = sum(values)
