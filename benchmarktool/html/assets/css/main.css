@@ -33,7 +33,7 @@ summary:hover, details[open] summary {
 summary {
   margin: -5px;
   outline: none;
-  font-size: 16pt;
+  font-size: 16px;
   cursor: pointer;
   background-color: #FAFAFA;
   font-weight: bold;
@@ -101,15 +101,19 @@ body {
   background-color: rgb(0, 50, 84);
   padding: 30px;
   color: #888;
-  font: 300 16px/22px "Lato", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
 }
+
 
 .tile {
   background: white;
   padding: 1em;
-  margin: 0 1em 2em 1em;
+  margin-bottom: 10px;
   border: 1px solid #ccc;
-  border-bottom-width: 3px;
+  border-bottom-width: 2px;
   display: block;
 }
 
@@ -122,24 +126,25 @@ h1, h3, h4, h5, p {
 }
 
 h1 {
-  font-size: 36px;
+  font-size: 22px;
   line-height: 44px;
   color: #fff;
-  font-weight: 800;
+  font-weight: lighter;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 44px;
   margin-bottom: 10px;
 }
 
 h3 {
-  font-size: 21px;
+  font-size: 16px;
 }
 
 h4 {
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 900
 }
 
 h5 {
@@ -159,18 +164,13 @@ table {
   border-spacing: 0;
 }
 
-th, td {
-  vertical-align: top;
-}
-
 th {
-  background-color: rgb(0, 128, 197);
+  background-color: #0080c5;
   color: #fff;
-  font-weight: 400;
   text-transform: uppercase;
-  padding: 22px 22px;
+  padding: 10px 10px;
   width: 20%;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 td {
