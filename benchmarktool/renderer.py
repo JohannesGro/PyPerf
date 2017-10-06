@@ -36,7 +36,7 @@ class Renderer(object):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks or a folder.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
-    parser.add_argument("--reference", "-r", nargs='?', default=outputFile, help="The Reference for the comparision.")
+    parser.add_argument("--reference", "-r", nargs='?', help="The Reference for the comparision.")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
     parser.add_argument("--trend", "-t", default=False, action="store_true")
 
@@ -46,6 +46,7 @@ class Renderer(object):
     <head>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
         <style>
         {}
         </style>
@@ -164,14 +165,8 @@ class Renderer(object):
 
                 # if the result is a time series, it will be aggregated
                 if benchTestData['type'] == "time_series":
-                    if len(testResult) == 0:
-                        continue
-                    sumTime = sum(testResult)
-                    avg = sumTime / len(testResult)
-                    val = avg
-                    measurements.append({'value': avg, 'time': utcTime, 'tooltip': tooltip})
-                else:
-                    measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
+                    testResult = calcAvg(testResult)
+                measurements.append({'value': testResult, 'time': utcTime, 'tooltip': tooltip})
             # creates a base64 id for the element. test names could be invalid.
             eleId = createElementId("{}{}".format(benchName, benchTestName))
             htmlCode += self.createTrendDiagram({'name': benchTestName, 'meas': measurements}, eleId, benchTestName)
@@ -243,7 +238,7 @@ class Renderer(object):
         """
         elementTempl = """
         <div id="{0}" class="diagramContainer">
-        <h4>{2}</h4>
+        <h3>{2}</h3>
         <script>
         var {0} = {1};
         createTrendChart("#{0}",self.{0}, 0);
@@ -397,27 +392,18 @@ class Renderer(object):
                 continue
 
             # reference data
-            val = self.reference['results'][benchName]['data'][benchTestName]['value']
-            if testData["type"] == "time_series":
-                testResultList = val
-                if len(testResultList) == 0:
-                    continue
-                sumTime = sum(testResultList)
-                avg = sumTime / len(testResultList)
-                val = avg
-            diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
+            if self.args.reference:
+                val = self.reference['results'][benchName]['data'][benchTestName]['value']
+                if testData["type"] == "time_series":
+                    val = calcAvg(val)
+                diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
 
             # benchmarks data
             values = testData["values"]
             for index, val in enumerate(values):
                 # aggreagte time series and use that value for the diagram
                 if testData["type"] == "time_series":
-                    testResultList = val
-                    if len(testResultList) == 0:
-                        continue
-                    sumTime = sum(testResultList)
-                    avg = sumTime / len(testResultList)
-                    val = avg
+                    val = calcAvg(val)
                 diagramData.append({"file": self.fileList[index], "name": benchTestName, "value": val})
                 elementId = createElementId(benchName + benchTestName)
             htmlCode += self.createBarDiagram(diagramData, elementId, benchTestName)
@@ -435,7 +421,7 @@ class Renderer(object):
         """
         elementTempl = """
         <div id="{0}" class="diagramContainer">
-        <h4>{2}</h4>
+        <h3>{2}</h3>
         <script>
         var data = {1};
         createBarChart("#{0}",self.data);
@@ -462,7 +448,7 @@ class Renderer(object):
         :param dataType: type of the benchmark (e.g. 'time', 'time_series')
         :returns: html code of the table.
         """
-        header = "<h4>Tabelle {}</h4>".format(dataType)
+        header = "<h3>Tabelle {}</h3>".format(dataType)
         benchTests = self.benchmarkData[benchName]
 
         # not data available
@@ -508,7 +494,7 @@ class Renderer(object):
         for benchTestName, testData in sorted(test.iteritems()):
             if self.args.reference:
                 referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
-                self.markBounds(referenceValue, testData['values'])
+                self.markBounds(referenceValue, testData['values'], testData['type'])
                 htmlCode += rowTempl.format(benchTestName, referenceValue, *testData['values'])
             else:
                 htmlCode += rowTempl.format(benchTestName, *testData['values'])
@@ -570,10 +556,10 @@ class Renderer(object):
                 sumVal = sum(timeList)
                 avgVal = sumVal / len(timeList)
 
-                self.markBounds(maxVal, listMax)
-                self.markBounds(minVal, listMin)
-                self.markBounds(sumVal, listSum)
-                self.markBounds(avgVal, listAvg)
+                self.markBounds(maxVal, listMax, testData['type'])
+                self.markBounds(minVal, listMin, testData['type'])
+                self.markBounds(sumVal, listSum, testData['type'])
+                self.markBounds(avgVal, listAvg, testData['type'])
 
                 innerhtmlCode += innerRowTempl.format("Max", maxVal, *listMax)
                 innerhtmlCode += innerRowTempl.format("Min", minVal, *listMin)
@@ -609,29 +595,53 @@ class Renderer(object):
         result = result.format(rows)
         return result
 
-    def markBounds(self, referenceValue, data):
-        lowerBound = referenceValue * 0.7
-        firstUpperBound = referenceValue * 1.3
-        secondUpperBound = referenceValue * 1.5
-        for i, x in enumerate(data):
-            if x > firstUpperBound:
-                if x > secondUpperBound:
-                    data[i] = "<span style='background-color: #D00000;'>{}</span>".format(x)
-                else:
-                    data[i] = "<span style='background-color: #e57373;'>{}</span>".format(x)
-            if x < referenceValue:
-                if x < lowerBound:
-                    data[i] = "<span style='background-color: #ADC902;'>{}</span>".format(x)
-                else:
-                    data[i] = "<span style='background-color: #d2e175;'>{}</span>".format(x)
-        print referenceValue, data
+    def markBounds(self, referenceValue, data, testType):
+        """Iterate through the data and compare it to the reference value.
+        The data will be marked with red or green if several bounds are reached.
 
-    def calcMedian(self, data):
-        size = len(data)
-        if not (size % 2 == 0):
-            return (data[(size - 1) / 2] + data[(size + 1) / 2]) / 2
+        :param referenceValue: reference value for the comparison
+        :param data: a list with values
+        :param testType: type of the test. important to determine the upper/lower bounds.
+            E.g. the smaller time the better but the more operations per minute the better."""
+        # there is two upper and lower bounds.
+        firstInterval = 0.3
+        secondInterval = 0.5
+
+        # the order of the color represents the bounds [1. upper, 2.upper, 1. lower , 2.lower]
+        # light-red, red, light-green, green
+        colors = ['#e57373', '#D00000', '#d2e175', '#ADC902']
+
+        if testType == 'time' or testType == 'time_series':
+            # determine the bounds
+            firstLowerBound = referenceValue
+            secondLowerBound = referenceValue * (1 - firstInterval)
+            firstUpperBound = referenceValue * (1 + firstInterval)
+            secondUpperBound = referenceValue * (1 + secondInterval)
         else:
-            return data[size / 2]
+            # light-green, green, light-red, red
+            colors = ['#d2e175', '#ADC902', '#e57373', '#D00000']
+            # determine the bounds
+            firstLowerBound = referenceValue * (1 - firstInterval)
+            secondLowerBound = referenceValue * (1 - secondInterval)
+            firstUpperBound = referenceValue
+            secondUpperBound = referenceValue * (1 + firstInterval)
+
+        # check if the values reached the bounds and setting the color for this section.
+        for i, value in enumerate(data):
+            colorIndex = -1
+            if value > firstUpperBound:
+                if value > secondUpperBound:
+                    colorIndex = 1
+                else:
+                    colorIndex = 0
+            elif value < firstLowerBound:
+                if value < secondLowerBound:
+                    colorIndex = 3
+                else:
+                    colorIndex = 2
+            # change the value if a bound is reached
+            if not colorIndex == -1:
+                data[i] = "<span style='background-color: {};'>{}</span>".format(colors[colorIndex], value)
 
 
 def isFloat(s):
@@ -649,3 +659,12 @@ def createElementId(name):
     :param name: name of the element
     :returns: base64 encoded string without newline and '='"""
     return name.encode('Base64').replace('\n', '').replace('=', '')
+
+
+def calcAvg(values):
+    """ A helper function for calculating the average of a list of values."""
+    if len(values) == 0:
+        return
+    sumTime = sum(values)
+    avg = sumTime / len(values)
+    return avg
