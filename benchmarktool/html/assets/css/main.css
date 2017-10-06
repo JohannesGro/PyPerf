@@ -1,3 +1,7 @@
+* { margin:0; padding:0; box-sizing:border-box;
+background: transparent;
+}
+
 td span {
   display: inline-block;
   width: 100%;
@@ -31,12 +35,12 @@ summary:hover, details[open] summary {
 }
 
 summary {
+  border-radius: 4px;
   margin: -5px;
   outline: none;
   font-size: 14pt;
   cursor: pointer;
   background-color: #F7F7F7;
-  font-weight: bold;
   padding: 8px 0;
 }
 
@@ -97,10 +101,16 @@ html, body, div, h1, h2, h3, h4, h5, h6, p, table, tbody, tfoot, thead, tr, th, 
   vertical-align: baseline;
 }
 
+html {
+  background-color: #bfbfbf;
+}
+
 body {
+  padding: 10px;
+  border-radius: 2px;
+  color: #3f3f3f;
   background-color: #0069a2;
-  padding: 30px;
-  color: #888;
+  margin: 15px;
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 14px;
   font-weight: 300;
