@@ -220,15 +220,11 @@ function createBarChart(DOMElement, data) {
 
 
 function createTrendChart(DOMElement, data, option) {
-    console.log(option);
-    console.log(data);
-
-
     var margin = {top: 20, right: 100, bottom: 40, left: 100},
-      width = 560 - margin.left - margin.right,
+      width = 660 - margin.left - margin.right,
       height = 300 - margin.top - margin.bottom;
-    var x = d3.scaleTime().rangeRound([0, width]);
 
+    var x = d3.scaleUtc().rangeRound([0, width]);
     var y = d3.scaleLinear().rangeRound([height, 0]);
 
     var xAxis = d3.axisBottom(x);
@@ -246,6 +242,9 @@ function createTrendChart(DOMElement, data, option) {
       for (var i = 0; i < data.meas.length; i++) {
 
         var timeString = data.meas[i].time.split('T')[1];
+        // set seconds to 0
+        var splittedTimeString = timeString.split(':')
+        timeString = splittedTimeString[0] + ':' + splittedTimeString[1] + ':00.000000'
         // set the same date for every entry
         var newDate = "1971-01-01T"+timeString
 
@@ -262,7 +261,7 @@ function createTrendChart(DOMElement, data, option) {
       // replace the data
       data.meas = newMeas;
       // set the tick format for the xAxis
-      xAxis =  xAxis.tickFormat(d3.timeFormat("%Hh"))
+      xAxis =  xAxis.ticks(d3.utcHour,1).tickFormat(d3.utcFormat("%Hh"))
       // option 2 = Weekdays
     }else if(option == 2) {
           var timeDict = {} // dict for storing time and index. the index is used for aggregation.
@@ -272,8 +271,8 @@ function createTrendChart(DOMElement, data, option) {
             var weekday = new Date(data.meas[i].time).getDay();
             // new date dummy
             var dateString = "1971-01-00"
-            // 1971-01-04 -> monday
-            var weekdayString = '' + (weekday + 4)
+            // 1971-01-03 -> Sunday
+            var weekdayString = '' + (weekday + 3)
             // set the time to "00:00:00.000000" and set the weekday
             var newDate = dateString.substring(0,dateString.length - weekdayString.length) + weekdayString + "T" + "00:00:00.000000";
 
@@ -290,14 +289,13 @@ function createTrendChart(DOMElement, data, option) {
           // replace the data
           data.meas = newMeas;
           // set the tick format for the xAxis
-          xAxis =  xAxis.ticks(d3.timeDay,1).tickFormat(d3.timeFormat("%a"))
+          xAxis =  xAxis.ticks(d3.utcDay,1).tickFormat(d3.utcFormat("%a"))
         }
 
     // sort data by date
     data.meas.sort(function(a, b) {
       return a.time.localeCompare(b.time, {sensitivity: "case"});
     });
-
 
       // Define the div for the tooltip
       var div = d3.select("body").append("div")
@@ -309,13 +307,13 @@ function createTrendChart(DOMElement, data, option) {
       .attr("height", height + margin.top + margin.bottom),
       g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    x.domain(d3.extent(data.meas, function(d) { return parseTime(d.time); }));
+    y.domain(d3.extent(data.meas, function(d) { return d.value; })).nice();
+
     var area = d3.area()
     .x(function(d) { return x(parseTime(d.time)); })
     .y0(height)
     .y1(function(d) { return y(d.value); });
-
-    x.domain(d3.extent(data.meas, function(d) { return parseTime(d.time); }));
-    y.domain(d3.extent(data.meas, function(d) { return d.value; }));
 
     g.append("path")
     .datum(data.meas)
@@ -376,7 +374,7 @@ function createTrendChart(DOMElement, data, option) {
     .text("Time");
 
 
-    if (tooltipFlag){
+      if (tooltipFlag || true){
       // Add the scatterplot
       svg.selectAll("dot")
           .data(data.meas)
@@ -384,7 +382,7 @@ function createTrendChart(DOMElement, data, option) {
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
           .attr("r", 5)
           .attr("cx", function(d) { return x(parseTime(d.time)); })
-          .attr("cy", function(d) { if (isNaN(d.value)){console.log(d.value, d.time, data.name)} ;return y(d.value); })
+          .attr("cy", function(d) { return y(d.value); })
           .on("mouseover", function(d) {
                       div.transition()
                           .duration(200)
