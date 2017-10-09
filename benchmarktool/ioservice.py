@@ -26,16 +26,16 @@ def loadJSONData(json_file):
         with io.open(json_file, encoding="UTF-8") as data_file:
             data = json.load(data_file)
     except IOError as err:
-        logger.error("Could not open json file ({})! ".format(json_file, str(err)))
+        logger.exception("Could not open json file ({})! ".format(json_file, str(err)))
         sys.exit(1)
     except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode json file ({})! {}".format(json_file, str(err)))
+        logger.exception("Could not decode json file ({})! {}".format(json_file, str(err)))
         sys.exit(1)
     except:
-        logger.error("Unexpected error occurred! {}".format(str(sys.exc_info()[0:1])))
+        logger.exception("Unexpected error occurred! {}".format(str(sys.exc_info()[0:1])))
         sys.exit(1)
     else:
-        logger.info("Reading json file successful ({})".format(json_file))
+        logger.exception("Reading json file successful ({})".format(json_file))
     return data
 
 
@@ -50,13 +50,13 @@ def saveJSONData(fileName, data):
         with io.open(fileName, 'w', encoding="utf-8") as outfile:
             outfile.write(unicode(json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)))
     except IOError as err:
-        logger.error("Could not open file to save the data! " + str(err))
+        logger.exception("Could not open file to save the data! " + str(err))
     except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.error("Could not decode values! " + str(err))
+        logger.exception("Could not decode values! " + str(err))
     except TypeError as err:
-        logger.error("Could not serialize object! " + str(err))
+        logger.exception("Could not serialize object! " + str(err))
     except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
+        logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
     else:
         logger.info("Saving successful")
 
@@ -83,8 +83,8 @@ def writeToFile(data, outfile):
         with io.open(outfile, 'w', encoding="UTF-8") as out:
             out.write(unicode(data))
     except IOError as err:
-        logger.error("Could not open file to save the data! " + str(err))
+        logger.exception("Could not open file to save the data! " + str(err))
     except:
-        logger.error("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
+        logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
     else:
         logger.info("Saving successful")
