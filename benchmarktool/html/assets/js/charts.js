@@ -374,7 +374,7 @@ function createTrendChart(DOMElement, data, option) {
     .text("Time");
 
 
-      if (tooltipFlag || true){
+      if (tooltipFlag){
       // Add the scatterplot
       svg.selectAll("dot")
           .data(data.meas)
