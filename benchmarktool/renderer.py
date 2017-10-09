@@ -34,8 +34,8 @@ class Renderer(object):
 
     # CLI
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--benchmarks", "-s", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks or a folder.")
-    parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file.")
+    parser.add_argument("--benchmarks", "-b", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks. It is also possible to use folders. All json files from a folder will be loaded.")
+    parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file (html).")
     parser.add_argument("--reference", "-r", nargs='?', help="""A referenced benchmark for the comparision. Uses the reference to mark some benchmarks result
                                                                 as positiv or negativ. This option will be ignored if the -trend option is active.""")
     parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
@@ -287,7 +287,9 @@ class Renderer(object):
 
     def loadBenchmarkData(self):
         """Loads the benchmark data. The Format is a dict of the benchmark result
-        produced by the benchmark runner.
+        produced by the benchmark runner. The files are specified in the arguments
+        of argparse. If a directory is given it will load all json files from this
+        directory.
 
         :returns: a dict of files which contain the benchmarks"""
 
@@ -301,7 +303,10 @@ class Renderer(object):
                 if os.path.isdir(fileName):
                     (_, _, fileNames) = os.walk(fileName).next()
                     for fn in fileNames:
-                        data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
+                        # use only json files
+                        _, fileExt = os.path.splitext(fn)
+                        if fileExt == ".json":
+                            data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
                     continue
                 data[fileName] = ioservice.loadJSONData(fileName)
             self.areBenchmarksComparable(data)
