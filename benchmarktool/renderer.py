@@ -136,10 +136,12 @@ class Renderer(object):
         :returns: html code of the data
         """
         res = ""
+        body = ""
         # no diagram for a one entr
         if len(self.fileList) > 1:
             body = self.createTrendDiagramForBenchName(benchName)
-    #    body += self.renderTablesByTypes(benchName)
+        else:
+            body += self.renderTablesByTypes(benchName)
         return body
 
     def createTrendDiagramForBenchName(self, benchName):
