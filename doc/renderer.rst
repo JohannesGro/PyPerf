@@ -26,11 +26,12 @@ In the following the command line interface will be shown.
 
     optional arguments:
       -h, --help            show this help message and exit
-      --benchmarks BENCHMARKS [BENCHMARKS ...], -s BENCHMARKS [BENCHMARKS ...]
-                            One or more json files which contain the benchmarks or
-                            a folder.
+      --benchmarks BENCHMARKS [BENCHMARKS ...], -b BENCHMARKS [BENCHMARKS ...]
+                            One or more json files which contain the benchmarks.
+                            It is also possible to use folders. All json files
+                            from a folder will be loaded.
       --outfile [OUTFILE], -o [OUTFILE]
-                            The results will be stored in this file.
+                            The results will be stored in this file (html).
       --reference [REFERENCE], -r [REFERENCE]
                             A referenced benchmark for the comparision. Uses the
                             reference to mark some benchmarks result as positiv or
@@ -39,4 +40,5 @@ In the following the command line interface will be shown.
       --logconfig [LOGCONFIG], -l [LOGCONFIG]
                             Configuration file for the logger.
       --trend, -t           Using the benchmarks to show a trend of a system.
+
 
