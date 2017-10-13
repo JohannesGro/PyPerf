@@ -124,9 +124,9 @@ class SqlApiBenchmark(Bench):
                 logger.debug("Test Table Definition:\n%s", tbl.stmt())
                 tbl.create()
             except Exception as exc:
-                logger.error("Error while creating table '%s': %s", name, exc)
+                logger.exception("Error while creating table '%s': %s", name, exc)
                 raise
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Create Table")
 
     def cleanup(self, name):
         """ Delete the tables holding the data related to the migration.
@@ -216,7 +216,7 @@ class SqlApiBenchmark(Bench):
                 self.do_single_insert(table, rec)
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
-        self.storeResult(res, type="time_series")
+        self.storeResult(res, type="time_series", name="Inserts")
 
     def do_select_one_by_one(self, rows, table):
         logger.info("\nSelect row by row for %d rows", rows)
@@ -226,19 +226,19 @@ class SqlApiBenchmark(Bench):
                 sqlapi.SQLselect("* from %s where z_nummer='%d'" % (table, i))
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
-        self.storeResult(res, type="time_series")
+        self.storeResult(res, type="time_series", name="Selects")
 
     def do_select_in_one_statement(self, table):
         logger.info("\nGet all with one statement")
         with Timer() as t:
             sqlapi.SQLselect("* from %s" % table)
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Select all statement")
 
     def do_PKs_select_in_one_statement(self, table):
         logger.info("\nGet all PKs with one statement")
         with Timer() as t:
             sqlapi.SQLselect("z_nummer, z_index from %s" % table)
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Select all PKs statement")
 
     def update_one_by_one(self, rows, table):
         logger.info("\nUpdate row by row for %d rows", rows)
@@ -249,7 +249,7 @@ class SqlApiBenchmark(Bench):
                                  % (table, i))
             res.append(t.elapsed.total_seconds())
         # logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
-        self.storeResult(res, type="time_series")
+        self.storeResult(res, type="time_series", name="Updates")
 
     def warmup(self, table, cycles=10):
         """Do some warmup, to avoid flickering from cold FS caches
@@ -265,7 +265,7 @@ class SqlApiBenchmark(Bench):
                 self.cleanup(table)
         self.discard(self.namespace)
         self.namespace = ""
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Warmup")
         logger.setLevel(prevlog)
 
     def test_run(self, table, rows):
@@ -279,19 +279,17 @@ class SqlApiBenchmark(Bench):
 
     def bench_main(self):
         logger.info("Bench_main")
-        self.namespace = "bench_main_"
         res = self.test_run(self.args['tablename'], self.args['rows'])
 
-        # self.storeResult(res)
-
     def select_cdbkeys(self, rows):
-        # cdb_keys is a view based on system tables/views and through some
-        # circumstances this view is sometimes very slow.
+        """cdb_keys is a view based on system tables/views and through some
+         circumstances this view is sometimes very slow."""
         logger.info("\nselect %d times from cdb_keys" % rows)
         with Timer() as t:
             for i in xrange(rows):
                 sqlapi.SQLselect("table_name, column_name FROM cdb_keys ORDER BY table_name, keyno")
         logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Select cdbKeys")
 
     def nope_statement(self, rows):
         logger.info("\nRun a nope SQL statement, %d times", rows)
@@ -310,6 +308,7 @@ class SqlApiBenchmark(Bench):
                     elif sqlapi.SQLdbms() == sqlapi.DBMS_MSSQL:
                             sqlapi.SQLselect("1")
         logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Nope statement")
 
 if __name__ == "__main__":
     print SqlApiBenchmark().run({"rows": 1000, "iterations": 10, "tablename": "x_cdb_testperf", "warmup": 100})

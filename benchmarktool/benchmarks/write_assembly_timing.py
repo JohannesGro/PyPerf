@@ -45,7 +45,7 @@ class WriteAssemblyTiming(Bench):
 
         with Timer() as t:
             ref_docs = self.doc.getAllRefDocs()
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Get all doc. refs.")
         logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
                      % (len(ref_docs), t.elapsed.total_seconds()))
         return ref_docs
@@ -56,7 +56,7 @@ class WriteAssemblyTiming(Bench):
             file_list = []
             for d in ref_docs:
                 file_list.extend(d.PrimaryFiles)
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Get primary files")
         logger.debug("--> Documents have %d primary files, %.4f secs. for query"
                      % (len(file_list), t.elapsed.total_seconds()))
         return file_list
@@ -77,7 +77,7 @@ class WriteAssemblyTiming(Bench):
         logger.debug("--> Loading of %d files / %d bytes took %.4f secs. (%.4f KBytes/sec)"
                      % (len(file_list), dlen, t.elapsed.total_seconds(), dlen / ((t.elapsed.total_seconds()) * 1024)))
         # store dlen or kb/s ?
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Load file content")
         return filenames
 
     def prepare(self):
@@ -129,7 +129,7 @@ class WriteAssemblyTiming(Bench):
             # store numFiles, dlen, kb/s ?
             timeWritingBlobs.append(t.elapsed.total_seconds())
             all_blob_ids.extend(blob_ids)
-        self.storeResult(timeWritingBlobs, type="time_series")
+        self.storeResult(timeWritingBlobs, type="time_series", name="Save files into blobstore")
         return all_blob_ids
 
     def cleanupBlobs(self, blob_ids):
@@ -141,7 +141,7 @@ class WriteAssemblyTiming(Bench):
                 bs.delete(blob_id, True)
         logger.debug("-> Deletion of %d blobs took %.4f secs. (%.4f blobs/sec)"
                      % (len(blob_ids), t.elapsed.total_seconds(), (len(blob_ids) / (t.elapsed.total_seconds()))))
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Clean up blobs")
 
     def cleanupFiles(self, sourcefiles):
         logger.info("Cleanup: Removing %d temporary files" % len(sourcefiles))
@@ -150,7 +150,7 @@ class WriteAssemblyTiming(Bench):
                 os.unlink(fn)
         logger.debug("-> Deletion of %d files took %.4f secs. (%.4f files/sec)"
                      % (len(sourcefiles), t.elapsed.total_seconds(), (len(sourcefiles) / (t.elapsed.total_seconds()))))
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="clean up files")
         os.rmdir(self.args['tmpdir'])
 
 if __name__ == '__main__':

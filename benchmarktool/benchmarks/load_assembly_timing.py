@@ -36,7 +36,7 @@ class LoadAssemblyTiming(Bench):
 
         with Timer() as t:
             ref_docs = self.doc.getAllRefDocs()
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Get all doc. refs.")
         logger.debug("--> Reference structure consists of %d documents, %.4f secs. for query"
                      % (len(ref_docs), t.elapsed.total_seconds()))
         return ref_docs
@@ -47,12 +47,12 @@ class LoadAssemblyTiming(Bench):
             file_list = []
             for d in ref_docs:
                 file_list.extend(d.PrimaryFiles)
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Get primary files")
         logger.debug("--> Documents have %d primary files, %.4f secs. for query"
                      % (len(file_list), t.elapsed.total_seconds()))
         return file_list
 
-    def bench_load(self):
+    def bench_loadFiles(self):
         logger.info("benchLoad")
         ref_docs = self.getAllRefDocs()
 
@@ -83,8 +83,8 @@ class LoadAssemblyTiming(Bench):
                 blob_values.append(t_blob.elapsed.total_seconds())
                 logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
                     f.cdbf_blob_id, len(reader), t_blob.elapsed.total_seconds(), len(reader) / (t_blob.elapsed.total_seconds() * 1024)))
-        self.storeResult(meta_values, name="fetching_metadata", type="time_series")
-        self.storeResult(blob_values, name="fetching_blob_data", type="time_series")
+        self.storeResult(meta_values, name="Fetching meta data", type="time_series")
+        self.storeResult(blob_values, name="Fetching blob data", type="time_series")
 
 
 if __name__ == '__main__':

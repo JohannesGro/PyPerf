@@ -59,7 +59,7 @@ class BlobstoreTiming(Bench):
         meta_values = []
         blob_values = []
         for i in range(self.args['loops']):
-            self.namespace = "(Loops#:{})".format(i)
+
             time.sleep(10)
             logger.debug("Load file content - %d/%d" % (i + 1, self.args['loops']))
 
@@ -84,9 +84,8 @@ class BlobstoreTiming(Bench):
                 blob_values.append(t_blob.elapsed.total_seconds())
                 logger.debug("----> Fetching data of blob %s ( %d bytes) took %.4f secs. (%.4f KBytes/sec)" % (
                     blob_id, len(reader), t_blob.elapsed.total_seconds(), len(reader) / (t_blob.elapsed.total_seconds() * 1024)))
-            self.storeResult(meta_values, name="fetching_metadata", type="time_series")
-            self.storeResult(blob_values, name="fetching_blob_data", type="time_series")
-        self.namespace = ""
+        self.storeResult(meta_values, name="Fetching meta data", type="time_series")
+        self.storeResult(blob_values, name="Fetching blob data", type="time_series")
 
     def saveFilesIntoBlobStore(self, sourcefiles):
 
@@ -98,7 +97,6 @@ class BlobstoreTiming(Bench):
 
         all_blob_ids = []
         for i in xrange(self.args['loops']):
-            self.namespace = "(Loop#:{})".format(i)
             logger.debug("saveFilesIntoBlobStore: Starting to write blobs %d/%d" % (i + 1, self.args['loops']))
             dlen = 0
             blob_ids = []
@@ -113,9 +111,8 @@ class BlobstoreTiming(Bench):
                              % (blob_id, dlen, t.elapsed.total_seconds(), dlen / ((t.elapsed.total_seconds()) * 1024)))
                 # store numFiles, dlen, kb/s ?
                 timeWritingBlobs.append(t.elapsed.total_seconds())
-                self.storeResult(timeWritingBlobs, type="time_series")
             all_blob_ids.extend(blob_ids)
-        self.namespace = ""
+        self.storeResult(timeWritingBlobs, type="time_series", name="Save Files into Blobstore")
         return all_blob_ids
 
     def cleanupBlobs(self, blob_ids):
@@ -127,7 +124,7 @@ class BlobstoreTiming(Bench):
                 bs.delete(blob_id, True)
         logger.debug("-> Deletion of %d blobs took %.4f secs. (%.4f blobs/sec)"
                      % (len(blob_ids), t.elapsed.total_seconds(), (len(blob_ids) / (t.elapsed.total_seconds()))))
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Clean up Blobs")
 
     def cleanupFiles(self, sourcefiles):
         logger.info("Cleanup: Removing %d temporary files" % len(sourcefiles))
@@ -136,7 +133,7 @@ class BlobstoreTiming(Bench):
                 os.unlink(fn)
         logger.debug("-> Deletion of %d files took %.4f secs. (%.4f files/sec)"
                      % (len(sourcefiles), t.elapsed.total_seconds(), (len(sourcefiles) / (t.elapsed.total_seconds()))))
-        self.storeResult(t.elapsed.total_seconds())
+        self.storeResult(t.elapsed.total_seconds(), name="Clean up files")
 
 
 if __name__ == '__main__':
