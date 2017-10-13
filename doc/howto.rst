@@ -33,13 +33,13 @@ the benchmark. In this example_ it is used to close the connection to a database
 Before each test the *setUp* method is called to prepare the test fixture.
 In this example_ it is used to create a new db table.
 
-Method called immediately after the test method has been called. Usually this method
+The Method *tearDown* is called immediately after the test method has been called. Usually this method
 is used for cleaning purposes. In this example_ it is used to drop a table of the database.
 
 There are serveral ways for creating the test. If you need to execute the tests in a specific order,
-you could create bench methods in alphabetical order. A other way is to create one bench
-method to call several non bench methods. The *namespace* could be useful for this purpose.
-The code below shows a bench method calling a non bench method, which does a measurement. The namespace
+you could create bench methods in alphabetical order. Bench methods have the prefix 'bench_' and are called automatically. A other way is to create one bench
+method to call several non bench methods. The *namespace* variable could be useful for this purpose.
+The code below shows a bench ('bench_update') method calling a non bench method ('do_inserts'), which does a measurement. The namespace
 is used to associate the call to *bench_update*. The measurements are store under the designation
 `bench_update_do_inserts`.
 
