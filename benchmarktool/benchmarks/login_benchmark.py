@@ -1,5 +1,3 @@
-#!c:\ce\trunk\sqlite\bin\powerscript.exe
-# Some imports
 import logging
 import os
 import random

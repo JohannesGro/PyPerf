@@ -1,4 +1,3 @@
-#!c:\ce\trunk\sqlite\bin\powerscript.exe
 # -*- mode: python; coding: utf-8 -*-
 #
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
