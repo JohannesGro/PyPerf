@@ -35,7 +35,7 @@ def loadJSONData(json_file):
         logger.exception("Unexpected error occurred! {}".format(str(sys.exc_info()[0:1])))
         sys.exit(1)
     else:
-        logger.exception("Reading json file successful ({})".format(json_file))
+        logger.info("Reading json file successful ({})".format(json_file))
     return data
 
 
