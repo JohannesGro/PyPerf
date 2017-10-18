@@ -6,4 +6,6 @@ For this purpose the project has two main parts. Firstly a runner executes the
 benchmakrs and saves the result. Secondly a renderer reads the results and displays
 it in a human readable manner.
 It is possible to define a suite of benchmarks, run the suite on several systems
-and compare the results.
+and compare the results or display a trend on a single system.
+
+For more information have a look at our documentation.

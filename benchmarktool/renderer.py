@@ -129,7 +129,8 @@ class Renderer(object):
 
     def renderBenchMeasurementsTrend(self, benchName):
         """Produces html code for the data of the given bench name.
-        Diagrams are created only.
+        Diagrams are created only if there are more than one file. Otherwise
+        a table is created.
 
         :param benchName: name of the bench
         :returns: html code of the data
@@ -318,8 +319,8 @@ class Renderer(object):
         return data
 
     def areBenchmarksComparable(self, benchmarks):
-        """Checks the structure of each benchmark result. The same benchsuite is
-        necessary for comparison. The benches and the arguments are therefore checked.
+        """Checks the structure of each benchmark result. The same benchsuite structure is
+        necessary for comparison. The benches, the arguments and the test are therefore checked.
 
         :param benchmarks: dict with all benchmarks
         :raises RuntimeError: if the strucutre of the benchmarks is unequal
