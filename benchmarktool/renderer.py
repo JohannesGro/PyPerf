@@ -111,6 +111,7 @@ class Renderer(object):
                     attributeValues.append('-')
             self.sysInfos[sysinfo] = attributeValues
 
+        # todo not iterate over firstfile all file keys
         # create dict of all benches->test->results. The values all files are represented as a list.
         for bench, benchContent in data[firstFile]["results"].iteritems():
             self.benchmarkData[bench] = {}
@@ -124,7 +125,11 @@ class Renderer(object):
                 self.benchmarkData[bench][test]['unit'] = testContent['unit']
                 self.benchmarkData[bench][test]['type'] = testContent['type']
                 for fileName in self.fileList:
-                    resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
+                    # add None if bench or test does not exist
+                    if bench not in data[fileName]["results"] or test not in data[fileName]["results"][bench]['data']:
+                        resultValues.append(None)
+                    else:
+                        resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
                 self.benchmarkData[bench][test]['values'] = resultValues
 
     def renderBenchMeasurementsTrend(self, benchName):
@@ -159,6 +164,8 @@ class Renderer(object):
                 continue
             # iterate over all results
             for index, testResult in enumerate(benchTestData['values']):
+                if testResult is None:
+                    continue
                 # find infos which will be displayed as tooltip
                 tooltip = {}
                 tooltipSysInfos = ["CPU Percent", "Memory Percent"]
@@ -166,7 +173,6 @@ class Renderer(object):
                     tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
 
                 utcTime = self.sysInfos['Current Time (UTC)'][index]
-
                 # if the result is a time series, it will be aggregated
                 if benchTestData['type'] == "time_series":
                     testResult = calcAvg(testResult)
@@ -311,7 +317,7 @@ class Renderer(object):
                             data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
                     continue
                 data[fileName] = ioservice.loadJSONData(fileName)
-            self.areBenchmarksComparable(data)
+            # self.areBenchmarksComparable(data)
         else:
             # Loads a single benchmark
             data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
@@ -568,11 +574,11 @@ class Renderer(object):
             listAvg = []
 
             for timeList in testData['values']:
-                if len(timeList) == 0:
-                    listMax.append([])
-                    listMin.append([])
-                    listSum.append([])
-                    listAvg.append([])
+                if timeList is None or len(timeList) == 0:
+                    listMax.append(timeList)
+                    listMin.append(timeList)
+                    listSum.append(timeList)
+                    listAvg.append(timeList)
                     continue
                 maxVal = max(timeList)
                 minVal = min(timeList)
