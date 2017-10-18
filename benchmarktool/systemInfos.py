@@ -24,6 +24,7 @@ from cdb.uberserver import usutil
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
 
+# windows memory information
 class MEMORYSTATUSEX(ctypes.Structure):
     _fields_ = [
         ("dwLength", ctypes.c_ulong),
@@ -147,6 +148,9 @@ def diskIOCounter():
 
 
 def getSysInfo():
+    """Get the general infos like time, OS etc.
+
+    :returns: dict with the infos"""
     logger.info("Elements Version: %s", version.getVersionDescription())
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
     logger.info("Current User: %s", getpass.getuser())
@@ -189,6 +193,9 @@ def getCPUInfo():
 
 
 def getCADDOKINfos():
+    """Looking for CADDOK enviroment variables.
+
+    :returns: dict with the infos."""
     res = {}
 
     for var in ('CADDOK_FLS_SOED',
@@ -238,6 +245,14 @@ def getCADDOKINfos():
 
 
 def isVMware():
+    """Detect virtual mashines by their mac address.
+    It is not completely sure that the running system is vm. These MAC are known
+    for being used for VMs.
+
+    :returns: True if a MAC was found. Otherwise False.
+    """
+
+    # list with macs
     """ VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69, 0x001c14
         Microsoft Hyper-V, Virtual Server, Virtual PC	00-03-FF
         Parallells Desktop, Workstation, Server, Virtuozzo	00-1C-42
@@ -262,6 +277,10 @@ def VMWareInfo():
 
 
 def msinfo32():
+    """Executes MSINFO32.exe on windows systems and saves the file. Reads the xml and filters useful informations.
+
+    :returns: dict with infos
+    """
     res = {}
     if(psutil.WINDOWS):
         import io
@@ -289,21 +308,51 @@ def msinfo32():
 
 
 def traceroute(dest):
+    """Executes tracert on windows and traceroute on linux systems.
+
+    :returns: dict with infos."""
     import re
     m = re.search("\/\/(.*):", dest)
     if m is None:
         dest = "localhost"
     else:
         dest = m.group(1)
-    output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = output.decode('cp852')
+    if(psutil.WINDOWS):
+        output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = output.decode('cp852').replace("\r\n", "")
 
-    logger.info("Route to server: {}".format(output))
-    return {"Route to server:": output}
-    # output = subprocess.check_output(["traceroute", "-w", "100", "localhost"], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # shorten en/de tracert msg
+        regex = '.*(Routenverfolgung\szu|Tracing\sroute\sto)\s(.*?\[.*?\]).*?:(.*)'
+        m = re.match(regex, output)
+        if m is not None:
+            server = m.group(2)
+            route = m.group(3)
+            logger.info("Route to server: {} - {}".format(server, route))
+            tracertString = "{}: {}".format(server, route)
+            return {"Route to server:": tracertString}
+    elif(psutil.POSIX):
+        # traceroute to google.com (172.217.23.14),
+        output = subprocess.check_output(["traceroute", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = output.replace("\n", "")
+
+        # shorten traceroute msg
+        regex = '.*(traceroute\sto)\s(.*?\(.*?\)).*?packets(.*)'
+        m = re.match(regex, output)
+        if m is not None:
+            server = m.group(2)
+            route = m.group(3)
+            logger.info("Route to server: {} - {}".format(server, route))
+            tracertString = "{}: {}".format(server, route)
+            return {"Route to server:": tracertString}
+    else:
+        return {}
 
 
 def getAllSysInfos():
+    """Collects all system infos and returns a dict.
+
+    :returns: dict with all system infos."""
+
     logger.info("SYSINFOS:\n")
     res = {}
     res.update(getSysInfo())
