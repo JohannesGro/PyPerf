@@ -298,7 +298,6 @@ class Renderer(object):
         if self.args.reference:
             self.reference = ioservice.loadJSONData(self.args.reference)
 
-        print self.args.benchmarks
         if isinstance(self.args.benchmarks, list):
             # Loads a bunch of benchmarks.
             data = {}
