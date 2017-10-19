@@ -82,6 +82,10 @@ class Renderer(object):
         logger.debug("reference: " + str(self.args.reference))
 
         data = self.loadBenchmarkData()
+        # if a directory contains no json files
+        if len(data) == 0:
+            logger.info("No benchmarks found.")
+            return
         self.organizeData(data)
         self.renderAllData()
 
@@ -90,6 +94,9 @@ class Renderer(object):
 
         :param data: a dict with the data of benchmark files.
         """
+
+        if len(data) == 0:
+            return
 
         # three parts
         self.fileList = []
@@ -321,6 +328,11 @@ class Renderer(object):
         else:
             # Loads a single benchmark
             data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
+        if(self.args.reference):
+            numLoadedFiles = len(data) + 1
+        else:
+            numLoadedFiles = len(data)
+        logger.info("Number of loaded json files: {}".format(numLoadedFiles))
         return data
 
     def areBenchmarksComparable(self, benchmarks):
@@ -535,12 +547,14 @@ class Renderer(object):
             htmlCode += headerTempl.format("Test", *self.fileList)
 
         for benchTestName, testData in sorted(test.iteritems()):
+            # replace none with '-'
+            values = ['-' if val is None else val for val in testData['values']]
             if self.args.reference:
                 referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
-                self.markBounds(referenceValue, testData['values'], testData['type'])
-                htmlCode += rowTempl.format(benchTestName, referenceValue, *testData['values'])
+                self.markBounds(referenceValue, values, testData['type'])
+                htmlCode += rowTempl.format(benchTestName, referenceValue, *values)
             else:
-                htmlCode += rowTempl.format(benchTestName, *testData['values'])
+                htmlCode += rowTempl.format(benchTestName, *values)
         return htmlCode
 
     def renderTimeSeriesRows(self, benchName, tests):
@@ -574,12 +588,13 @@ class Renderer(object):
             listAvg = []
 
             for timeList in testData['values']:
-                if timeList is None or len(timeList) == 0:
-                    listMax.append(timeList)
-                    listMin.append(timeList)
-                    listSum.append(timeList)
-                    listAvg.append(timeList)
+                if len(timeList) == 0 or timeList is None:
+                    listMax.append('-')
+                    listMin.append('-')
+                    listSum.append('-')
+                    listAvg.append('-')
                     continue
+
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
@@ -671,6 +686,8 @@ class Renderer(object):
 
         # check if the values reached the bounds and setting the color for this section.
         for i, value in enumerate(data):
+            if not isFloat(value):
+                continue
             colorIndex = -1
             if value > firstUpperBound:
                 if value > secondUpperBound:
