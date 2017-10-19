@@ -372,7 +372,6 @@ class Renderer(object):
                             data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
                     continue
                 data[fileName] = ioservice.loadJSONData(fileName)
-            # self.areBenchmarksComparable(data)
         else:
             # Loads a single benchmark
             data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
