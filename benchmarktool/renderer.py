@@ -91,10 +91,13 @@ class Renderer(object):
 
     def organizeData(self, data):
         """Takes the read-in data and puts the data in a format for further processing.
+        In order to use as much data as possible the renderer iterates over all benches and tests of all files
+        and shows the information. Older benchmarks can be compared with newer ones if the bench arguments and the test parameter
+        are identical.
 
         :param data: a dict with the data of benchmark files.
+        :raises RuntimeError: the data of the benches or tests is invalid
         """
-
         if len(data) == 0:
             return
 
@@ -108,8 +111,14 @@ class Renderer(object):
         for fileName in data.keys():
             self.fileList.append(fileName)
 
+        # collect system infos keys of all files
+        allSystemInfosKeys = set([])
+        for fileName in self.fileList:
+            # union the keys
+            allSystemInfosKeys.update(data[fileName]["Sysinfos"].keys())
+
         # create dict of all sysinfos. The values of all files are represented as a list.
-        for sysinfo, val in data[firstFile]["Sysinfos"].iteritems():
+        for sysinfo in allSystemInfosKeys:
             attributeValues = []
             for fileName in self.fileList:
                 if sysinfo in data[fileName]["Sysinfos"]:
@@ -118,24 +127,64 @@ class Renderer(object):
                     attributeValues.append('-')
             self.sysInfos[sysinfo] = attributeValues
 
-        # todo not iterate over firstfile all file keys
-        # create dict of all benches->test->results. The values all files are represented as a list.
-        for bench, benchContent in data[firstFile]["results"].iteritems():
-            self.benchmarkData[bench] = {}
-            # argument list of a bench
-            self.benchmarkData[bench]['args'] = benchContent['args']
+        # collect benches of all files
+        allBenchKeys = set([])
+        for fileName in self.fileList:
+            # union the keys
+            allBenchKeys.update(data[fileName]["results"].keys())
 
-            # iterate over all bench tests
-            for test, testContent in benchContent['data'].iteritems():
+        # create dict of all benches->test->results. The values all files are represented as a list.
+        for bench in allBenchKeys:
+            self.benchmarkData[bench] = {}
+
+            # argument list of a bench
+            for fileName in self.fileList:
+                # check if the bench exist in the given file
+                if bench in data[fileName]["results"]:
+                    # is there a entry for this bench?
+                    if 'args' in self.benchmarkData[bench]:
+                        # raise an error if the arguments for the benchmark are inconsistent
+                        if not self.benchmarkData[bench]['args'] == data[fileName]["results"][bench]['args']:
+                            raise RuntimeError("Can not compare given benchmarks. Different arguments found in {}!".format(fileName))
+                    else:
+                        # create first entry
+                        self.benchmarkData[bench]['args'] = data[fileName]["results"][bench]['args']
+
+            # test keys list
+            allBenchTestKeys = set([])
+            for fileName in self.fileList:
+                # union the keys
+                allBenchTestKeys.update(data[fileName]["results"][bench]['data'].keys())
+
+            # iterate over all bench tests. if the benchmarks does not contain this bench None is used.
+            for test in allBenchTestKeys:
                 resultValues = []
                 self.benchmarkData[bench][test] = {}
-                self.benchmarkData[bench][test]['unit'] = testContent['unit']
-                self.benchmarkData[bench][test]['type'] = testContent['type']
+
                 for fileName in self.fileList:
                     # add None if bench or test does not exist
                     if bench not in data[fileName]["results"] or test not in data[fileName]["results"][bench]['data']:
                         resultValues.append(None)
                     else:
+                        # the properties of a test has to be consistent in each file
+                        if 'unit' in self.benchmarkData[bench][test]:
+                            # raise an error if the tests for the benchmark are inconsistent
+                            if not self.benchmarkData[bench][test]['unit'] == data[fileName]["results"][bench]['data'][test]['unit']:
+                                raise RuntimeError("Can not compare given benchmarks. Different test ({}) units ({} - {}) found in {}!".format(test, self.benchmarkData[bench][test]['unit'], data[fileName]["results"][bench]['data'][test]['unit'], fileName))
+                        else:
+                            # create first entry
+                            self.benchmarkData[bench][test]['unit'] = data[fileName]["results"][bench]['data'][test]['unit']
+
+                        # the properties of a test has to be consistent in each file
+                        if 'type' in self.benchmarkData[bench][test]:
+                            # raise an error if the tests for the benchmark are inconsistent
+                            if not self.benchmarkData[bench][test]['type'] == data[fileName]["results"][bench]['data'][test]['type']:
+                                raise RuntimeError("Can not compare given benchmarks. Different test types found in {}!".format(fileName))
+                        else:
+                            # create first entry
+                            self.benchmarkData[bench][test]['type'] = data[fileName]["results"][bench]['data'][test]['type']
+
+                        # everthing is fine. add the value of this file
                         resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
                 self.benchmarkData[bench][test]['values'] = resultValues
 
@@ -447,9 +496,12 @@ class Renderer(object):
 
             # reference data
             if self.args.reference:
-                val = self.reference['results'][benchName]['data'][benchTestName]['value']
-                if testData["type"] == "time_series":
-                    val = calcAvg(val)
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    val = None
+                else:
+                    val = self.reference['results'][benchName]['data'][benchTestName]['value']
+                    if testData["type"] == "time_series":
+                        val = calcAvg(val)
                 diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
 
             # benchmarks data
@@ -550,7 +602,10 @@ class Renderer(object):
             # replace none with '-'
             values = ['-' if val is None else val for val in testData['values']]
             if self.args.reference:
-                referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    referenceValue = '-'
+                else:
+                    referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
                 self.markBounds(referenceValue, values, testData['type'])
                 htmlCode += rowTempl.format(benchTestName, referenceValue, *values)
             else:
@@ -608,6 +663,12 @@ class Renderer(object):
 
             # reference data
             if self.args.reference:
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    listMax.append('-')
+                    listMin.append('-')
+                    listSum.append('-')
+                    listAvg.append('-')
+                    continue
                 timeList = self.reference['results'][benchName]['data'][benchTestName]['value']
                 maxVal = max(timeList)
                 minVal = min(timeList)
@@ -661,6 +722,10 @@ class Renderer(object):
         :param data: a list with values
         :param testType: type of the test. important to determine the upper/lower bounds.
             E.g. the smaller time the better but the more operations per minute the better."""
+        # reference could be None or non float
+        if referenceValue is None or not isFloat(referenceValue):
+            return
+
         # there is two upper and lower bounds.
         firstInterval = 0.3
         secondInterval = 0.5
