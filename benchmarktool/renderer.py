@@ -384,51 +384,6 @@ class Renderer(object):
         logger.info("Number of loaded json files: {}".format(numLoadedFiles))
         return data
 
-    def areBenchmarksComparable(self, benchmarks):
-        """Checks the structure of each benchmark result. The same benchsuite structure is
-        necessary for comparison. The benches, the arguments and the test are therefore checked.
-
-        :param benchmarks: dict with all benchmarks
-        :raises RuntimeError: if the strucutre of the benchmarks is unequal
-        """
-
-        # define compare values from the first file
-        firstFile = benchmarks.keys()[0]
-        firstFileBenches = benchmarks[firstFile]['results']
-
-        if self.args.reference and firstFileBenches.keys() != self.reference['results'].keys():
-            raise RuntimeError("Can not compare given benchmarks ({} - {}) with reference! Different benches.".format(firstFile, self.args.reference))
-
-        for fileName in benchmarks:
-            fnBenches = benchmarks[fileName]['results'].keys()
-            if firstFileBenches.keys() != fnBenches:
-                raise RuntimeError("Can not compare given benchmarks ({} - {})! Different benches.".format(firstFile, fileName))
-
-            for benchName in fnBenches:
-                firstFileBenchTest = benchmarks[firstFile]["results"][benchName]["data"].keys()
-                firstFileBenchArgs = benchmarks[firstFile]["results"][benchName]["args"]
-                # compare args
-                benchArgs = benchmarks[fileName]["results"][benchName]["args"]
-                if firstFileBenchArgs != benchArgs:
-                    raise RuntimeError("Can not compare given benchmarks ({} - {})! Different args in bench: {}".format(firstFile, fileName, benchName))
-
-                # compare bench tests
-                benchTests = benchmarks[fileName]["results"][benchName]["data"].keys()
-                if firstFileBenchTest != benchTests:
-                    raise RuntimeError("Can not compare given benchmarks ({} - {})! Different tests in bench: {}".format(firstFile, fileName, benchName))
-
-        for benchName in firstFileBenches:
-            firstFileBenchTest = benchmarks[firstFile]["results"][benchName]["data"].keys()
-            firstFileBenchArgs = benchmarks[firstFile]["results"][benchName]["args"]
-            if self.args.reference:
-                # compare reference bench args
-                if firstFileBenchArgs != self.reference['results'][benchName]['args']:
-                    raise RuntimeError("Can not compare given benchmarks with reference ({} - {})! Different args in bench: {}".format(self.reference, firstFile, benchName))
-                # compare reference bench tests
-                referenceBenchTest = self.reference['results'][benchName]['data'].keys()
-                if firstFileBenchTest != referenceBenchTest:
-                    raise RuntimeError("Can not compare given benchmarks with reference ({} - {})! Different tests ({} - {}) in bench: {}".format(self.reference, firstFile, firstFileBenchTest, referenceBenchTest, benchName))
-
     def renderAllData(self):
         """Iterates over each bench and calls a render function to display the data.
         The render functions will produce html code. This code will be put together and
