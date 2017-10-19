@@ -13,14 +13,19 @@ function createBarChart(DOMElement, data) {
     return b.name.localeCompare(a.name, {sensitivity: "case"});
   });
 
-  var files = [];
-  for(var i = 0 ; i < data.length; i++) {
-    var d = data[i];
-    if( -1 ==  files.indexOf(d.file)) {
-      files.push(d.file);
+  // remove the null values and remember the position
+  var indexList = [];
+  var tmp = [];
+  for(var i = 0; i < data.length; i++) {
+    if(data[i].value != null) {
+      tmp.push(data[i]);
+    }else {
+      indexList.push(i);
     }
   }
-  var num_files = files.length;
+  data = tmp;
+
+  var num_files = data.length;
 
 
   // Color scale
@@ -74,7 +79,7 @@ function createBarChart(DOMElement, data) {
         .attr("y", function(d, i) { return y(d.file);})
         .attr("width", function(d) { return x(d.value);})
         .attr("height", barHeight)
-        .attr("fill", function(d,i) { return color(i % num_files); })
+        .attr("fill", function(d,i) { return skipedColor(i); })
         .on("mouseover", function(d) {
                     div.transition()
                         .duration(200)
@@ -161,7 +166,7 @@ function createBarChart(DOMElement, data) {
         spaceForLabels = 50;
 
     var legend = svg.selectAll('.legend')
-        .data(files)
+        .data(data)
         .enter()
         .append('g')
         .attr('transform', function (d, i) {
@@ -176,15 +181,15 @@ function createBarChart(DOMElement, data) {
     legend.append('rect')
         .attr('width', legendRectSize)
         .attr('height', legendRectSize)
-        .style('fill', function (d, i) { return color(i); })
-        .style('stroke', function (d, i) { return color(i); });
+        .style('fill', function (d, i) { return skipedColor(i); })
+        .style('stroke', function (d, i) { return skipedColor(i); });
 
     // text of the file names
     legend.append('text')
         .attr('class', 'legend')
         .attr('x', legendRectSize + legendSpacing)
         .attr('y', legendRectSize - legendSpacing)
-        .text(function (d) { return d; });
+        .text(function (d) { return d.file; });
 
     var legend2 = svg.selectAll('.legend2')
         .data([{'name':"Median", "color":"orange"}, {'name':"Mean", "color":"red"}])
@@ -215,6 +220,18 @@ function createBarChart(DOMElement, data) {
         .attr('x', legendRectSize + legendSpacing)
         .attr('y', legendRectSize - legendSpacing)
         .text(function (d) { return d.name; });
+
+    // helper function to skip the color of removed data to keep the same color for different bars.
+    function skipedColor(index) {
+      for( var ele of indexList ) {
+          if(ele <= index) {
+            // skip this color
+            color(index);
+            index++;
+          }
+      }
+      return color(index);
+    }
 
 }
 

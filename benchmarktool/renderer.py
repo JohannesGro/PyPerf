@@ -82,14 +82,24 @@ class Renderer(object):
         logger.debug("reference: " + str(self.args.reference))
 
         data = self.loadBenchmarkData()
+        # if a directory contains no json files
+        if len(data) == 0:
+            logger.info("No benchmarks found.")
+            return
         self.organizeData(data)
         self.renderAllData()
 
     def organizeData(self, data):
         """Takes the read-in data and puts the data in a format for further processing.
+        In order to use as much data as possible the renderer iterates over all benches and tests of all files
+        and shows the information. Older benchmarks can be compared with newer ones if the bench arguments and the test parameter
+        are identical.
 
         :param data: a dict with the data of benchmark files.
+        :raises RuntimeError: the data of the benches or tests is invalid
         """
+        if len(data) == 0:
+            return
 
         # three parts
         self.fileList = []
@@ -97,12 +107,17 @@ class Renderer(object):
         self.benchmarkData = {}
 
         # create a list of all files
-        firstFile = data.keys()[0]
         for fileName in data.keys():
             self.fileList.append(fileName)
 
+        # collect system infos keys of all files
+        allSystemInfosKeys = set([])
+        for fileName in self.fileList:
+            # union the keys
+            allSystemInfosKeys.update(data[fileName]["Sysinfos"].keys())
+
         # create dict of all sysinfos. The values of all files are represented as a list.
-        for sysinfo, val in data[firstFile]["Sysinfos"].iteritems():
+        for sysinfo in allSystemInfosKeys:
             attributeValues = []
             for fileName in self.fileList:
                 if sysinfo in data[fileName]["Sysinfos"]:
@@ -111,20 +126,65 @@ class Renderer(object):
                     attributeValues.append('-')
             self.sysInfos[sysinfo] = attributeValues
 
-        # create dict of all benches->test->results. The values all files are represented as a list.
-        for bench, benchContent in data[firstFile]["results"].iteritems():
-            self.benchmarkData[bench] = {}
-            # argument list of a bench
-            self.benchmarkData[bench]['args'] = benchContent['args']
+        # collect benches of all files
+        allBenchKeys = set([])
+        for fileName in self.fileList:
+            # union the keys
+            allBenchKeys.update(data[fileName]["results"].keys())
 
-            # iterate over all bench tests
-            for test, testContent in benchContent['data'].iteritems():
+        # create dict of all benches->test->results. The values all files are represented as a list.
+        for bench in allBenchKeys:
+            self.benchmarkData[bench] = {}
+
+            # argument list of a bench
+            for fileName in self.fileList:
+                # check if the bench exist in the given file
+                if bench in data[fileName]["results"]:
+                    # is there a entry for this bench?
+                    if 'args' in self.benchmarkData[bench]:
+                        # raise an error if the arguments for the benchmark are inconsistent
+                        if not self.benchmarkData[bench]['args'] == data[fileName]["results"][bench]['args']:
+                            raise RuntimeError("Can not compare given benchmarks. Different arguments found in {}!".format(fileName))
+                    else:
+                        # create first entry
+                        self.benchmarkData[bench]['args'] = data[fileName]["results"][bench]['args']
+
+            # test keys list
+            allBenchTestKeys = set([])
+            for fileName in self.fileList:
+                # union the keys
+                allBenchTestKeys.update(data[fileName]["results"][bench]['data'].keys())
+
+            # iterate over all bench tests. if the benchmarks does not contain this bench None is used.
+            for test in allBenchTestKeys:
                 resultValues = []
                 self.benchmarkData[bench][test] = {}
-                self.benchmarkData[bench][test]['unit'] = testContent['unit']
-                self.benchmarkData[bench][test]['type'] = testContent['type']
+
                 for fileName in self.fileList:
-                    resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
+                    # add None if bench or test does not exist
+                    if bench not in data[fileName]["results"] or test not in data[fileName]["results"][bench]['data']:
+                        resultValues.append(None)
+                    else:
+                        # the properties of a test has to be consistent in each file
+                        if 'unit' in self.benchmarkData[bench][test]:
+                            # raise an error if the tests for the benchmark are inconsistent
+                            if not self.benchmarkData[bench][test]['unit'] == data[fileName]["results"][bench]['data'][test]['unit']:
+                                raise RuntimeError("Can not compare given benchmarks. Different test ({}) units ({} - {}) found in {}!".format(test, self.benchmarkData[bench][test]['unit'], data[fileName]["results"][bench]['data'][test]['unit'], fileName))
+                        else:
+                            # create first entry
+                            self.benchmarkData[bench][test]['unit'] = data[fileName]["results"][bench]['data'][test]['unit']
+
+                        # the properties of a test has to be consistent in each file
+                        if 'type' in self.benchmarkData[bench][test]:
+                            # raise an error if the tests for the benchmark are inconsistent
+                            if not self.benchmarkData[bench][test]['type'] == data[fileName]["results"][bench]['data'][test]['type']:
+                                raise RuntimeError("Can not compare given benchmarks. Different test types found in {}!".format(fileName))
+                        else:
+                            # create first entry
+                            self.benchmarkData[bench][test]['type'] = data[fileName]["results"][bench]['data'][test]['type']
+
+                        # everthing is fine. add the value of this file
+                        resultValues.append(data[fileName]["results"][bench]['data'][test]['value'])
                 self.benchmarkData[bench][test]['values'] = resultValues
 
     def renderBenchMeasurementsTrend(self, benchName):
@@ -159,6 +219,8 @@ class Renderer(object):
                 continue
             # iterate over all results
             for index, testResult in enumerate(benchTestData['values']):
+                if testResult is None:
+                    continue
                 # find infos which will be displayed as tooltip
                 tooltip = {}
                 tooltipSysInfos = ["CPU Percent", "Memory Percent"]
@@ -166,7 +228,6 @@ class Renderer(object):
                     tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
 
                 utcTime = self.sysInfos['Current Time (UTC)'][index]
-
                 # if the result is a time series, it will be aggregated
                 if benchTestData['type'] == "time_series":
                     testResult = calcAvg(testResult)
@@ -311,56 +372,15 @@ class Renderer(object):
                             data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
                     continue
                 data[fileName] = ioservice.loadJSONData(fileName)
-            self.areBenchmarksComparable(data)
         else:
             # Loads a single benchmark
             data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
+        if(self.args.reference):
+            numLoadedFiles = len(data) + 1
+        else:
+            numLoadedFiles = len(data)
+        logger.info("Number of loaded json files: {}".format(numLoadedFiles))
         return data
-
-    def areBenchmarksComparable(self, benchmarks):
-        """Checks the structure of each benchmark result. The same benchsuite structure is
-        necessary for comparison. The benches, the arguments and the test are therefore checked.
-
-        :param benchmarks: dict with all benchmarks
-        :raises RuntimeError: if the strucutre of the benchmarks is unequal
-        """
-
-        # define compare values from the first file
-        firstFile = benchmarks.keys()[0]
-        firstFileBenches = benchmarks[firstFile]['results']
-
-        if self.args.reference and firstFileBenches.keys() != self.reference['results'].keys():
-            raise RuntimeError("Can not compare given benchmarks ({} - {}) with reference! Different benches.".format(firstFile, self.args.reference))
-
-        for fileName in benchmarks:
-            fnBenches = benchmarks[fileName]['results'].keys()
-            if firstFileBenches.keys() != fnBenches:
-                raise RuntimeError("Can not compare given benchmarks ({} - {})! Different benches.".format(firstFile, fileName))
-
-            for benchName in fnBenches:
-                firstFileBenchTest = benchmarks[firstFile]["results"][benchName]["data"].keys()
-                firstFileBenchArgs = benchmarks[firstFile]["results"][benchName]["args"]
-                # compare args
-                benchArgs = benchmarks[fileName]["results"][benchName]["args"]
-                if firstFileBenchArgs != benchArgs:
-                    raise RuntimeError("Can not compare given benchmarks ({} - {})! Different args in bench: {}".format(firstFile, fileName, benchName))
-
-                # compare bench tests
-                benchTests = benchmarks[fileName]["results"][benchName]["data"].keys()
-                if firstFileBenchTest != benchTests:
-                    raise RuntimeError("Can not compare given benchmarks ({} - {})! Different tests in bench: {}".format(firstFile, fileName, benchName))
-
-        for benchName in firstFileBenches:
-            firstFileBenchTest = benchmarks[firstFile]["results"][benchName]["data"].keys()
-            firstFileBenchArgs = benchmarks[firstFile]["results"][benchName]["args"]
-            if self.args.reference:
-                # compare reference bench args
-                if firstFileBenchArgs != self.reference['results'][benchName]['args']:
-                    raise RuntimeError("Can not compare given benchmarks with reference ({} - {})! Different args in bench: {}".format(self.reference, firstFile, benchName))
-                # compare reference bench tests
-                referenceBenchTest = self.reference['results'][benchName]['data'].keys()
-                if firstFileBenchTest != referenceBenchTest:
-                    raise RuntimeError("Can not compare given benchmarks with reference ({} - {})! Different tests ({} - {}) in bench: {}".format(self.reference, firstFile, firstFileBenchTest, referenceBenchTest, benchName))
 
     def renderAllData(self):
         """Iterates over each bench and calls a render function to display the data.
@@ -429,9 +449,12 @@ class Renderer(object):
 
             # reference data
             if self.args.reference:
-                val = self.reference['results'][benchName]['data'][benchTestName]['value']
-                if testData["type"] == "time_series":
-                    val = calcAvg(val)
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    val = None
+                else:
+                    val = self.reference['results'][benchName]['data'][benchTestName]['value']
+                    if testData["type"] == "time_series":
+                        val = calcAvg(val)
                 diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
 
             # benchmarks data
@@ -529,12 +552,17 @@ class Renderer(object):
             htmlCode += headerTempl.format("Test", *self.fileList)
 
         for benchTestName, testData in sorted(test.iteritems()):
+            # replace none with '-'
+            values = ['-' if val is None else val for val in testData['values']]
             if self.args.reference:
-                referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
-                self.markBounds(referenceValue, testData['values'], testData['type'])
-                htmlCode += rowTempl.format(benchTestName, referenceValue, *testData['values'])
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    referenceValue = '-'
+                else:
+                    referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
+                self.markBounds(referenceValue, values, testData['type'])
+                htmlCode += rowTempl.format(benchTestName, referenceValue, *values)
             else:
-                htmlCode += rowTempl.format(benchTestName, *testData['values'])
+                htmlCode += rowTempl.format(benchTestName, *values)
         return htmlCode
 
     def renderTimeSeriesRows(self, benchName, tests):
@@ -568,12 +596,13 @@ class Renderer(object):
             listAvg = []
 
             for timeList in testData['values']:
-                if len(timeList) == 0:
-                    listMax.append([])
-                    listMin.append([])
-                    listSum.append([])
-                    listAvg.append([])
+                if len(timeList) == 0 or timeList is None:
+                    listMax.append('-')
+                    listMin.append('-')
+                    listSum.append('-')
+                    listAvg.append('-')
                     continue
+
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)
@@ -587,6 +616,12 @@ class Renderer(object):
 
             # reference data
             if self.args.reference:
+                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+                    listMax.append('-')
+                    listMin.append('-')
+                    listSum.append('-')
+                    listAvg.append('-')
+                    continue
                 timeList = self.reference['results'][benchName]['data'][benchTestName]['value']
                 maxVal = max(timeList)
                 minVal = min(timeList)
@@ -640,6 +675,10 @@ class Renderer(object):
         :param data: a list with values
         :param testType: type of the test. important to determine the upper/lower bounds.
             E.g. the smaller time the better but the more operations per minute the better."""
+        # reference could be None or non float
+        if referenceValue is None or not isFloat(referenceValue):
+            return
+
         # there is two upper and lower bounds.
         firstInterval = 0.3
         secondInterval = 0.5
@@ -665,6 +704,8 @@ class Renderer(object):
 
         # check if the values reached the bounds and setting the color for this section.
         for i, value in enumerate(data):
+            if not isFloat(value):
+                continue
             colorIndex = -1
             if value > firstUpperBound:
                 if value > secondUpperBound:
