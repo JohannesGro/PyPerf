@@ -107,7 +107,6 @@ class Renderer(object):
         self.benchmarkData = {}
 
         # create a list of all files
-        firstFile = data.keys()[0]
         for fileName in data.keys():
             self.fileList.append(fileName)
 
