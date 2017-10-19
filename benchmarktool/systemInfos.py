@@ -250,7 +250,7 @@ def getCADDOKINfos():
     return res
 
 
-def isVMware():
+def isVM():
     """Detect virtual mashines by their mac address.
     It is not completely sure that the running system is vm. These MAC are known
     for being used for VMs.
@@ -277,7 +277,7 @@ def isVMware():
     return False
 
 
-def VMWareInfo():
+def VMInfo():
     logger.info("VM running?: (probably) {}".format("Yes" if isVMware() else "No"))
     return {"VM running?: (probably) ": ("Yes" if isVMware() else "No")}
 
