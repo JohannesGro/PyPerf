@@ -14,8 +14,10 @@ Contents:
    benchrunner
    bench
    benchsuite
-   howto
    renderer
+   howtoBenchmark
+   gettingStarted
+
 
 Indices and tables
 ==================
