@@ -27,13 +27,12 @@ class Renderer(object):
     module supports html output only.
     """
     currentDir = os.path.dirname(__file__)
-    benchmarkFile = os.path.join(currentDir, "benchmarkResults.json")
     outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     loggingFile = 'renderer.log'
 
     # CLI
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--benchmarks", "-b", nargs='+', default=benchmarkFile, help="One or more json files which contain the benchmarks. It is also possible to use folders. All json files from a folder will be loaded.")
+    parser.add_argument("benchmarks", nargs='+', help="One or more json files which contain the benchmarks. It is also possible to use folders. All json files from a folder will be loaded.")
     parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file (html).")
     parser.add_argument("--reference", "-r", nargs='?', help="""A referenced benchmark for the comparision. Uses the reference to mark some benchmarks result
                                                                 as positiv or negativ. This option will be ignored if the -trend option is active.""")
@@ -67,7 +66,8 @@ class Renderer(object):
         if type(args) == argparse.Namespace:
             prev = sys.argv
             sys.argv = []
-            self.args = self.parser.parse_args(args=None, namespace=args)
+            print args
+            self.args = self.parser.parse_args(args.benchmarks, namespace=args)
             sys.argv = prev
         else:
             self.args = self.parser.parse_args(args)
@@ -144,7 +144,9 @@ class Renderer(object):
                     if 'args' in self.benchmarkData[bench]:
                         # raise an error if the arguments for the benchmark are inconsistent
                         if not self.benchmarkData[bench]['args'] == data[fileName]["results"][bench]['args']:
-                            raise RuntimeError("Can not compare given benchmarks. Different arguments found in {}!".format(fileName))
+                            # raise RuntimeError("Can not compare given benchmarks. Different bench arguments found in {} - {}!".format(fileName, bench))
+                            # TODO vergleich aepfen mit birnen
+                            pass
                     else:
                         # create first entry
                         self.benchmarkData[bench]['args'] = data[fileName]["results"][bench]['args']
@@ -169,7 +171,7 @@ class Renderer(object):
                         if 'unit' in self.benchmarkData[bench][test]:
                             # raise an error if the tests for the benchmark are inconsistent
                             if not self.benchmarkData[bench][test]['unit'] == data[fileName]["results"][bench]['data'][test]['unit']:
-                                raise RuntimeError("Can not compare given benchmarks. Different test ({}) units ({} - {}) found in {}!".format(test, self.benchmarkData[bench][test]['unit'], data[fileName]["results"][bench]['data'][test]['unit'], fileName))
+                                raise RuntimeError("Can not compare given benchmarks. Different test units found in {} - {} - {}!".format(fileName, bench, test))
                         else:
                             # create first entry
                             self.benchmarkData[bench][test]['unit'] = data[fileName]["results"][bench]['data'][test]['unit']
@@ -178,7 +180,7 @@ class Renderer(object):
                         if 'type' in self.benchmarkData[bench][test]:
                             # raise an error if the tests for the benchmark are inconsistent
                             if not self.benchmarkData[bench][test]['type'] == data[fileName]["results"][bench]['data'][test]['type']:
-                                raise RuntimeError("Can not compare given benchmarks. Different test types found in {}!".format(fileName))
+                                raise RuntimeError("Can not compare given benchmarks. Different test types found in {} - {} - {}!".format(fileName, bench, test))
                         else:
                             # create first entry
                             self.benchmarkData[bench][test]['type'] = data[fileName]["results"][bench]['data'][test]['type']
