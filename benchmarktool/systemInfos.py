@@ -278,8 +278,8 @@ def isVM():
 
 
 def VMInfo():
-    logger.info("VM running?: (probably) {}".format("Yes" if isVMware() else "No"))
-    return {"VM running?: (probably) ": ("Yes" if isVMware() else "No")}
+    logger.info("VM running?: (probably) {}".format("Yes" if isVM() else "No"))
+    return {"VM running?: (probably) ": ("Yes" if isVM() else "No")}
 
 
 def msinfo32():
@@ -317,15 +317,21 @@ def traceroute(dest):
     """Executes tracert on windows and traceroute on linux systems.
 
     :returns: dict with infos."""
+
     import re
+
     m = re.search("\/\/(.*):", dest)
     if m is None:
         dest = "localhost"
     else:
         dest = m.group(1)
     if(psutil.WINDOWS):
+        # find encoding
+        import encodingService
+        cp = encodingService.guess_console_encoding()
+
         output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
-        output = output.decode('cp852').replace("\r\n", "")
+        output = output.decode(cp).replace("\r\n", "")
 
         # shorten en/de tracert msg
         regex = '.*(Routenverfolgung\szu|Tracing\sroute\sto)\s(.*?\[.*?\]).*?:(.*)'
@@ -366,7 +372,7 @@ def getAllSysInfos():
     res.update(getCPUInfo())
     if 'CADDOK_SERVER' in res:
         res.update(traceroute(res['CADDOK_SERVER']))
-    res.update(VMWareInfo())
+    res.update(VMInfo())
     res.update(getAllHostnamesInfo())
     res.update(getMacInfo())
     res.update(getMemoryInfos())
