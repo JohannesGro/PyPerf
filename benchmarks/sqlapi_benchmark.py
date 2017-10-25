@@ -45,7 +45,6 @@ class SqlApiBenchmark(Bench):
 
     def tabledef(self, name):
         # Use a wide table, so we use a copy of zeichung
-        # return ddl.Table("x_cdb_testperf",
         return ddl.Table(name,
                          ddl.Char("z_nummer", 20, 1),
                          ddl.Char("z_index", 10, 1),
