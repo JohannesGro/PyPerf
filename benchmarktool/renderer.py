@@ -60,6 +60,7 @@ class Renderer(object):
     </html>
     """
     data = {}
+    argsWarning = []
 
     def __init__(self, args):
         # Grab the self.args from argv
@@ -145,8 +146,7 @@ class Renderer(object):
                         # raise an error if the arguments for the benchmark are inconsistent
                         if not self.benchmarkData[bench]['args'] == data[fileName]["results"][bench]['args']:
                             # raise RuntimeError("Can not compare given benchmarks. Different bench arguments found in {} - {}!".format(fileName, bench))
-                            # TODO vergleich aepfen mit birnen
-                            pass
+                            self.argsWarning.append(bench)
                     else:
                         # create first entry
                         self.benchmarkData[bench]['args'] = data[fileName]["results"][bench]['args']
@@ -653,7 +653,12 @@ class Renderer(object):
         :param benchName: name of the benchmark
         :returns: html table with arguments of the given bench
         """
-        result = """
+        result = ""
+        if benchName in self.argsWarning:
+            warning = "<p style='color: #F75C03;font-size: 16px;'><span style='font-size: 24px; margin-right:10px;'>⚠</span>The arguments of the benchmarks are different from each other!</p>"
+            result += warning
+
+        result += """
             <table>
                 <tr>
                     <th>Argument</th>
