@@ -19,6 +19,7 @@ logger = logging.getLogger("[" + __name__ + " - I/O Service]")
 def loadJSONData(json_file):
     """This functions load the json-data and returns it.
 
+    :param fileName: name of the destination file
     :param json_file: the file in json format
     :returns: json object
     """
