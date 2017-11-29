@@ -5,7 +5,7 @@ import requests
 import time
 
 logging.basicConfig()
-logger = logging.getLogger("[" + __name__ + " - WebUiBenchmark]")
+logger = logging.getLogger("[" + __name__ + " - WebBenchmark]")
 ch = logging.StreamHandler()
 logger.addHandler(ch)
 
@@ -21,7 +21,7 @@ from cdb.platform.mom.entities import CDBClassDef
 
 
 
-class WebUiBenchmark(Bench):
+class WebBenchmark(Bench):
     def setUpClass(self):
         app = Root()
         self.client = Client(app)    
@@ -146,18 +146,18 @@ def saveJSONData(fileName, data):
 
 if __name__ == "__main__":
     step = 100
-    webui = WebUiBenchmark()
+    webui = WebBenchmark()
     webui.run({'step': step})
     # workaround execute without runner
     benchresult = {"Sysinfos": {},
             "results": {
-            "WebUiBenchmark": {
+            "WebBenchmark": {
             "args": {
                 "step": step
             },"data": {}
             }
     }}
-    benchresult["results"]["WebUiBenchmark"]["data"] =  webui.results
+    benchresult["results"]["WebBenchmark"]["data"] =  webui.results
     print benchresult
     output_file = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     saveJSONData(output_file, benchresult)
