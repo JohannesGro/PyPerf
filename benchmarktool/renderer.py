@@ -426,6 +426,7 @@ class Renderer(object):
         :returns: html code of the data
         """
         res = ""
+        body = ""
         # no diagram for one entry
         if len(self.fileList) > 1 or self.args.reference:
             body = self.createDiagramsForBenchName(benchName)
@@ -497,7 +498,7 @@ class Renderer(object):
         :param benchName: name of the benchmark
         :return: the html code of all tables
         """
-        types = ["time", "time_series"]
+        types = ["time", "time_series", "count", "count_series"]
         res = ""
         for t in types:
             res += self.renderTableByType(benchName, t)
@@ -523,15 +524,15 @@ class Renderer(object):
             return ""
 
         content = "<table>"
-        if dataType == "time_series":
-            content += self.renderTimeSeriesRows(benchName, tests)
-        elif dataType == "time":
-            content += self.renderTimeRows(benchName, tests)
+        if dataType in ["time_series", "count_series"]:
+            content += self.renderSeriesRows(benchName, tests)
+        elif dataType in ["time", "count"]:
+            content += self.renderRows(benchName, tests)
 
         content += "</table>"
         return header + content
 
-    def renderTimeRows(self, benchName, test):
+    def renderRows(self, benchName, test):
         """Creates the rows for the table. Each row display data of type 'time'.
         The elements parameter contains a dict which is already filtered by this type.
 
@@ -567,7 +568,7 @@ class Renderer(object):
                 htmlCode += rowTempl.format(benchTestName, *values)
         return htmlCode
 
-    def renderTimeSeriesRows(self, benchName, tests):
+    def renderSeriesRows(self, benchName, tests):
         """Creates the rows for the table. Each row display data of type 'time_series'.
         The values are aggregated and displayed as a single value.
 
