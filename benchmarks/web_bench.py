@@ -26,7 +26,7 @@ class WebBenchmark(Bench):
         app = Root()
         self.client = Client(app)    
 
-    def abench_get_all(self):
+    def bench_get_all(self):
         logger.info("bench_get_all")
 
         sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
@@ -43,7 +43,7 @@ class WebBenchmark(Bench):
 #        print response.json
 
 
-    def abench_get_all_astable(self):
+    def bench_get_all_astable(self):
         logger.info("bench_get_all_astable")
 
         sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
