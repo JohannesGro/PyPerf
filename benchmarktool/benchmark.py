@@ -49,3 +49,6 @@ def main():
     # Grab the self.args from argv
     args = parser.parse_args()
     return bm._main(args)
+
+if __name__ == "__main__":
+    main()
