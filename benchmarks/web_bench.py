@@ -31,7 +31,22 @@ class WebBenchmark(Bench):
         self.table = "test_benchmark"
 
     def bench_get_all(self):
-        logger.info("bench_get_all")
+        logger.info("bench_get_all")   
+        sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
+        with Timer() as t:
+            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'") 
+        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']    
+
+        self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection All Rows: no_cache")
+        self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection All Rows: SQL-Count", type="count", unit="statements")
+
+        with Timer() as t:
+            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'")
+        self.storeResult(t.elapsed.total_seconds(),  name="RestApi Collection All Rows: cache")
+
+
+    def bench_get_subset(self):
+        logger.info("bench_get_subset")
 
         for i in range(1,6):
             maxrows = 100 * i
@@ -41,7 +56,7 @@ class WebBenchmark(Bench):
             sql_count_after =  sqlapi.SQLget_statistics()['statement_count']    
 
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection (Rows: {}): no_cache".format(maxrows))
-            self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection (Rows:{}): SQL-Count".format(maxrows), type="count", unit="statements")
+            self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection (Rows: {}): SQL-Count".format(maxrows), type="count", unit="statements")
 
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}".format(maxrows))
@@ -50,31 +65,56 @@ class WebBenchmark(Bench):
 
     def bench_get_all_as_table(self):
         logger.info("bench_get_all_as_table")
+
+        self.get_all_as_table(self.table)
+        self.get_all_as_table(self.table + "_no_icons")
+        self.get_all_as_table(self.table + "_no_uuid")
+
+
+    def get_all_as_table(self, table):
+        sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
+        with Timer() as t:
+            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}".format(table))
+        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
+
+        self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' All Rows: no cache".format(table))
+        self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection as table '{}' All Rows SQL-Count".format(table), type="count", unit="statements")
+
+        with Timer() as t:
+            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}".format(table))
+        self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' All Rows: cache".format(table))
+
+
+    def bench_get_subset_as_table(self):
+        logger.info("bench_get_subset_as_table")
         
         for i in range(1,6):
             maxrows = 100 * i
-            self.get_all_as_table(self.table, maxrows)
-            self.get_all_as_table(self.table + "_no_icons", maxrows)
-            self.get_all_as_table(self.table + "_no_uuid", maxrows)
+            self.get_subset_as_table(self.table, maxrows)
+            self.get_subset_as_table(self.table + "_no_icons", maxrows)
+            self.get_subset_as_table(self.table + "_no_uuid", maxrows)
 
-    def get_all_as_table(self, table, maxrows):
+
+    def get_subset_as_table(self, table, maxrows):
             sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}&maxrows={}".format(table, maxrows))
             sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
 
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' (Rows: {}): no cache".format(table, maxrows))
-            self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection as table '{}' SQL-Count".format(table), type="count", unit="statements")
+            self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection as table '{}' (Rows: {}) SQL-Count".format(table, maxrows), type="count", unit="statements")
 
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}&maxrows={}".format(table, maxrows))
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' (Rows: {}): cache".format(table, maxrows))
          
+
     def bench_get_progesseviley(self):
         logger.info("bench_get_progressively")
         time_series = []
         statements = []
-        for i in range(self.args["step"], 2000, self.args["step"]):
+        totalRows = 2000 
+        for i in range(self.args["step"], totalRows, self.args["step"]):
             sql_count_before =  sqlapi.SQLget_statistics()['statement_count']  
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}".format(i))
@@ -88,27 +128,28 @@ class WebBenchmark(Bench):
             if i > 0:
                 time_series[i] = val - tmp[i-1]
 
-        self.storeResult(time_series, name="RestApi Collection with maxrows Intervals", type="time_series")
+        self.storeResult(time_series, name="RestApi Collection All Row with maxrows Intervals", type="time_series")
 
         tmp = list(statements)
         for i, val in enumerate(tmp):
             if i > 0:
                 statements[i] = val - tmp[i-1]
 
-        self.storeResult(statements, name="RestApi Collection with maxrows Intervals SQL-Count", type="count_series", unit="statements")
+        self.storeResult(statements, name="RestApi Collection All Rows with maxrows Intervals SQL-Count", type="count_series", unit="statements")
 
 
     def bench_get_as_table_progesseviley(self):
-        logger.info("bench_get_astable_progressively")
-        self.get_table_progressivly(self.table, 500)
-        self.get_table_progressivly(self.table + "_no_icons", 500)
-        self.get_table_progressivly(self.table + "_no_uuid", 500)
+        logger.info("bench_get_as_table_progressively")
+        self.get_table_progressivly(self.table)
+        self.get_table_progressivly(self.table + "_no_icons")
+        self.get_table_progressivly(self.table + "_no_uuid")
 
 
-    def get_table_progressivly(self, table, maxrows):
+    def get_table_progressivly(self, table):
         time_series = []
         statements = []
-        for i in range(self.args["step"], maxrows, self.args["step"]):
+        totalRows = 2000
+        for i in range(self.args["step"], totalRows, self.args["step"]):
             sql_count_before =  sqlapi.SQLget_statistics()['statement_count']  
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}&_as_table={}".format(i, table))
@@ -164,8 +205,10 @@ class WebBenchmark(Bench):
                   "operation_state" : op.getOperationState()}
         with Timer() as t:
             response = self.client.post_json(u'/internal/uisupport/operation/class/test_benchmark/CDB_Search/run',
-                                   params)
+                    params)
         self.storeResult(t.elapsed.total_seconds(), name="Retrieve Table data elements ui operations", type="time")
+
+        
 
 
 if __name__ == "__main__":
