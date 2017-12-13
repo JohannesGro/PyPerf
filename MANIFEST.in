@@ -1,0 +1,2 @@
+include benchmarktool/html/assets/js/*.js
+include benchmarktool/html/assets/css/*.css

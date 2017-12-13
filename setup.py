@@ -23,5 +23,6 @@ setup(name='benchmarktool',
            "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
                              "render=benchmarktool.renderer:Renderer"],
            "console_scripts": ["benchmark=benchmarktool.benchmark:main", ]
-      }
+      },
+      include_package_data=True
       )
