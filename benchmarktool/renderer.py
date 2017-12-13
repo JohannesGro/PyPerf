@@ -10,6 +10,7 @@ import argparse
 import json
 import logging.config
 import os
+import pkg_resources
 import sqlite3
 import sys
 import time
@@ -389,9 +390,12 @@ class Renderer(object):
         The render functions will produce html code. This code will be put together and
         saved as .html file.
         """
-        inlineCss = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
-        d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
-        chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
+        #inlineCss = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "css", "main.css"))
+        #d3Lib = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "d3.v4.min.js"))
+        #chartsJS = ioservice.readFile(os.path.join(self.currentDir, "html", "assets", "js", "charts.js"))
+        inlineCss = pkg_resources.resource_string(__name__, "html/assets/css/main.css")
+        d3Lib = pkg_resources.resource_string(__name__, "html/ssets/js/d3.v4.min.js")
+        chartsJS = pkg_resources.resource_string(__name__, "html/assets/js/charts.js")
         if self.args.trend:
             body = self.renderSysInfosTrend()
         else:
