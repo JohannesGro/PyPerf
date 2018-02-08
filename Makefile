@@ -6,7 +6,7 @@
 # read the comments.
 
 .PHONY: info help tests testfailed pycoverage coverage preflight
-	upload pycheck check pylint lint
+	egg upload pycheck check pylint lint clean
 
 TESTS = .
 PY_FILE_DIRS = .
@@ -17,7 +17,7 @@ NOSECOVOPTS = --with-coverage --cover-inclusive --cover-erase --cover-html --cov
 PYLINT = pylint
 PYLINTOPTS = --rcfile=.pylintrc -E
 PYCHECKER = flake8
-PYCHECKEROPTS =
+PYCHECKEROPTS = --max-line-length=110
 
 # Gather all Python files that have changed from the working set
 PY_FILES := $(subst \,/,$(shell git status $(PY_FILE_DIRS) -s |\
@@ -44,6 +44,24 @@ info:
 	@grep '^##' Makefile | sed -e 's/##//'
 
 help: info
+
+dist/.build: benchmarktool setup.py MANIFEST.in README.rst
+	python setup.py bdist_egg
+	touch dist/.build
+egg: dist/.build
+
+upload: egg
+ifeq ($(ARMED),True)
+	devpi login wen
+	devpi upload --index apps/15.3 dist/benchmarktool-0.1-py2.7.egg
+else
+	# devpi upload --index apps/15.3 --dry-run dist/benchmarktool-0.1-py2.7.egg
+	rm -rf /home/wen/src/cdb/trunk/eggs/benchmarktool-0.1-py2.7.egg/*
+	unzip dist/benchmarktool-0.1-py2.7.egg -d /home/wen/src/cdb/trunk/eggs/benchmarktool-0.1-py2.7.egg
+endif
+
+clean:
+	git clean -fd
 
 ##
 ## tests        Run all Python unit tests using 'nosetests'.

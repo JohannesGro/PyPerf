@@ -20,9 +20,10 @@ setup(name='benchmarktool',
       license='',
       packages=find_packages(),
       entry_points={
-           "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
-                             "render=benchmarktool.renderer:Renderer"],
-           "console_scripts": ["benchmark=benchmarktool.benchmark:main", ]
+          "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
+                            "render=benchmarktool.renderer:Renderer",
+                            "upload=benchmarktool.uploader:InfluxUploader"],
+          "console_scripts": ["benchmark=benchmarktool.benchmark:main", ]
       },
       include_package_data=True
       )
