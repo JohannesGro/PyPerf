@@ -22,7 +22,7 @@ setup(name='benchmarktool',
       entry_points={
           "benchmarktool": ["runner=benchmarktool.benchrunner:Benchrunner",
                             "render=benchmarktool.renderer:Renderer",
-                            "upload=benchmarktool.uploader:InfluxUploader"],
+                            "upload=benchmarktool.influxuploader:InfluxUploader"],
           "console_scripts": ["benchmark=benchmarktool.benchmark:main", ]
       },
       include_package_data=True
