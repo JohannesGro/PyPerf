@@ -8,7 +8,7 @@
 
 import unittest
 
-from bench.bench import Bench
+from benchmarktool.bench import Bench
 
 
 class test_class(Bench):
