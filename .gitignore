@@ -1,12 +1,12 @@
 __pycache__/
 *.py[cod]
-*$py.class
 *.log
 *.db
-benchmarkResults.json
 *.html
 doc/_build/*
-*.pyc
 .coverage
 .noseids
 cover
+build
+dist
+*.egg-info

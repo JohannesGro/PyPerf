@@ -1,0 +1,10 @@
+{
+  "suite": {
+    "DummyBenchmark": {
+      "file": "dummy.py",
+      "className": "DummyBenchmark",
+      "args": {
+      }
+    }
+  }
+}

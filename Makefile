@@ -1,5 +1,5 @@
 # -*- mode: GNUMakefile -*-
-# $Id$
+# g$Id$
 
 # This Makefile is a simple "driver" script to automate tasks a
 # platform developer would do in her sandbox all the time. Please
@@ -13,7 +13,7 @@ PY_FILE_DIRS = .
 
 NOSE = nosetests
 NOSEOPTS = -v --exe --with-id
-NOSECOVOPTS = --with-coverage --cover-inclusive --cover-erase --cover-html --cover-package=benchmarktool
+NOSECOVOPTS = --with-coverage --cover-erase --cover-html --cover-package=benchmarktool
 PYLINT = pylint
 PYLINTOPTS = --rcfile=.pylintrc -E
 PYCHECKER = flake8
@@ -55,9 +55,10 @@ ifeq ($(ARMED),True)
 	devpi login wen
 	devpi upload --index apps/15.3 dist/benchmarktool-0.1-py2.7.egg
 else
+	# TODO: remove this temp. hack after the code base has been refactored
+	rm -rf /home/wen/src/performance_testing/generate_series/benchmarktool-0.1-py2.7.egg/*
+	unzip dist/benchmarktool-0.1-py2.7.egg -d /home/wen/src/performance_testing/generate_series/benchmarktool-0.1-py2.7.egg
 	# devpi upload --index apps/15.3 --dry-run dist/benchmarktool-0.1-py2.7.egg
-	rm -rf /home/wen/src/cdb/trunk/eggs/benchmarktool-0.1-py2.7.egg/*
-	unzip dist/benchmarktool-0.1-py2.7.egg -d /home/wen/src/cdb/trunk/eggs/benchmarktool-0.1-py2.7.egg
 endif
 
 clean:
@@ -118,7 +119,7 @@ pycheck:
 ifneq ($(PY_FILES),)
 	"$(PYCHECKER)" $(PYCHECKEROPTS) $(PY_FILES)
 else
-	echo "pycheck: no modified Python files"
+	@echo "pycheck: no modified Python files"
 endif
 
 check: pycheck
@@ -129,7 +130,7 @@ pylint:
 ifneq ($(PY_FILES),)
 	"$(PYLINT)" $(PYLINTOPTS) $(PY_FILES)
 else
-	echo "pylint: no modified Python files"
+	@echo "pylint: no modified Python files"
 endif
 
 lint: pylint

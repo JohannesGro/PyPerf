@@ -45,21 +45,22 @@ class InfluxUploader(object):
     # Contains stuff, which is useful as metadata and doesnt have much variability in values
     # https://docs.influxdata.com/influxdb/v1.4/concepts/schema_and_data_layout/
     #
-    RELEVANT_SYSINFOS = [
-        "Current User",
-        "CPU Count (locial CPUs)",
-        "CPU Count (physical CPUs)",
-        "Memory Total (MB)",
-        "OS-Platform",
-        "Processor",
-        "VM running?: (probably) "
-    ]
+    RELEVANT_SYSINFOS = {
+        "Current User": "user",
+        "CPU Count (locial CPUs)": "CPU_count",
+        "Memory Total (MB)": "memory_total",
+        "OS-Platform": "OS",
+        "Processor": "CPU",
+        "VM running?: (probably) ": "VM"
+    }
 
     parser = argparse.ArgumentParser(description=__doc__, prog="Uploader")
     parser.add_argument("--influxdburl", "-u",
                         help="The URL to the Influx DBMS to upload the results onto.")
     parser.add_argument("--database", "-d", help="The database to upload the results into.")
     parser.add_argument("--filename", "-f", help="JSON report to upload.")
+    parser.add_argument("--precision", "-p", help="The precision of the timestamp.")
+    parser.add_argument("--timestamp", "-t", help="If given, overrides the timestamp given in the report.")
 
     def __init__(self, args):
         # Grab the self.args from argv
@@ -73,15 +74,16 @@ class InfluxUploader(object):
 
     def extract_tags(self, sysinfo):
         tags = {}
-        for info in self.RELEVANT_SYSINFOS:
-            tags[info.replace(" ", "_")] = sysinfo[info]
+        for info, tag_name in self.RELEVANT_SYSINFOS.iteritems():
+            tags[tag_name] = sysinfo[info]
         return tags
 
     def upload_to_influxdb(self, lines):
         influxurl = self.args.influxdburl
         database = self.args.database
+        precision = self.args.precision or "u"
 
-        rsp = requests.post("%s/write?db=%s&precision=s" % (influxurl, database),
+        rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
                             data="\n".join(lines))
 
         if (rsp.status_code < 200 or rsp.status_code >= 400):
@@ -95,12 +97,24 @@ class InfluxUploader(object):
                 return name
         raise Exception("Could not find a suitable hostname")
 
-    def aggregate_time_series(self, bench, series):
+    def fieldname(self, benchname):
+        parts = benchname.split("bench_")
+        if len(parts) < 2:
+            raise Exception("Error: the bench name '%s' " % benchname +
+                            "doesnt follow the convention 'bench_<name>'")
+        return parts[1]
+
+    def aggregate_series(self, bench, series):
+        fieldprefix = self.fieldname(bench)
         return {
-            "%s_avr" % bench: sum(series) / len(series),
-            "%s_min" % bench: min(series),
-            "%s_max" % bench: max(series)
+            "%s_avr" % fieldprefix: sum(series) / len(series),
+            "%s_min" % fieldprefix: min(series),
+            "%s_max" % fieldprefix: max(series)
         }
+
+    def extract_timestamp(self, sysinfos):
+        time_iso = sysinfos["Current Time (UTC)"]
+        return dateparser.parse(time_iso).strftime('%s%f')
 
     def main(self):
         filename = self.args.filename
@@ -108,8 +122,9 @@ class InfluxUploader(object):
         with open(filename, "r") as fd:
             results = json.load(fd)
             sysinfos = results["Sysinfos"]
-            time_iso = sysinfos["Current Time (UTC)"]
-            time_epoch = dateparser.parse(time_iso).strftime('%s')
+
+            time_epoch = self.args.timestamp or self.extract_timestamp(sysinfos)
+
             tags = self.extract_tags(sysinfos)
             tags["hostname"] = self.extract_hostname(sysinfos)
             tags_str = ",".join(["%s=%s" % (tagname, tagvalue)
@@ -118,9 +133,11 @@ class InfluxUploader(object):
             fields = {}
             for benchmark, benchmark_results in results["results"].iteritems():
                 for bench, bench_results in benchmark_results["data"].iteritems():
-                    if bench_results["type"] == "time_series":
-                        fields.update(self.aggregate_time_series(bench, bench_results["value"]))
+                    values = bench_results["value"]
+                    if len(values) > 1:
+                        fields.update(self.aggregate_series(bench, bench_results["value"]))
+
                 fields_str = ",".join(["%s=%s" % (name, value)
                                        for name, value in fields.iteritems()])
-                lines.append(self.MSG_TMPL % (bench, tags_str, fields_str, time_epoch))
+                lines.append(self.MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
             self.upload_to_influxdb(lines)
