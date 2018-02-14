@@ -18,8 +18,13 @@ import sys
 
 import psutil
 
-from cdb import rte, version
-from cdb.uberserver import usutil
+
+CDB_AVAILABLE = True
+try:
+    from cdb import rte, version
+    from cdb.uberserver import usutil
+except ImportError:
+    CDB_AVAILABLE = False
 
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
@@ -120,11 +125,14 @@ def getMacInfo():
 
 
 def getAllHostnames():
-    return usutil.gethostnames()
-
+    if CDB_AVAILABLE:
+        return usutil.gethostnames()
+    else:
+        import socket
+        return [socket.gethostname()]
 
 def getAllHostnamesInfo():
-    logger.info("Hostnames: {}".format(usutil.gethostnames()))
+    logger.info("Hostnames: {}".format(getAllHostnames()))
     return {"Hostnames": getAllHostnames()}
 
 
@@ -151,19 +159,22 @@ def getSysInfo():
     """Get the general infos like time, OS etc.
 
     :returns: dict with the infos"""
-    logger.info("Elements Version: %s", version.getVersionDescription())
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
     logger.info("Current User: %s", getpass.getuser())
     logger.info("OS-Platform: %s", sys.platform)
     logger.info("OS-Platform Version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
     res = {}
-    res["Elements Version"] = version.getVersionDescription()
     res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat()
     res["Current User"] = getpass.getuser()
     res["OS-Platform"] = sys.platform
     res["OS-Platform Version"] = platform.platform()
     res["Processor"] = platform.processor()
+
+    if CDB_AVAILABLE:
+        logger.info("Elements Version: %s", version.getVersionDescription())
+        res["Elements Version"] = version.getVersionDescription()
+
     return res
 
 
@@ -193,8 +204,14 @@ def getCPUInfo():
     logger.info('CPU Count (physical CPUs): {}'.format(psutil.cpu_count(logical=False)))
     res['CPU Count (physical CPUs)'] = psutil.cpu_count(logical=False)
 
-    logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=False).current))
-    res['CPU Frenquency'] = psutil.cpu_freq(percpu=False).current
+    try:
+        cpu_freq = psutil.cpu_freq(percpu=False).current
+    except AttributeError:
+        pass  # Used psutil version doesnt support that. Ignore.
+    else:
+        logger.info("CPU Frenquency: {}".format(cpu_freq))
+        res['CPU Frenquency'] = cpu_freq
+
     return res
 
 
@@ -368,7 +385,8 @@ def getAllSysInfos():
     logger.info("SYSINFOS:\n")
     res = {}
     res.update(getSysInfo())
-    res.update(getCADDOKINfos())
+    if CDB_AVAILABLE:
+        res.update(getCADDOKINfos())
     res.update(getCPUInfo())
     if 'CADDOK_SERVER' in res:
         res.update(traceroute(res['CADDOK_SERVER']))

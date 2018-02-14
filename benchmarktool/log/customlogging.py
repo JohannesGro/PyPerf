@@ -36,7 +36,7 @@ def init_logging(logger_name, configFile="", fileName=""):
     # add the handler to the root logger
     logging.getLogger('').addHandler(ch)
 
-    if not configFile == "":
+    if configFile:
         # try to read configFile
         config = ioservice.loadJSONData(configFile)
         logging.config.dictConfig(config)
