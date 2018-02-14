@@ -8,7 +8,7 @@
 """
 
 import logging
-import sys
+import datetime
 
 from .. import ioservice
 

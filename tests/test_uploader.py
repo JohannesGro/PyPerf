@@ -17,8 +17,8 @@ __revision__ = "$Id$"
 import unittest
 import subprocess
 import os
-import json
 from nose.tools import eq_
+
 
 class UploaderTest(unittest.TestCase):
     def setUp(self):

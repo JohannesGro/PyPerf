@@ -7,13 +7,7 @@
 """
 """
 
-import argparse
-import getpass
-import importlib
-import logging.config
-import multiprocessing
 import os
-import platform
 import sys
 import time
 
@@ -33,7 +27,6 @@ class Benchrunner(object):
     """
 
     # defaults
-    #suite_file = 'benchsuite.json'
     output_file = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'benchrunner.log'
     results = {'results': {}}
@@ -48,7 +41,6 @@ class Benchrunner(object):
         logger.debug("Options: suite=%s, outfile=%s, logconfig=%s" % (suite, outfile, logconfig))
         logger.info("Reading the benchsuite: " + suite)
 
-        print suite
         data = ioservice.loadJSONData(suite)
 
         # iterating the suite

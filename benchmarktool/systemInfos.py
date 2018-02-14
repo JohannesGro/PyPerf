@@ -11,7 +11,6 @@ import ctypes
 import datetime
 import getpass
 import logging
-import multiprocessing
 import platform
 import subprocess
 import sys
@@ -131,13 +130,15 @@ def getAllHostnames():
         import socket
         return [socket.gethostname()]
 
+
 def getAllHostnamesInfo():
     logger.info("Hostnames: {}".format(getAllHostnames()))
     return {"Hostnames": getAllHostnames()}
 
 
 def diskIOCounter():
-    # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L, write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
+    # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L,
+    #    write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
     res = {}
     diskcounters = psutil.disk_io_counters(perdisk=False)
     logger.info('Disk IO read (count): {}'.format(diskcounters.read_count))
@@ -285,7 +286,8 @@ def isVM():
         XenSource	00-16-3E
         Novell Xen	00-16-3E
         Sun xVM VirtualBox	08-00-27"""
-    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff", "0x001c42", "0x000f4b", "0x00163e", "0x080027"]
+    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff", "0x001c42",
+              "0x000f4b", "0x00163e", "0x080027"]
 
     mac = getMac()
     for str in prefix:
@@ -308,12 +310,11 @@ def msinfo32():
     if(psutil.WINDOWS):
         import io
         import os
-        import xml.etree.ElementTree as ElementTree
         from lxml import etree
 
         fileName = "msinfo32.xml"
-        proc = subprocess.Popen(['msinfo32', "/nfo", fileName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        output = proc.stdout.read()
+        subprocess.Popen(['msinfo32', "/nfo", fileName],
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         with io.open(fileName, encoding="UTF-16le") as fd:
             xml_string = fd.read().encode("utf-8", "ignore")
@@ -347,7 +348,8 @@ def traceroute(dest):
         import encodingService
         cp = encodingService.guess_console_encoding()
 
-        output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(["tracert", "-w", "100", dest],
+                                         stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = output.decode(cp).replace("\r\n", "")
 
         # shorten en/de tracert msg
@@ -361,7 +363,8 @@ def traceroute(dest):
             return {"Route to server:": tracertString}
     elif(psutil.POSIX):
         # traceroute to google.com (172.217.23.14),
-        output = subprocess.check_output(["traceroute", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(["traceroute", "-w", "100", dest],
+                                         stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = output.replace("\n", "")
 
         # shorten traceroute msg

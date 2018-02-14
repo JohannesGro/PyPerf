@@ -16,8 +16,6 @@ The data mapping is as follows:
 
 """
 
-import argparse
-import sys
 import requests
 import dateutil.parser as dateparser
 import json

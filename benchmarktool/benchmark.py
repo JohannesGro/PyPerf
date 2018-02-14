@@ -17,6 +17,7 @@ DEFAULT_SUITEFILE = "benchsuite.json"
 DEFAULT_INFLUXURL = "http://localhost:8086"
 DEFAULT_INFLUXDB = "metrics"
 
+
 @click.group()
 def main():
     pass
@@ -40,7 +41,8 @@ def runner(suite, outfile, logconfig):
               help="The URL of InfluxDB. Defaults to a local setup (%s)." % DEFAULT_INFLUXURL)
 @click.option("--database", "-d", default=DEFAULT_INFLUXDB,
               help="The Influx database to upload to. Defaults to '%s'." % DEFAULT_INFLUXDB)
-@click.option("--timestamp", "-t", help="Timestamp to use for the upload. If given, overwrites those in the report files.")
+@click.option("--timestamp", "-t",
+              help="Timestamp to use for the upload. If given, overwrites those in the report files.")
 @click.option("--precision", "-p", help="The precision of the timestamp.")
 def upload(report, influxdburl, database, timestamp, precision):
     uploader = InfluxUploader()
