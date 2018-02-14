@@ -16,8 +16,6 @@ The data mapping is as follows:
 
 """
 
-import argparse
-import sys
 import requests
 import dateutil.parser as dateparser
 import json
@@ -26,8 +24,6 @@ import json
 # * code verbessern
 # * testen
 # * Umstrukturieren:
-#    - UI code raus
-#    - Zugang ueber entry-point weg
 #    - An templates (setuptools, cli apps) orientieren
 #
 
@@ -54,35 +50,13 @@ class InfluxUploader(object):
         "VM running?: (probably) ": "VM"
     }
 
-    parser = argparse.ArgumentParser(description=__doc__, prog="Uploader")
-    parser.add_argument("--influxdburl", "-u",
-                        help="The URL to the Influx DBMS to upload the results onto.")
-    parser.add_argument("--database", "-d", help="The database to upload the results into.")
-    parser.add_argument("--filename", "-f", help="JSON report to upload.")
-    parser.add_argument("--precision", "-p", help="The precision of the timestamp.")
-    parser.add_argument("--timestamp", "-t", help="If given, overrides the timestamp given in the report.")
-
-    def __init__(self, args):
-        # Grab the self.args from argv
-        if type(args) == argparse.Namespace:
-            prev = sys.argv
-            sys.argv = []
-            self.args = self.parser.parse_args(args=None, namespace=args)
-            sys.argv = prev
-        else:
-            self.args = self.parser.parse_args(args)
-
     def extract_tags(self, sysinfo):
         tags = {}
         for info, tag_name in self.RELEVANT_SYSINFOS.iteritems():
             tags[tag_name] = sysinfo[info]
         return tags
 
-    def upload_to_influxdb(self, lines):
-        influxurl = self.args.influxdburl
-        database = self.args.database
-        precision = self.args.precision or "u"
-
+    def upload_to_influxdb(self, lines, influxurl, database, precision):
         rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
                             data="\n".join(lines))
 
@@ -116,14 +90,12 @@ class InfluxUploader(object):
         time_iso = sysinfos["Current Time (UTC)"]
         return dateparser.parse(time_iso).strftime('%s%f')
 
-    def main(self):
-        filename = self.args.filename
-
-        with open(filename, "r") as fd:
+    def main(self, report, influxdburl, database, timestamp, precision):
+        with open(report, "r") as fd:
             results = json.load(fd)
             sysinfos = results["Sysinfos"]
 
-            time_epoch = self.args.timestamp or self.extract_timestamp(sysinfos)
+            time_epoch = timestamp or self.extract_timestamp(sysinfos)
 
             tags = self.extract_tags(sysinfos)
             tags["hostname"] = self.extract_hostname(sysinfos)
@@ -140,4 +112,4 @@ class InfluxUploader(object):
                 fields_str = ",".join(["%s=%s" % (name, value)
                                        for name, value in fields.iteritems()])
                 lines.append(self.MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
-            self.upload_to_influxdb(lines)
+            self.upload_to_influxdb(lines, influxdburl, database, precision)
