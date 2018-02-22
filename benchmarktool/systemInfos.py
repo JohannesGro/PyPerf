@@ -11,19 +11,15 @@ import ctypes
 import datetime
 import getpass
 import logging
+import multiprocessing
 import platform
 import subprocess
 import sys
 
 import psutil
 
-
-CDB_AVAILABLE = True
-try:
-    from cdb import rte, version
-    from cdb.uberserver import usutil
-except ImportError:
-    CDB_AVAILABLE = False
+from cdb import rte, version
+from cdb.uberserver import usutil
 
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
@@ -124,21 +120,16 @@ def getMacInfo():
 
 
 def getAllHostnames():
-    if CDB_AVAILABLE:
-        return usutil.gethostnames()
-    else:
-        import socket
-        return [socket.gethostname()]
+    return usutil.gethostnames()
 
 
 def getAllHostnamesInfo():
-    logger.info("Hostnames: {}".format(getAllHostnames()))
+    logger.info("Hostnames: {}".format(usutil.gethostnames()))
     return {"Hostnames": getAllHostnames()}
 
 
 def diskIOCounter():
-    # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L,
-    #    write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
+    # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L, write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
     res = {}
     diskcounters = psutil.disk_io_counters(perdisk=False)
     logger.info('Disk IO read (count): {}'.format(diskcounters.read_count))
@@ -160,22 +151,19 @@ def getSysInfo():
     """Get the general infos like time, OS etc.
 
     :returns: dict with the infos"""
+    logger.info("Elements Version: %s", version.getVersionDescription())
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
     logger.info("Current User: %s", getpass.getuser())
     logger.info("OS-Platform: %s", sys.platform)
     logger.info("OS-Platform Version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
     res = {}
+    res["Elements Version"] = version.getVersionDescription()
     res["Current Time (UTC)"] = datetime.datetime.utcnow().isoformat()
     res["Current User"] = getpass.getuser()
     res["OS-Platform"] = sys.platform
     res["OS-Platform Version"] = platform.platform()
     res["Processor"] = platform.processor()
-
-    if CDB_AVAILABLE:
-        logger.info("Elements Version: %s", version.getVersionDescription())
-        res["Elements Version"] = version.getVersionDescription()
-
     return res
 
 
@@ -205,14 +193,8 @@ def getCPUInfo():
     logger.info('CPU Count (physical CPUs): {}'.format(psutil.cpu_count(logical=False)))
     res['CPU Count (physical CPUs)'] = psutil.cpu_count(logical=False)
 
-    try:
-        cpu_freq = psutil.cpu_freq(percpu=False).current
-    except AttributeError:
-        pass  # Used psutil version doesnt support that. Ignore.
-    else:
-        logger.info("CPU Frenquency: {}".format(cpu_freq))
-        res['CPU Frenquency'] = cpu_freq
-
+    logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=False).current))
+    res['CPU Frenquency'] = psutil.cpu_freq(percpu=False).current
     return res
 
 
@@ -286,8 +268,7 @@ def isVM():
         XenSource	00-16-3E
         Novell Xen	00-16-3E
         Sun xVM VirtualBox	08-00-27"""
-    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff", "0x001c42",
-              "0x000f4b", "0x00163e", "0x080027"]
+    prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff", "0x001c42", "0x000f4b", "0x00163e", "0x080027"]
 
     mac = getMac()
     for str in prefix:
@@ -310,11 +291,12 @@ def msinfo32():
     if(psutil.WINDOWS):
         import io
         import os
+        import xml.etree.ElementTree as ElementTree
         from lxml import etree
 
         fileName = "msinfo32.xml"
-        subprocess.Popen(['msinfo32', "/nfo", fileName],
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(['msinfo32', "/nfo", fileName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.stdout.read()
 
         with io.open(fileName, encoding="UTF-16le") as fd:
             xml_string = fd.read().encode("utf-8", "ignore")
@@ -348,8 +330,7 @@ def traceroute(dest):
         import encodingService
         cp = encodingService.guess_console_encoding()
 
-        output = subprocess.check_output(["tracert", "-w", "100", dest],
-                                         stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(["tracert", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = output.decode(cp).replace("\r\n", "")
 
         # shorten en/de tracert msg
@@ -363,8 +344,7 @@ def traceroute(dest):
             return {"Route to server:": tracertString}
     elif(psutil.POSIX):
         # traceroute to google.com (172.217.23.14),
-        output = subprocess.check_output(["traceroute", "-w", "100", dest],
-                                         stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(["traceroute", "-w", "100", dest], stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = output.replace("\n", "")
 
         # shorten traceroute msg
@@ -388,8 +368,7 @@ def getAllSysInfos():
     logger.info("SYSINFOS:\n")
     res = {}
     res.update(getSysInfo())
-    if CDB_AVAILABLE:
-        res.update(getCADDOKINfos())
+    res.update(getCADDOKINfos())
     res.update(getCPUInfo())
     if 'CADDOK_SERVER' in res:
         res.update(traceroute(res['CADDOK_SERVER']))

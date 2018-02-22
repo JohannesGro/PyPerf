@@ -1,62 +1,54 @@
-# -*- mode: python; coding: utf-8 -*-
-#
-# Copyright (C) 1990 - 2018 CONTACT Software GmbH
-# All rights reserved.
-# https://www.contact-software.com/
 
+"""Benchmark tool
 """
-Command line interface for benchmarktool
-"""
+import argparse
+import sys
 
-import click
-
-from .influxuploader import InfluxUploader
-from .benchrunner import Benchrunner
-
-DEFAULT_SUITEFILE = "benchsuite.json"
-DEFAULT_INFLUXURL = "http://localhost:8086"
-DEFAULT_INFLUXDB = "metrics"
+import pkg_resources
 
 
-@click.group()
+class Benchmark(object):
+    """Class for loading the console scripts and providing a CLI interface."""
+
+    def __init__(self):
+        self.subcommands = {}
+        # get console scripts
+        for ep in pkg_resources.iter_entry_points("benchmarktool"):
+            self.subcommands[ep.name] = ep.load()
+
+    def _main(self, args):
+        cmdname = args.__dict__.pop('command', None)
+        cmdclass = self.subcommands.get(cmdname, None)
+        if cmdclass is None:
+            parser.error("Unknown subcommand %s" % cmdname)
+        else:
+            cmd = cmdclass(args)
+            try:
+                return cmd.main()
+            except RuntimeError as exc:
+                print(exc)
+
+
 def main():
-    pass
+    bm = Benchmark()
+    global parser
+    parser = argparse.ArgumentParser(description=__doc__)
+    # create a subparser for the subcommands
+    subparsers = parser.add_subparsers(help='Available subcommands')
+    # create a argparser for each subcommand/console script
+    for subc in sorted(bm.subcommands.items()):
+        # add parser with name and description
+        command = subparsers.add_parser(subc[0], description=subc[1].__doc__)
+        # set command for operation call
+        command.set_defaults(command=subc[0])
+        # iterate through the list of parameter of the console script and add these parameter
+        # to the current arg parser.
+        for action in subc[1].parser._actions:
+            if type(action) == argparse._StoreAction or type(action) == argparse._StoreTrueAction:
+                command._add_action(action)
+    # Grab the self.args from argv
+    args = parser.parse_args()
+    return bm._main(args)
 
-
-@click.command()
-@click.option("--suite", "-s", default=DEFAULT_SUITEFILE,
-              help="A JSON file which contains the benches (default: %s)." % DEFAULT_SUITEFILE)
-@click.option("--outfile", "-o",
-              help="File to store the results into. Defaults to ...")
-@click.option("--logconfig", "-l",
-              help="Configuration file for the logger.")
-def runner(suite, outfile, logconfig):
-    benchrunner = Benchrunner()
-    benchrunner.main(suite, outfile, logconfig)
-
-
-@click.command()
-@click.argument('report')
-@click.option("--influxdburl", "-u", default=DEFAULT_INFLUXURL,
-              help="The URL of InfluxDB. Defaults to a local setup (%s)." % DEFAULT_INFLUXURL)
-@click.option("--database", "-d", default=DEFAULT_INFLUXDB,
-              help="The Influx database to upload to. Defaults to '%s'." % DEFAULT_INFLUXDB)
-@click.option("--timestamp", "-t",
-              help="Timestamp to use for the upload. If given, overwrites those in the report files.")
-@click.option("--precision", "-p", help="The precision of the timestamp.")
-def upload(report, influxdburl, database, timestamp, precision):
-    uploader = InfluxUploader()
-    uploader.main(report, influxdburl, database, timestamp, precision)
-
-
-@click.command()
-def render():
-    pass
-
-main.add_command(runner)
-main.add_command(upload)
-main.add_command(render)
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
