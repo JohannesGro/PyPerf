@@ -36,7 +36,7 @@ class UploaderTest(unittest.TestCase):
         rc = subprocess.check_call([
             "python", os.path.join(here, "..", "bench.py"), "upload",
             "--filename=%s" % os.path.join(here, "report.json"),
-            "--influxdburl=http://con-wen:8086", "--database=sdperf"
+            "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
         ], stdout=subprocess.PIPE)
         eq_(rc, 0)
 
