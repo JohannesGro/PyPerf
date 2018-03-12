@@ -7,15 +7,8 @@
 """
 """
 
-import argparse
-import getpass
-import importlib
-import logging.config
-import multiprocessing
 import os
-import platform
 import sys
-import time
 
 import ioservice
 import systemInfos
@@ -33,26 +26,11 @@ class Benchrunner(object):
     """
 
     # defaults
-    suite_file = 'benchsuite.json'
-    output_file = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    # CLI
-    parser = argparse.ArgumentParser(description=__doc__, prog="Benchrunner")
-    parser.add_argument("--suite", "-s", nargs='?', default=suite_file, help="A json file which contains the benches. (default: %(default)s)")
-    parser.add_argument("--outfile", "-o", nargs='?', default=output_file, help="The results will be stored in this file. (default: %(default)s)")
-    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
-
     def __init__(self, args):
-        # Grab the self.args from argv
-        if type(args) == argparse.Namespace:
-            prev = sys.argv
-            sys.argv = []
-            self.args = self.parser.parse_args(args=None, namespace=args)
-            sys.argv = prev
-        else:
-            self.args = self.parser.parse_args(args)
+        self.args = args
 
     def main(self):
         global logger

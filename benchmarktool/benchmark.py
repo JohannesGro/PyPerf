@@ -1,54 +1,75 @@
+#!/usr/bin/env python
+# -*- python -*- coding: iso-8859-1 -*-
+#
+# Copyright (C) 1990 - 2018 CONTACT Software GmbH
+# All rights reserved.
+# http://www.contact.de/
+#
 
-"""Benchmark tool
-"""
 import argparse
-import sys
+import time
 
-import pkg_resources
-
-
-class Benchmark(object):
-    """Class for loading the console scripts and providing a CLI interface."""
-
-    def __init__(self):
-        self.subcommands = {}
-        # get console scripts
-        for ep in pkg_resources.iter_entry_points("benchmarktool"):
-            self.subcommands[ep.name] = ep.load()
-
-    def _main(self, args):
-        cmdname = args.__dict__.pop('command', None)
-        cmdclass = self.subcommands.get(cmdname, None)
-        if cmdclass is None:
-            parser.error("Unknown subcommand %s" % cmdname)
-        else:
-            cmd = cmdclass(args)
-            try:
-                return cmd.main()
-            except RuntimeError as exc:
-                print(exc)
+SUITEFILE_DEFAULT = "benchsuite.json"
+REPORTFILE_DEFAULT = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
+RENDERFILE_DEFAULT = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
 
 
 def main():
-    bm = Benchmark()
-    global parser
-    parser = argparse.ArgumentParser(description=__doc__)
-    # create a subparser for the subcommands
-    subparsers = parser.add_subparsers(help='Available subcommands')
-    # create a argparser for each subcommand/console script
-    for subc in sorted(bm.subcommands.items()):
-        # add parser with name and description
-        command = subparsers.add_parser(subc[0], description=subc[1].__doc__)
-        # set command for operation call
-        command.set_defaults(command=subc[0])
-        # iterate through the list of parameter of the console script and add these parameter
-        # to the current arg parser.
-        for action in subc[1].parser._actions:
-            if type(action) == argparse._StoreAction or type(action) == argparse._StoreTrueAction:
-                command._add_action(action)
-    # Grab the self.args from argv
+    help_txt = ("Help")
+    parser = argparse.ArgumentParser(description=help_txt)
+    subparsers = parser.add_subparsers(dest='subcommand')
+
+    runner = subparsers.add_parser("runner")
+    helpstr = "A JSON file which contains the benches (default: %s)." % SUITEFILE_DEFAULT
+    runner.add_argument("--suite", "-s", nargs='?', default=SUITEFILE_DEFAULT, help=helpstr)
+    helpstr = "The results will be stored in this file (default: %s)." % REPORTFILE_DEFAULT
+    runner.add_argument("--outfile", "-o", nargs='?', default=REPORTFILE_DEFAULT, help=helpstr)
+    runner.add_argument("--logconfig", "-l", nargs='?', default="",
+                        help="Configuration file for the logger.")
+
+    render = subparsers.add_parser("render")
+    render.add_argument("benchmarks", nargs='+',
+                        help="One or more json files which contain the benchmarks."
+                        "It is also possible to use folders. "
+                        "All JSON files from a folder will be loaded.")
+    render.add_argument("--outfile", "-o", nargs='?', default=RENDERFILE_DEFAULT,
+                        help="The results will be stored in this file (HTML).")
+    render.add_argument("--reference", "-r", nargs='?',
+                        help="A referenced benchmark for the comparision."
+                        "Uses the reference to mark some benchmarks result"
+                        "as positiv or negativ. This option will be ignored"
+                        "if the -trend option is active.")
+    render.add_argument("--logconfig", "-l", nargs='?', default="",
+                        help="Configuration file for the logger.")
+    render.add_argument("--trend", "-t", default=False, action="store_true",
+                        help="Using the benchmarks to show a trend of a system.")
+
+    upload = subparsers.add_parser("upload")
+    upload.add_argument("--influxdburl", "-u",
+                        help="The URL to the Influx DBMS to upload the results onto.")
+    upload.add_argument("--database", "-d",
+                        help="The database to upload the results into.")
+    upload.add_argument("--filename", "-f",
+                        help="JSON report to upload.")
+    upload.add_argument("--precision", "-p",
+                        help="The precision of the timestamp.")
+    upload.add_argument("--timestamp", "-t",
+                        help="If given, overrides the timestamp given in the report.")
+
     args = parser.parse_args()
-    return bm._main(args)
+    subcommand = args.subcommand
+    if subcommand == "runner":
+        from benchrunner import Benchrunner
+        br = Benchrunner(args)
+        br.main()
+    elif subcommand == "render":
+        from renderer import Renderer
+        rend = Renderer(args)
+        rend.main()
+    elif subcommand == "upload":
+        from influxuploader import InfluxUploader
+        uploader = InfluxUploader(args)
+        uploader.main()
 
 if __name__ == "__main__":
     main()

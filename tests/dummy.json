@@ -1,7 +1,7 @@
 {
   "suite": {
     "DummyBenchmark": {
-      "file": "dummy.py",
+      "file": "DummyBenchmark.py",
       "className": "DummyBenchmark",
       "args": {
       }

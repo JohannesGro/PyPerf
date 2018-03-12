@@ -5,20 +5,19 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""
-Test Module pytest
-
-This is the documentation for the tests.
-"""
-
-__docformat__ = "restructuredtext en"
-__revision__ = "$Id$"
-
 import unittest
 import subprocess
 import os
 import json
 from nose.tools import eq_
+
+"""
+Contains basic CLI tests for the 'runner' subcommand
+"""
+
+__docformat__ = "restructuredtext en"
+__revision__ = "$Id$"
+
 
 class RunnerTest(unittest.TestCase):
     REPORTFILE = "report_tmp.json"
@@ -36,10 +35,11 @@ class RunnerTest(unittest.TestCase):
     def test_trivial_run(self):
         here = os.path.abspath(os.path.dirname(__file__))
         os.chdir(here)
-        proc = subprocess.Popen([
+        cmdline = [
             "python", os.path.join(here, "..", "bench.py"), "runner", "--suite",
             "dummy.json", "-o", self.REPORTFILE
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ]
+        proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         expected = """setUpClass called
 setUp called
