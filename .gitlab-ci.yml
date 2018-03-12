@@ -1,0 +1,3 @@
+image: "dhub.contact.de/centos_ci_trunk"
+test:
+  script: "make tests"
