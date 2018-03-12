@@ -30,7 +30,8 @@ class Benchrunner(object):
 
     def main(self, suite, outfile, logconfig):
         global logger
-        logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig, fileName=self.logging_file)
+        logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig,
+                                            fileName=self.logging_file)
         self.sys_infos()
         logger.info("Starting")
         logger.info("Reading the benchsuite: " + suite)
@@ -39,11 +40,12 @@ class Benchrunner(object):
         # iterating the suite
         for bench_key, bench_val in data["suite"].iteritems():
             logger.info("Execute bench: " + bench_key)
-            result = self.start_bench_script(bench_val["file"], bench_val["className"], bench_val["args"])
+            result = self.start_bench_script(suite, bench_val["file"],
+                                             bench_val["className"], bench_val["args"])
             self.results['results'][bench_key] = {'args': bench_val["args"], 'data': result}
         ioservice.saveJSONData(outfile, self.results)
 
-    def start_bench_script(self, path, class_name, args):
+    def start_bench_script(self, suitepath, benchpath, class_name, args):
         """This functions imports the bench module and creates an instance of the given
         class_name. It calls the method run(args) which is the entry point for
         the test classes. Returns the result of the bench.
@@ -55,8 +57,9 @@ class Benchrunner(object):
         """
         prevSysPath = sys.path
         try:
-            dirPath = os.path.dirname(path)
-            fileName = os.path.basename(path)
+            benchpath = self.normalize_bench_path(suitepath, benchpath)
+            dirPath = os.path.dirname(benchpath)
+            fileName = os.path.basename(benchpath)
             module, extension = os.path.splitext(fileName)
             if (not extension == '' and not extension == '.py') or module == '':
                 raise ValueError("The bench file '{}' is not specified correctly.".format(fileName))

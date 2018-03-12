@@ -13,7 +13,7 @@ PY_FILE_DIRS = .
 
 NOSE = nosetests
 NOSEOPTS = -v --exe --with-id
-NOSECOVOPTS = --with-coverage --cover-erase --cover-html --cover-package=benchmarktool
+NOSECOVOPTS = --with-coverage --cover-erase --cover-inclusive --cover-html --cover-package=benchmarktool
 PYLINT = pylint
 PYLINTOPTS = --rcfile=.pylintrc -E
 PYCHECKER = flake8

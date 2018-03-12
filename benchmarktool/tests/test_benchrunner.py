@@ -10,6 +10,7 @@ import os
 from ..benchrunner import Benchrunner
 from nose.tools import eq_
 
+
 class TestBenchrunner(unittest.TestCase):
     def setUp(self):
         pass
@@ -21,7 +22,6 @@ class TestBenchrunner(unittest.TestCase):
         # - benchpath is relative, the suite is also relative
 
         cwd = os.getcwd()
-        print cwd
         cases = [
             # <suitepath>, <benchpath>, <expected result>
             ("suite.json", "/benchmark.py", "/benchmark.py"),
@@ -29,7 +29,8 @@ class TestBenchrunner(unittest.TestCase):
             ("/suite.json", "benchmark.py", "/benchmark.py"),
             ("/folder/suite.json", "benchmark.py", "/folder/benchmark.py"),
             ("/folder/suite.json", "subfolder/benchmark.py", "/folder/subfolder/benchmark.py"),
-            ("folder/suite.json", "subfolder/benchmark.py", os.path.join(cwd, "folder/subfolder/benchmark.py")),
+            ("folder/suite.json", "subfolder/benchmark.py",
+             os.path.join(cwd, "folder/subfolder/benchmark.py")),
 
             # one backstep case
             ("/folder/../suite.json", "benchmark.py", "/benchmark.py")

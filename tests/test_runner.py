@@ -23,23 +23,16 @@ __revision__ = "$Id$"
 class RunnerTest(unittest.TestCase):
     REPORTFILE = "report_tmp.json"
 
-    #def setUp(self):
-        #self.here = os.path.abspath(os.path.dirname(__file__))
-        #self.orig_cwd = os.getcwd()
-
     def tearDown(self):
         if os.path.exists(self.REPORTFILE):
             os.remove(self.REPORTFILE)
-        #if self.orig_cwd != os.getcwd():
-        #    os.chdir(self.orig_cwd)
 
     def test_trivial_run(self):
         here = os.path.abspath(os.path.dirname(__file__))
-        #os.chdir(here)
+        bench = os.path.normpath(os.path.join(here, "..", "bench.py"))
         cmdline = ["python"] + coverage_opts() + [
-            os.path.join(here, "..", "bench.py"), "runner", "--suite",
-            "dummy.json", "-o", self.REPORTFILE]
-        print subprocess.list2cmdline(cmdline)
+            bench, "runner", "--suite", os.path.join(here, "dummy.json"),
+            "-o", self.REPORTFILE]
         proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         expected = """setUpClass called

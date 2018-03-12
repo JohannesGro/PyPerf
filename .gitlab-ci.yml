@@ -1,5 +1,5 @@
 image: "dhub.contact.de/centos_ci_trunk"
 test:
-  script: "make tests"
+  script: "make coverage"
   tags:
     - Docker
