@@ -48,18 +48,21 @@ class Renderer(object):
     data = {}
     argsWarning = []
 
-    def __init__(self, args):
-        # Grab the self.args from argv
-        self.args = args
+    def __init__(self, benchmarks, outfile, reference, logconfig, trend):
+        self.benchmarks = benchmarks
+        self.outfile = outfile
+        self.reference = reference
+        self.logconfig = logconfig
+        self.trend = trend
 
     def main(self):
         global logger
-        logger = customlogging.init_logging("[Renderer]", configFile=self.args.logconfig, fileName=self.loggingFile)
-        logger.debug("benchmarks files: {}".format(self.args.benchmarks))
-        logger.debug("output file: {}".format(self.args.outfile))
-        logger.debug("logger conf file: " + str(self.args.logconfig))
-        logger.debug("trend: " + str(self.args.trend))
-        logger.debug("reference: " + str(self.args.reference))
+        logger = customlogging.init_logging("[Renderer]", configFile=self.logconfig, fileName=self.loggingFile)
+        logger.debug("benchmarks files: {}".format(self.benchmarks))
+        logger.debug("output file: {}".format(self.outfile))
+        logger.debug("logger conf file: " + str(self.logconfig))
+        logger.debug("trend: " + str(self.trend))
+        logger.debug("reference: " + str(self.reference))
 
         data = self.loadBenchmarkData()
         # if a directory contains no json files
@@ -337,13 +340,13 @@ class Renderer(object):
 
         :returns: a dict of files which contain the benchmarks"""
 
-        if self.args.reference:
-            self.reference = ioservice.loadJSONData(self.args.reference)
+        if self.reference:
+            self.ref = ioservice.loadJSONData(self.reference)
 
-        if isinstance(self.args.benchmarks, list):
+        if isinstance(self.benchmarks, list):
             # Loads a bunch of benchmarks.
             data = {}
-            for fileName in self.args.benchmarks:
+            for fileName in self.benchmarks:
                 if os.path.isdir(fileName):
                     (_, _, fileNames) = os.walk(fileName).next()
                     for fn in fileNames:
@@ -355,8 +358,8 @@ class Renderer(object):
                 data[fileName] = ioservice.loadJSONData(fileName)
         else:
             # Loads a single benchmark
-            data[self.args.benchmarks] = ioservice.loadJSONData(self.args.benchmarks)
-        if(self.args.reference):
+            data[self.benchmarks] = ioservice.loadJSONData(self.benchmarks)
+        if(self.reference):
             numLoadedFiles = len(data) + 1
         else:
             numLoadedFiles = len(data)
@@ -372,7 +375,7 @@ class Renderer(object):
         d3Lib = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/js/d3.v4.min.js"))
         chartsJS = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/js/charts.js"))
 
-        if self.args.trend:
+        if self.trend:
             body = self.renderSysInfosTrend()
         else:
             body = self.renderSysInfos()
@@ -380,7 +383,7 @@ class Renderer(object):
         for benchName in benches:
             logger.info("Render bench: " + benchName)
             body += self.renderBench(benchName)
-        ioservice.writeToFile(self.template.format(inlineCss, d3Lib, chartsJS, body), self.args.outfile)
+        ioservice.writeToFile(self.template.format(inlineCss, d3Lib, chartsJS, body), self.outfile)
 
     def renderBench(self, benchName):
         """Generates html code of the given bench name to display its data.
@@ -392,7 +395,7 @@ class Renderer(object):
         title = "<h2>{0}</h2>".format(benchName)
         tileTempl = "<div class='tile'>{0}</div>"
         args = self.renderBenchArgs(benchName)
-        if self.args.trend:
+        if self.trend:
             measurements = self.renderBenchMeasurementsTrend(benchName)
         else:
             measurements = self.renderBenchMeasurements(benchName)
@@ -408,7 +411,7 @@ class Renderer(object):
         res = ""
         body = ""
         # no diagram for one entry
-        if len(self.fileList) > 1 or self.args.reference:
+        if len(self.fileList) > 1 or self.reference:
             body = self.createDiagramsForBenchName(benchName)
         body += self.renderTablesByTypes(benchName)
         return body
@@ -431,11 +434,11 @@ class Renderer(object):
                 continue
 
             # reference data
-            if self.args.reference:
-                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+            if self.reference:
+                if benchName not in self.ref['results'] or benchTestName not in self.ref['results'][benchName]['data']:
                     val = None
                 else:
-                    val = self.reference['results'][benchName]['data'][benchTestName]['value']
+                    val = self.ref['results'][benchName]['data'][benchTestName]['value']
                     if testData["type"] == "time_series":
                         val = calcAvg(val)
                 diagramData.append({"file": 'reference', "name": benchTestName, "value": val})
@@ -523,13 +526,13 @@ class Renderer(object):
         htmlCode = ""
 
         numFiles = len(self.fileList)
-        if self.args.reference:
+        if self.reference:
             numFiles += 1
 
         headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 1) + "</tr>"
         rowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        if self.args.reference:
+        if self.reference:
             htmlCode += headerTempl.format("Test", "reference", *self.fileList)
         else:
             htmlCode += headerTempl.format("Test", *self.fileList)
@@ -537,11 +540,11 @@ class Renderer(object):
         for benchTestName, testData in sorted(test.iteritems()):
             # replace none with '-'
             values = ['-' if val is None else val for val in testData['values']]
-            if self.args.reference:
-                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+            if self.reference:
+                if benchName not in self.ref['results'] or benchTestName not in self.ref['results'][benchName]['data']:
                     referenceValue = '-'
                 else:
-                    referenceValue = self.reference['results'][benchName]['data'][benchTestName]['value']
+                    referenceValue = self.ref['results'][benchName]['data'][benchTestName]['value']
                 self.markBounds(referenceValue, values, testData['type'])
                 htmlCode += rowTempl.format(benchTestName, referenceValue, *values)
             else:
@@ -559,14 +562,14 @@ class Renderer(object):
         htmlCode = ""
 
         numFiles = len(self.fileList)
-        if self.args.reference:
+        if self.reference:
             numFiles += 1
 
         headerTempl = "<tr>" + "<th>{}</th>" * (numFiles + 2) + "</tr>"
         outerRowTempl = "<tr><td>{}</td><td colspan='{}'><table>{}</table></td></tr>"
         innerRowTempl = "<tr>" + "<td>{}</td>" * (numFiles + 1) + "</tr>"
 
-        if self.args.reference:
+        if self.reference:
             htmlCode += headerTempl.format("Test", "Aggregation", "reference", *self.fileList)
         else:
             htmlCode += headerTempl.format("Test", "Aggregation", *self.fileList)
@@ -598,14 +601,14 @@ class Renderer(object):
                 continue
 
             # reference data
-            if self.args.reference:
-                if benchName not in self.reference['results'] or benchTestName not in self.reference['results'][benchName]['data']:
+            if self.reference:
+                if benchName not in self.ref['results'] or benchTestName not in self.ref['results'][benchName]['data']:
                     listMax.append('-')
                     listMin.append('-')
                     listSum.append('-')
                     listAvg.append('-')
                     continue
-                timeList = self.reference['results'][benchName]['data'][benchTestName]['value']
+                timeList = self.ref['results'][benchName]['data'][benchTestName]['value']
                 maxVal = max(timeList)
                 minVal = min(timeList)
                 sumVal = sum(timeList)

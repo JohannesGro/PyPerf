@@ -25,28 +25,23 @@ class Benchrunner(object):
     stored in a json formatted outputfile.
     """
 
-    # defaults
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    def __init__(self, args):
-        self.args = args
-
-    def main(self):
+    def main(self, suite, outfile, logconfig):
         global logger
-        logger = customlogging.init_logging("[Benchrunner]", configFile=self.args.logconfig, fileName=self.logging_file)
+        logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig, fileName=self.logging_file)
         self.sys_infos()
         logger.info("Starting")
-        logger.debug("Options: " + str(self.args))
-        logger.info("Reading the benchsuite: " + self.args.suite)
-        data = ioservice.loadJSONData(self.args.suite)
+        logger.info("Reading the benchsuite: " + suite)
+        data = ioservice.loadJSONData(suite)
 
         # iterating the suite
         for bench_key, bench_val in data["suite"].iteritems():
             logger.info("Execute bench: " + bench_key)
             result = self.start_bench_script(bench_val["file"], bench_val["className"], bench_val["args"])
             self.results['results'][bench_key] = {'args': bench_val["args"], 'data': result}
-        ioservice.saveJSONData(self.args.outfile, self.results)
+        ioservice.saveJSONData(outfile, self.results)
 
     def start_bench_script(self, path, class_name, args):
         """This functions imports the bench module and creates an instance of the given

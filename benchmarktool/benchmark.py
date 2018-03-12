@@ -60,16 +60,16 @@ def main():
     subcommand = args.subcommand
     if subcommand == "runner":
         from benchrunner import Benchrunner
-        br = Benchrunner(args)
-        br.main()
+        Benchrunner().main(args.suite, args.outfile, args.logconfig)
     elif subcommand == "render":
         from renderer import Renderer
-        rend = Renderer(args)
+        rend = Renderer(args.benchmarks, args.outfile, args.reference,
+                        args.logconfig, args.trend)
         rend.main()
     elif subcommand == "upload":
         from influxuploader import InfluxUploader
-        uploader = InfluxUploader(args)
-        uploader.main()
+        InfluxUploader().main(args.filename, args.influxdburl, args.database,
+                              args.timestamp, args.precision)
 
 if __name__ == "__main__":
     main()

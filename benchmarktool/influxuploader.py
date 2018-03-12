@@ -52,20 +52,14 @@ class InfluxUploader(object):
         "VM running?: (probably) ": "VM"
     }
 
-    def __init__(self, args):
-        # Grab the self.args from argv
-        self.args = args
-
     def extract_tags(self, sysinfo):
         tags = {}
         for info, tag_name in self.RELEVANT_SYSINFOS.iteritems():
             tags[tag_name] = sysinfo[info]
         return tags
 
-    def upload_to_influxdb(self, lines):
-        influxurl = self.args.influxdburl
-        database = self.args.database
-        precision = self.args.precision or "u"
+    def upload_to_influxdb(self, lines, influxurl, database, precision):
+        precision = precision or "u"
 
         rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
                             data="\n".join(lines))
@@ -100,14 +94,12 @@ class InfluxUploader(object):
         time_iso = sysinfos["Current Time (UTC)"]
         return dateparser.parse(time_iso).strftime('%s%f')
 
-    def main(self):
-        filename = self.args.filename
-
+    def main(self, filename, influxurl, database, timestamp, precision):
         with open(filename, "r") as fd:
             results = json.load(fd)
             sysinfos = results["Sysinfos"]
 
-            time_epoch = self.args.timestamp or self.extract_timestamp(sysinfos)
+            time_epoch = timestamp or self.extract_timestamp(sysinfos)
 
             tags = self.extract_tags(sysinfos)
             tags["hostname"] = self.extract_hostname(sysinfos)
@@ -124,4 +116,4 @@ class InfluxUploader(object):
                 fields_str = ",".join(["%s=%s" % (name, value)
                                        for name, value in fields.iteritems()])
                 lines.append(self.MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
-            self.upload_to_influxdb(lines)
+            self.upload_to_influxdb(lines, influxurl, database, precision)
