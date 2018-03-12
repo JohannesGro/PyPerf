@@ -6,14 +6,9 @@
 """
 """
 
-import argparse
 import json
-import logging.config
 import os
 import pkg_resources
-import sqlite3
-import sys
-import time
 
 import ioservice
 from benchmarktool.log import customlogging
@@ -28,17 +23,7 @@ class Renderer(object):
     module supports html output only.
     """
     currentDir = os.path.dirname(__file__)
-    outputFile = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
     loggingFile = 'renderer.log'
-
-    # CLI
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("benchmarks", nargs='+', help="One or more json files which contain the benchmarks. It is also possible to use folders. All json files from a folder will be loaded.")
-    parser.add_argument("--outfile", "-o", nargs='?', default=outputFile, help="The results will be stored in this file (html).")
-    parser.add_argument("--reference", "-r", nargs='?', help="""A referenced benchmark for the comparision. Uses the reference to mark some benchmarks result
-                                                                as positiv or negativ. This option will be ignored if the -trend option is active.""")
-    parser.add_argument("--logconfig", "-l", nargs='?', default="", help="Configuration file for the logger.")
-    parser.add_argument("--trend", "-t", default=False, action="store_true", help="Using the benchmarks to show a trend of a system.")
 
     template = """
     <!DOCTYPE html>
@@ -65,14 +50,7 @@ class Renderer(object):
 
     def __init__(self, args):
         # Grab the self.args from argv
-        if type(args) == argparse.Namespace:
-            prev = sys.argv
-            sys.argv = []
-            print args
-            self.args = self.parser.parse_args(args.benchmarks, namespace=args)
-            sys.argv = prev
-        else:
-            self.args = self.parser.parse_args(args)
+        self.args = args
 
     def main(self):
         global logger
@@ -393,7 +371,7 @@ class Renderer(object):
         inlineCss = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/css/main.css"))
         d3Lib = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/js/d3.v4.min.js"))
         chartsJS = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/js/charts.js"))
-        
+
         if self.args.trend:
             body = self.renderSysInfosTrend()
         else:

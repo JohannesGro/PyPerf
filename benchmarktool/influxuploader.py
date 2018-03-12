@@ -16,8 +16,6 @@ The data mapping is as follows:
 
 """
 
-import argparse
-import sys
 import requests
 import dateutil.parser as dateparser
 import json
@@ -54,23 +52,9 @@ class InfluxUploader(object):
         "VM running?: (probably) ": "VM"
     }
 
-    parser = argparse.ArgumentParser(description=__doc__, prog="Uploader")
-    parser.add_argument("--influxdburl", "-u",
-                        help="The URL to the Influx DBMS to upload the results onto.")
-    parser.add_argument("--database", "-d", help="The database to upload the results into.")
-    parser.add_argument("--filename", "-f", help="JSON report to upload.")
-    parser.add_argument("--precision", "-p", help="The precision of the timestamp.")
-    parser.add_argument("--timestamp", "-t", help="If given, overrides the timestamp given in the report.")
-
     def __init__(self, args):
         # Grab the self.args from argv
-        if type(args) == argparse.Namespace:
-            prev = sys.argv
-            sys.argv = []
-            self.args = self.parser.parse_args(args=None, namespace=args)
-            sys.argv = prev
-        else:
-            self.args = self.parser.parse_args(args)
+        self.args = args
 
     def extract_tags(self, sysinfo):
         tags = {}
