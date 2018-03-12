@@ -86,3 +86,23 @@ class Benchrunner(object):
         results of the benchmarks.
         """
         self.results['Sysinfos'] = systemInfos.getAllSysInfos()
+
+    def normalize_bench_path(self, suitepath, benchpath):
+        """
+        Normalizes the path to the benchmark, given absolute or
+        relative path to the suite and absolute or relative path to
+        the benchmark
+
+        :param suitepath: path to the benchsuite file
+        :param benchpath: path to the benchmark file
+        :returns: normalized absolute path to the benchmark file
+        """
+        path = None
+        if os.path.isabs(benchpath):
+            path = benchpath
+        elif os.path.isabs(suitepath):
+            path = os.path.join(os.path.dirname(suitepath), benchpath)
+        else:
+            path = os.path.join(os.getcwd(), os.path.dirname(suitepath), benchpath)
+
+        return os.path.normpath(path)

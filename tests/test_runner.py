@@ -10,6 +10,7 @@ import subprocess
 import os
 import json
 from nose.tools import eq_
+from .utils import coverage_opts
 
 """
 Contains basic CLI tests for the 'runner' subcommand
@@ -22,23 +23,23 @@ __revision__ = "$Id$"
 class RunnerTest(unittest.TestCase):
     REPORTFILE = "report_tmp.json"
 
-    def setUp(self):
-        self.here = os.path.abspath(os.path.dirname(__file__))
-        self.orig_cwd = os.getcwd()
+    #def setUp(self):
+        #self.here = os.path.abspath(os.path.dirname(__file__))
+        #self.orig_cwd = os.getcwd()
 
     def tearDown(self):
         if os.path.exists(self.REPORTFILE):
             os.remove(self.REPORTFILE)
-        if self.orig_cwd != os.getcwd():
-            os.chdir(self.orig_cwd)
+        #if self.orig_cwd != os.getcwd():
+        #    os.chdir(self.orig_cwd)
 
     def test_trivial_run(self):
         here = os.path.abspath(os.path.dirname(__file__))
-        os.chdir(here)
-        cmdline = [
-            "python", os.path.join(here, "..", "bench.py"), "runner", "--suite",
-            "dummy.json", "-o", self.REPORTFILE
-        ]
+        #os.chdir(here)
+        cmdline = ["python"] + coverage_opts() + [
+            os.path.join(here, "..", "bench.py"), "runner", "--suite",
+            "dummy.json", "-o", self.REPORTFILE]
+        print subprocess.list2cmdline(cmdline)
         proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         expected = """setUpClass called
