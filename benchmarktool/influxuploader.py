@@ -21,18 +21,12 @@ import requests
 import dateutil.parser as dateparser
 import json
 
-# TODO
-# * code verbessern
-# * testen
-# * Umstrukturieren:
-#    - An templates (setuptools, cli apps) orientieren
-#
 
 __docformat__ = "restructuredtext en"
 __revision__ = "$Id$"
 
 # Exported objects
-__all__ = ["upload"]
+__all__ = ["upload", "InvalidReportError"]
 
 
 # <measurement>[,<tag_key>=<tag_value>[,...]] <field_key>=<field_value>[,...] [<timestamp>]
@@ -49,6 +43,10 @@ RELEVANT_SYSINFOS = {
     # "Processor": "CPU",
     "VM running?: (probably) ": "VM"
 }
+
+
+class InvalidReportError(Exception):
+    pass
 
 
 def extract_tags(sysinfo):
@@ -109,8 +107,14 @@ def extract_timestamp(sysinfos):
 
 def upload(report, influxdburl, database, timestamp=None, precision=None, values=None):
     with open(report, "r") as fd:
-        results = json.load(fd)
+        try:
+            results = json.load(fd)
+        except ValueError:
+            raise InvalidReportError("Report '%s' cannot be parsed." % report)
+
         sysinfos = results["Sysinfos"]
+        if len(sysinfos) == 0:
+            raise InvalidReportError("Report '%s' doesn't contain sysinfos." % report)
 
         time_epoch = timestamp or extract_timestamp(sysinfos)
 
@@ -120,6 +124,10 @@ def upload(report, influxdburl, database, timestamp=None, precision=None, values
                              for tagname, tagvalue in tags.iteritems()])
         lines = []
         fields = {}
+
+        if "results" not in results:
+            raise InvalidReportError("Report '%s' doesn't contain any results." % report)
+
         for benchmark, benchmark_results in results["results"].iteritems():
             for bench, bench_results in benchmark_results["data"].iteritems():
                 report_values = bench_results["value"]

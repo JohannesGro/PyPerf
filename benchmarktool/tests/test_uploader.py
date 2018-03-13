@@ -30,20 +30,17 @@ class TestInfluxdbUploader(unittest.TestCase):
         assert lp_msg.find("user=wen") != -1
         assert lp_msg.find("runtime_avr=0.01") != -1
 
-    # TODO: should raise a more specific exception
-    @raises(KeyError)
+    @raises(uploader.InvalidReportError)
     def test_sysinfos_incomplete(self):
         uploader.upload(os.path.join(self.testdata, "report_no_sysinfos.json"),
                         self.influxdburl, self.database)
 
-    # TODO: should raise a more specific exception
-    @raises(KeyError)
+    @raises(uploader.InvalidReportError)
     def test_no_results(self):
         uploader.upload(os.path.join(self.testdata, "report_no_results.json"),
                         self.influxdburl, self.database)
 
-    # TODO: should raise a more specific exception
-    @raises(ValueError)
+    @raises(uploader.InvalidReportError)
     def test_invalid_report(self):
         uploader.upload(os.path.join(self.testdata, "report_invalid.json"),
                         self.influxdburl, self.database)
@@ -69,7 +66,6 @@ class TestInfluxdbUploader(unittest.TestCase):
         uploader.upload(os.path.join(self.testdata, "report.json"),
                         self.influxdburl, self.database)
 
-    # TODO: should raise a more specific exception
     @raises(Exception)
     @patch('benchmarktool.influxuploader.requests.post', new=InfluxMock(sc=500))
     def test_influx_error(self):
