@@ -8,7 +8,7 @@
 import unittest
 import subprocess
 import os
-from nose.tools import eq_, raises
+from nose.tools import eq_
 from .utils import coverage_opts
 
 """
@@ -20,9 +20,6 @@ __revision__ = "$Id$"
 
 
 class RendererTest(unittest.TestCase):
-    # FIXME: currently it blows up with an encoding under Linux.
-    #        TST should have a fix for that.
-    @raises(subprocess.CalledProcessError)
     def test_render(self):
         # Pretty basic: render just one report, everything default
         here = os.path.abspath(os.path.dirname(__file__))

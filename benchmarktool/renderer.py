@@ -25,7 +25,7 @@ class Renderer(object):
     currentDir = os.path.dirname(__file__)
     loggingFile = 'renderer.log'
 
-    template = """
+    template = u"""
     <!DOCTYPE html>
     <html>
     <head>
