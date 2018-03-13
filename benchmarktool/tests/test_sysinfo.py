@@ -16,3 +16,8 @@ def test_getcpuifo_verbose():
 def test_getcpuifo_nonverbose():
     res = si.getCPUInfo(verbose=False)
     eq_(len(res), 3)
+
+
+def test_getAllSysInfos():
+    res = si.getAllSysInfos()
+    eq_(len(res), 41)
