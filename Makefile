@@ -23,7 +23,7 @@ PYCHECKEROPTS = --max-line-length=110
 PY_FILES := $(subst \,/,$(shell git status $(PY_FILE_DIRS) -s |\
 	python -c 'import sys;\
 	print " ".join([line[3:].strip() for line in sys.stdin.readlines() \
-	if line.endswith(".py\n") and line[1] in ("AM")])'))
+	if line.endswith(".py\n") and (line[0] in ("AM") or line[1] in ("AM"))])'))
 
 ##
 ## This Makefile automates a lot of things you should do quite often in your
