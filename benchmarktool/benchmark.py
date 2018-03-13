@@ -44,17 +44,19 @@ def main():
     render.add_argument("--trend", "-t", default=False, action="store_true",
                         help="Using the benchmarks to show a trend of a system.")
 
-    upload = subparsers.add_parser("upload")
-    upload.add_argument("--influxdburl", "-u",
-                        help="The URL to the Influx DBMS to upload the results onto.")
-    upload.add_argument("--database", "-d",
-                        help="The database to upload the results into.")
-    upload.add_argument("--filename", "-f",
-                        help="JSON report to upload.")
-    upload.add_argument("--precision", "-p",
-                        help="The precision of the timestamp.")
-    upload.add_argument("--timestamp", "-t",
-                        help="If given, overrides the timestamp given in the report.")
+    upload_parser = subparsers.add_parser("upload")
+    upload_parser.add_argument("--influxdburl", "-u",
+                               help="The URL to the Influx DBMS to upload the results onto.")
+    upload_parser.add_argument("--database", "-d",
+                               help="The database to upload the results into.")
+    upload_parser.add_argument("--filename", "-f",
+                               help="JSON report to upload.")
+    upload_parser.add_argument("--precision", "-p",
+                               help="The precision of the timestamp.")
+    upload_parser.add_argument("--timestamp", "-t",
+                               help="If given, overrides the timestamp given in the report.")
+    upload_parser.add_argument("--values", "-v",
+                               help="Additional values to upload.")
 
     args = parser.parse_args()
     subcommand = args.subcommand
@@ -67,9 +69,9 @@ def main():
                         args.logconfig, args.trend)
         rend.main()
     elif subcommand == "upload":
-        from influxuploader import InfluxUploader
-        InfluxUploader().main(args.filename, args.influxdburl, args.database,
-                              args.timestamp, args.precision)
+        from influxuploader import upload
+        upload(args.filename, args.influxdburl, args.database,
+               args.timestamp, args.precision, args.values)
 
 if __name__ == "__main__":
     main()

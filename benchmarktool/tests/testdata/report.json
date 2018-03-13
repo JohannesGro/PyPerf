@@ -1,0 +1,82 @@
+{
+    "Sysinfos": {
+        "CADDOK_BASE": "/home/wen/src/cdb/trunk_exp/sqlite",
+        "CADDOK_DEFAULT": "@:/home/wen/src/cdb/trunk_exp/sqlite",
+        "CADDOK_HOME": "/home/wen/src/cdb/trunk_exp/cdb",
+        "CADDOK_RUNTIME": "/home/wen/src/cdb/trunk_exp/linux2/debug/img/bin",
+        "CADDOK_SOED_PLACES": "/media/projects/soed",
+        "CADDOK_TOPDIR": "/home/wen/src/cdb",
+        "CPU Count (locial CPUs)": 4,
+        "CPU Count (physical CPUs)": 4,
+        "CPU Frenquency": 3571.1945,
+        "CPU Percent": 9.8,
+        "CPU Time (spent by processes executing in kernel mode)": 38391.76,
+        "CPU Time (spent by processes in user mode)": 205881.08,
+        "CPU Time (spent doing nothing)": 2917325.77,
+        "CPU Time Percent (spent by processes executing in kernel mode)": 9.6,
+        "CPU Time Percent (spent by processes in user mode)": 32.6,
+        "CPU Time Percent (spent doing nothing)": 57.3,
+        "Current Time (UTC)": "2018-02-13T15:52:28.010691",
+        "Current User": "wen",
+        "Disk IO read (MB)": 199571232256,
+        "Disk IO read (count)": 4321865,
+        "Disk IO read (time)": 7941000,
+        "Disk IO write (MB)": 1181437155328,
+        "Disk IO write (count)": 7199586,
+        "Disk IO write (time)": 440871816,
+        "Elements Version": "2015.1 Service Level dev (Build #146253)",
+        "Hostnames": [
+            "127.0.0.1",
+            "127.0.1.1",
+            "con-wen",
+            "con-wen.contact.de",
+            "localhost"
+        ],
+        "MAC-Adress": "0x24be050fceba",
+        "Memory Active (MB)": 8157,
+        "Memory Available (MB)": 8576,
+        "Memory Buffers (MB)": 311,
+        "Memory Cached (MB)": 11269,
+        "Memory Free (MB)": 1484,
+        "Memory Inactive (MB)": 5473,
+        "Memory Percent": 46.6,
+        "Memory Shared (MB)": 4159,
+        "Memory Total (MB)": 16070,
+        "Memory Used (MB)": 3004,
+        "OS-Platform": "linux2",
+        "OS-Platform Version": "Linux-4.4.0-112-generic-x86_64-with-debian-stretch-sid",
+        "Processor": "x86_64",
+        "Swap (Free MB)": 15413,
+        "Swap In (MB)": 137,
+        "Swap Percent": 5.7,
+        "Swap Total (MB)": 16340,
+        "Swap Used (MB)": 927,
+        "Swaped Out (MB)": 1126,
+        "VM running?: (probably) ": "No"
+    },
+    "results": {
+        "SomeBenchmark": {
+            "args": {
+                "iterations": 100
+            },
+            "data": {
+                "bench_runtime": {
+                    "type": "time_series",
+                    "unit": "seconds",
+                    "value": [
+                        0.01,
+                        0.01
+                    ]
+                },
+                "bench_sqlstms": {
+                    "type": "count",
+                    "unit": "statements",
+                    "value": [
+                        6,
+                        6
+                    ]
+                }
+            }
+        }
+    }
+}
