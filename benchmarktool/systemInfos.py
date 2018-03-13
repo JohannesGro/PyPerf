@@ -167,34 +167,40 @@ def getSysInfo():
     return res
 
 
-def getCPUInfo():
+def getCPUInfo(verbose=True):
     res = {}
-    cpu_times = psutil.cpu_times()
-    logger.info("CPU Time (spent by processes in user mode): {}".format(cpu_times.user))
-    res["CPU Time (spent by processes in user mode)"] = cpu_times.user
-    logger.info("CPU Time (spent by processes in kernel mode): {}".format(cpu_times.system))
-    res["CPU Time (spent by processes executing in kernel mode)"] = cpu_times.system
-    logger.info("CPU Time (spent doing nothing): {}".format(cpu_times.idle))
-    res["CPU Time (spent doing nothing)"] = cpu_times.idle
 
-    logger.info('CPU Percent: {}'.format(psutil.cpu_percent(interval=1, percpu=False)))
-    res['CPU Percent'] = psutil.cpu_percent(interval=1, percpu=False)
+    # 1. CPU utilisation by mode (user, system, idle).
+    #    TODO: platform specific modes (irq, softirq etc.) would probably be useful too.
+    if verbose:
+        cpu_times = psutil.cpu_times()
+        logger.info("CPU Time (spent by processes in user mode): {}".format(cpu_times.user))
+        res["CPU Time (spent by processes in user mode)"] = cpu_times.user
+        logger.info("CPU Time (spent by processes in kernel mode): {}".format(cpu_times.system))
+        res["CPU Time (spent by processes executing in kernel mode)"] = cpu_times.system
+        logger.info("CPU Time (spent doing nothing): {}".format(cpu_times.idle))
+        res["CPU Time (spent doing nothing)"] = cpu_times.idle
 
-    cpu_time_percent = psutil.cpu_times_percent(interval=1.1, percpu=False)
-    logger.info("CPU Time Percent (spent by processes in user mode): {}".format(cpu_time_percent.user))
-    res["CPU Time Percent (spent by processes in user mode)"] = cpu_time_percent.user
-    logger.info("CPU Time Percent (spent by processes in kernel mode): {}".format(cpu_time_percent.system))
-    res["CPU Time Percent (spent by processes executing in kernel mode)"] = cpu_time_percent.system
-    logger.info("CPU Time Percent (spent doing nothing): {}".format(cpu_time_percent.idle))
-    res["CPU Time Percent (spent doing nothing)"] = cpu_time_percent.idle
+        cpu_time_percent = psutil.cpu_times_percent(interval=0.5, percpu=False)
+        logger.info("CPU Time Percent (spent by processes in user mode): {}".format(cpu_time_percent.user))
+        res["CPU Time Percent (spent by processes in user mode)"] = cpu_time_percent.user
+        logger.info("CPU Time Percent (spent by processes in kernel mode): {}".format(cpu_time_percent.system))
+        res["CPU Time Percent (spent by processes executing in kernel mode)"] = cpu_time_percent.system
+        logger.info("CPU Time Percent (spent doing nothing): {}".format(cpu_time_percent.idle))
+        res["CPU Time Percent (spent doing nothing)"] = cpu_time_percent.idle
 
-    logger.info('CPU Count (locial CPUs): {}'.format(psutil.cpu_count()))
-    res['CPU Count (locial CPUs)'] = psutil.cpu_count()
-    logger.info('CPU Count (physical CPUs): {}'.format(psutil.cpu_count(logical=False)))
-    res['CPU Count (physical CPUs)'] = psutil.cpu_count(logical=False)
+    # 2. CPU core counts
+    cores_logical = psutil.cpu_count()
+    cores_physical = psutil.cpu_count(logical=False)
+    logger.info('CPU Count (logical CPUs): {}'.format(cores_logical))
+    res['CPU Count (logical CPUs)'] = cores_logical
+    logger.info('CPU Count (physical CPUs): {}'.format(cores_physical))
+    res['CPU Count (physical CPUs)'] = cores_physical
 
-    logger.info("CPU Frenquency: {}".format(psutil.cpu_freq(percpu=False).current))
-    res['CPU Frenquency'] = psutil.cpu_freq(percpu=False).current
+    # 3. Current CPU frequency
+    cpu_freq_curr = psutil.cpu_freq(percpu=False).current
+    logger.info("CPU Frenquency: {}".format(cpu_freq_curr))
+    res['CPU Frenquency'] = cpu_freq_curr
     return res
 
 
