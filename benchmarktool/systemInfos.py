@@ -181,6 +181,10 @@ def getCPUInfo(verbose=True):
         logger.info("CPU Time (spent doing nothing): {}".format(cpu_times.idle))
         res["cpu_idle"] = cpu_times.idle
 
+        cpu_percent = psutil.cpu_percent(interval=0.5, percpu=False)
+        logger.info('CPU Percent: {}'.format(cpu_percent))
+        res['cpu_percent'] = cpu_percent
+
         cpu_time_percent = psutil.cpu_times_percent(interval=0.5, percpu=False)
         logger.info("CPU Time Percent (spent by processes in user mode): {}".format(cpu_time_percent.user))
         res["cpu_load_user"] = cpu_time_percent.user

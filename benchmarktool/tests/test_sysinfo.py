@@ -10,7 +10,7 @@ from .. import systemInfos as si
 
 def test_getcpuifo_verbose():
     res = si.getCPUInfo(verbose=True)
-    eq_(len(res), 9)
+    eq_(len(res), 10)
 
 
 def test_getcpuifo_nonverbose():
@@ -20,4 +20,4 @@ def test_getcpuifo_nonverbose():
 
 def test_getAllSysInfos():
     res = si.getAllSysInfos()
-    eq_(len(res), 41)
+    eq_(len(res), 42)

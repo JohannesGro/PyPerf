@@ -253,10 +253,10 @@ class Renderer(object):
                     continue
                 # find infos which will be displayed as tooltip
                 tooltip = {}
-                #tooltipSysInfos = ["CPU Percent", "Memory Percent"]
-                tooltipSysInfos = ["mem_percent"]
+                tooltipSysInfos = ["cpu_percent", "mem_percent"]
                 for tooltipSysInfo in tooltipSysInfos:
-                    tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
+                    if tooltipSysInfo in self.sysInfos:
+                        tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
 
                 utcTime = self.sysInfos["time"][index]
                 # if the result is a time series, it will be aggregated
