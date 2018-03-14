@@ -1,6 +1,11 @@
-image: "dhub.contact.de/centos_ci_trunk"
-test:
+
+tests_linux:
+  image: "dhub.contact.de/centos_ci_trunk"
   script: "make coverage"
   tags:
     - Docker
+
+tests_windows:
+  script: "make coverage"
+  tags:
     - Windows
