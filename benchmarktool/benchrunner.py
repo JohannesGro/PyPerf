@@ -28,11 +28,11 @@ class Benchrunner(object):
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    def main(self, suite, outfile, logconfig):
+    def main(self, suite, outfile, logconfig, verbose):
         global logger
         logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig,
                                             fileName=self.logging_file)
-        self.sys_infos()
+        self.sys_infos(verbose)
         logger.info("Starting")
         logger.info("Reading the benchsuite: " + suite)
         data = ioservice.loadJSONData(suite)
@@ -84,11 +84,11 @@ class Benchrunner(object):
         # perform the benchmark
         return bench_class().run(args)
 
-    def sys_infos(self):
+    def sys_infos(self, verbose):
         """Detect serveral system infos. This infos will be saved later with the
         results of the benchmarks.
         """
-        self.results['Sysinfos'] = systemInfos.getAllSysInfos()
+        self.results['Sysinfos'] = systemInfos.getAllSysInfos(verbose)
 
     def normalize_bench_path(self, suitepath, benchpath):
         """

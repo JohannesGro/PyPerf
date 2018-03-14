@@ -43,17 +43,10 @@ class MEMORYSTATUSEX(ctypes.Structure):
         super(MEMORYSTATUSEX, self).__init__()
 
 
-def getMemoryInfos():
+def getMemoryInfos(verbose=True):
     # working for windows only
     mb = 1024 * 1024
     res = {}
-    if psutil.WINDOWS:
-        stat = MEMORYSTATUSEX()
-        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
-
-        logger.info("Memory Total Virtual: {}MB".format(stat.ullTotalVirtual / mb))
-        res['mem_total_virtual'] = stat.ullTotalVirtual / mb
-
     mem = psutil.virtual_memory()
     logger.info("Memory Total: {}MB".format(mem.total / mb))
     res['mem_total'] = mem.total / mb
@@ -61,49 +54,58 @@ def getMemoryInfos():
     logger.info("Memory Percent: {}%".format(mem.percent))
     res['mem_percent'] = mem.percent
 
-    logger.info("Memory Used: {}MB".format(mem.used / mb))
-    res['mem_used'] = mem.used / mb
+    if verbose:
+        if psutil.WINDOWS:
+            stat = MEMORYSTATUSEX()
+            ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
 
-    logger.info("Memory Free: {}MB".format(mem.free / mb))
-    res['mem_free'] = mem.free / mb
+            logger.info("Memory Total Virtual: {}MB".format(stat.ullTotalVirtual / mb))
+            res['mem_total_virtual'] = stat.ullTotalVirtual / mb
 
-    logger.info("Memory Available: {}MB".format(mem.available / mb))
-    res['mem_available'] = mem.available / mb
-    if(psutil.POSIX):
-        logger.info("Memory Active: {}MB".format(mem.active / mb))
-        res['mem_active'] = mem.active / mb
+        logger.info("Memory Used: {}MB".format(mem.used / mb))
+        res['mem_used'] = mem.used / mb
 
-        logger.info("Memory Inactive: {}MB".format(mem.inactive / mb))
-        res['mem_inactive'] = mem.inactive / mb
+        logger.info("Memory Free: {}MB".format(mem.free / mb))
+        res['mem_free'] = mem.free / mb
 
-    if(psutil.POSIX or psutil.BSD):
-        logger.info("Memory Buffers: {}MB".format(mem.buffers / mb))
-        res['mem_buffers'] = mem.buffers / mb
+        logger.info("Memory Available: {}MB".format(mem.available / mb))
+        res['mem_available'] = mem.available / mb
+        if(psutil.POSIX):
+            logger.info("Memory Active: {}MB".format(mem.active / mb))
+            res['mem_active'] = mem.active / mb
 
-        logger.info("Memory Shared: {}MB".format(mem.shared / mb))
-        res['mem_shared'] = mem.shared / mb
+            logger.info("Memory Inactive: {}MB".format(mem.inactive / mb))
+            res['mem_inactive'] = mem.inactive / mb
 
-        logger.info("Memory Cached: {}MB".format(mem.cached / mb))
-        res['mem_cached'] = mem.cached / mb
-    if(psutil.OSX or psutil.BSD):
-        logger.info("Memory Wired {}MB".format(mem.wired / mb))
-        res['mem_wired'] = mem.wired / mb
+        if(psutil.POSIX or psutil.BSD):
+            logger.info("Memory Buffers: {}MB".format(mem.buffers / mb))
+            res['mem_buffers'] = mem.buffers / mb
 
-    swap = psutil.swap_memory()
-    logger.info('Swap Total: {}MB'.format(swap.total / mb))
-    res['swap_total'] = swap.total / mb
-    logger.info('Swap Used: {}MB'.format(swap.used / mb))
-    res['swap_used'] = swap.used / mb
-    logger.info('Swap Free: {}MB'.format(swap.free / mb))
-    res['swap_free'] = swap.free / mb
-    logger.info('Swap Percent: {}'.format(swap.percent))
-    res['swap_percent'] = swap.percent
-    if not psutil.WINDOWS:
-        logger.info('Swap In: {}MB'.format(swap.sin / mb))
-        res['swapped_in'] = swap.sin / mb
+            logger.info("Memory Shared: {}MB".format(mem.shared / mb))
+            res['mem_shared'] = mem.shared / mb
 
-        logger.info('Swaped Out: {}MB'.format(swap.sout / mb))
-        res['swapped_out'] = swap.sout / mb
+            logger.info("Memory Cached: {}MB".format(mem.cached / mb))
+            res['mem_cached'] = mem.cached / mb
+        if(psutil.OSX or psutil.BSD):
+            logger.info("Memory Wired {}MB".format(mem.wired / mb))
+            res['mem_wired'] = mem.wired / mb
+
+    if verbose:
+        swap = psutil.swap_memory()
+        logger.info('Swap Total: {}MB'.format(swap.total / mb))
+        res['swap_total'] = swap.total / mb
+        logger.info('Swap Used: {}MB'.format(swap.used / mb))
+        res['swap_used'] = swap.used / mb
+        logger.info('Swap Free: {}MB'.format(swap.free / mb))
+        res['swap_free'] = swap.free / mb
+        logger.info('Swap Percent: {}'.format(swap.percent))
+        res['swap_percent'] = swap.percent
+        if not psutil.WINDOWS:
+            logger.info('Swap In: {}MB'.format(swap.sin / mb))
+            res['swapped_in'] = swap.sin / mb
+
+            logger.info('Swaped Out: {}MB'.format(swap.sout / mb))
+            res['swapped_out'] = swap.sout / mb
     return res
 
 
@@ -122,9 +124,9 @@ def getAllHostnames():
     return usutil.gethostnames()
 
 
-def getAllHostnamesInfo():
-    logger.info("Hostnames: {}".format(usutil.gethostnames()))
-    return {"hostnames": getAllHostnames()}
+def getAllHostnamesInfo(verbose=True):
+    hostnames = getAllHostnames() if verbose else [platform.node()]
+    return {"hostnames": hostnames}
 
 
 def diskIOCounter():
@@ -208,7 +210,7 @@ def getCPUInfo(verbose=True):
     return res
 
 
-def getCADDOKINfos():
+def getCADDOKInfos():
     """Looking for CADDOK enviroment variables.
 
     :returns: dict with the infos."""
@@ -371,22 +373,25 @@ def traceroute(dest):
         return {}
 
 
-def getAllSysInfos():
+def getAllSysInfos(verbose=True):
     """Collects all system infos and returns a dict.
 
+    :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
     :returns: dict with all system infos."""
 
     logger.info("SYSINFOS:\n")
     res = {}
     res.update(getSysInfo())
-    res.update(getCADDOKINfos())
-    res.update(getCPUInfo())
-    if 'CADDOK_SERVER' in res:
-        res.update(traceroute(res['CADDOK_SERVER']))
+    res.update(getCADDOKInfos())
+    res.update(getCPUInfo(verbose))
     res.update(VMInfo())
-    res.update(getAllHostnamesInfo())
-    res.update(getMacInfo())
-    res.update(getMemoryInfos())
-    res.update(diskIOCounter())
-    res.update(msinfo32())
+    res.update(getAllHostnamesInfo(verbose))
+    res.update(getMemoryInfos(verbose))
+    if verbose:
+        if 'CADDOK_SERVER' in res:
+            res.update(traceroute(res['CADDOK_SERVER']))
+        res.update(diskIOCounter())
+        res.update(getMacInfo())
+        res.update(msinfo32())
+
     return res

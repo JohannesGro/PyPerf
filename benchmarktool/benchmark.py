@@ -26,6 +26,8 @@ def main():
     runner.add_argument("--outfile", "-o", nargs='?', default=REPORTFILE_DEFAULT, help=helpstr)
     runner.add_argument("--logconfig", "-l", nargs='?', default="",
                         help="Configuration file for the logger.")
+    runner.add_argument("--verbose", "-v", default=False,
+                        action='store_true', help="Get more detailled system infos.")
 
     render = subparsers.add_parser("render")
     render.add_argument("benchmarks", nargs='+',
@@ -62,7 +64,7 @@ def main():
     subcommand = args.subcommand
     if subcommand == "runner":
         from benchrunner import Benchrunner
-        Benchrunner().main(args.suite, args.outfile, args.logconfig)
+        Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
     elif subcommand == "render":
         from renderer import Renderer
         rend = Renderer(args.benchmarks, args.outfile, args.reference,
