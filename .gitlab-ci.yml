@@ -3,3 +3,4 @@ test:
   script: "make coverage"
   tags:
     - Docker
+    - Windows
