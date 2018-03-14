@@ -10,9 +10,13 @@ from .. import systemInfos as si
 
 def test_getcpuifo_verbose():
     res = si.getCPUInfo(verbose=True)
-    eq_(len(res), 9)
-
+    assert res
 
 def test_getcpuifo_nonverbose():
     res = si.getCPUInfo(verbose=False)
-    eq_(len(res), 3)
+    assert res
+
+
+def test_getAllSysInfos():
+    res = si.getAllSysInfos()
+    assert res

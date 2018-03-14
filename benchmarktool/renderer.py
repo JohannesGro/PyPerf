@@ -14,6 +14,52 @@ import ioservice
 from benchmarktool.log import customlogging
 
 
+KEY_2_GUILABEL = {
+    "cpu_cores_logical": "CPU Count (locial CPUs)",
+    "cpu_cores_physical": "CPU Count (physical CPUs)",
+    "cpu_frequency": "CPU Frenquency",
+    "cpu_load_system": "CPU Time Percent (spent by processes executing in kernel mode)",
+    "cpu_load_user": "CPU Time Percent (spent by processes in user mode)",
+    "cpu_load_idle": "CPU Time Percent (spent doing nothing)",
+    "cpu_system": "CPU Time (spent by processes executing in kernel mode)",
+    "cpu_user": "CPU Time (spent by processes in user mode)",
+    "cpu_idle": "CPU Time (spent doing nothing)",
+    "time": "Current Time (UTC)",
+    "user": "Current User",
+    "io_read_count": "Disk IO read (count)",
+    "io_read_mb": "Disk IO read (MB)",
+    "io_read_time": "Disk IO read (time)",
+    "io_write_count": "Disk IO write (count)",
+    "io_write_mb": "Disk IO write (MB)",
+    "io_write_time": "Disk IO write (time)",
+    "ce_version": "Elements Version",
+    "mem_active": "Memory Active (MB)",
+    "mem_available": "Memory Available (MB)",
+    "mem_buffers": "Memory Buffers (MB)",
+    "mem_cached": "Memory Cached (MB)",
+    "mem_free": "Memory Free (MB)",
+    "mem_inactive": "Memory Inactive (MB)",
+    "mem_percent": "Memory Percent",
+    "mem_shared": "Memory Shared (MB)",
+    "mem_total": "Memory Total (MB)",
+    "mem_total_virtual": "Memory Total Virtual (MB)",
+    "mem_used": "Memory Used (MB)",
+    "mem_wired": "Memory Wired (MB)",
+    "os": "OS-Platform",
+    "os_version": "OS-Platform Version",
+    "cpu": "Processor",
+    "swapped_out": "Swaped Out (MB)",
+    "swapped_in": "Swap In (MB)",
+    "swap_free": "Swap (Free MB)",
+    "swap_percent": "Swap Percent",
+    "swap_total": "Swap Total (MB)",
+    "swap_used": "Swap Used (MB)",
+    "mac_adress": "MAC_Adress",
+    "hostnames": "Hostnames",
+    "vm": "VM running?: (probably) "
+}
+
+
 class Renderer(object):
     """The class renderer reads the results of one or several benchmarks and
     creates a human readable output for example showing table or diagrams. The renderer provides two
@@ -207,11 +253,12 @@ class Renderer(object):
                     continue
                 # find infos which will be displayed as tooltip
                 tooltip = {}
-                tooltipSysInfos = ["CPU Percent", "Memory Percent"]
+                tooltipSysInfos = ["cpu_percent", "mem_percent"]
                 for tooltipSysInfo in tooltipSysInfos:
-                    tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
+                    if tooltipSysInfo in self.sysInfos:
+                        tooltip[tooltipSysInfo] = self.sysInfos[tooltipSysInfo][index]
 
-                utcTime = self.sysInfos['Current Time (UTC)'][index]
+                utcTime = self.sysInfos["time"][index]
                 # if the result is a time series, it will be aggregated
                 if benchTestData['type'] == "time_series":
                     testResult = calcAvg(testResult)
@@ -235,16 +282,26 @@ class Renderer(object):
 
         sysinfosList = self.sysInfos
         groups = ""
-        groupsKeywords = ['CADDOK', 'CPU', 'Disk', 'Memory', 'Swap', 'Other']
-        for group in groupsKeywords:
+
+        groupsKeywords = [
+            ("CADDOK", "CADDOK"),
+            ("CPU", "cpu"),
+            ("Disk", "io"),
+            ("Memory", "mem"),
+            ("Swap", "swap"),
+            ("Other", "")]
+
+        for group, groupkey in groupsKeywords:
             graphs = ""
             if group == 'Other':
                 groupElements = sysinfosList
             else:
                 # find the element for the current group
-                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.find(group) == 0}
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.startswith(groupkey)}
+
             groupRows = ""
             for sysinfoname, values in sorted(groupElements.iteritems()):
+                sysinfoname = KEY_2_GUILABEL.get(sysinfoname, sysinfoname)
                 # no diagram for one entry
                 if len(self.fileList) > 1:
                     # not the same columns
@@ -268,7 +325,7 @@ class Renderer(object):
 
         :returns: html code for displaying system infos"""
         sysinfovalues = self.sysInfos[SysInfoName]
-        timeList = self.sysInfos['Current Time (UTC)']
+        timeList = self.sysInfos["time"]
 
         measurements = []
         for index, value in enumerate(sysinfovalues):
@@ -316,16 +373,24 @@ class Renderer(object):
         sysinfosList = self.sysInfos
 
         groups = ""
-        groupsKeywords = ['CADDOK', 'CPU', 'Disk', 'Memory', 'Swap', 'Other']
-        for group in groupsKeywords:
+        groupsKeywords = [
+            ("CADDOK", "CADDOK"),
+            ("CPU", "cpu"),
+            ("Disk", "io"),
+            ("Memory", "mem"),
+            ("Swap", "swap"),
+            ("Other", "")]
+
+        for group, groupkey in groupsKeywords:
             if group == 'Other':
                 groupElements = sysinfosList
             else:
                 # find the element for the current group
-                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.find(group) == 0}
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.startswith(groupkey)}
             groupRows = ""
             for sysinfoname, values in sorted(groupElements.iteritems()):
-                groupRows += rowTempl.format(sysinfoname, *values)
+                groupRows += rowTempl.format(KEY_2_GUILABEL.get(sysinfoname, sysinfoname), *values)
+
             groups += groupsTemp.format(group, tableTemp.format(headerTempl.format("System Info", *self.fileList), groupRows))
             # remove the elements from the list
             sysinfosList = {key: val for key, val in sysinfosList.iteritems() if key not in groupElements.keys()}

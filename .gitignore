@@ -2,7 +2,6 @@ __pycache__/
 *.py[cod]
 *.log
 *.db
-*.html
 doc/_build/*
 .coverage
 .noseids

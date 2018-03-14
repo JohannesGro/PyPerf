@@ -27,7 +27,7 @@ class UploaderTest(unittest.TestCase):
         here = os.path.abspath(os.path.dirname(__file__))
         bench = os.path.normpath(os.path.join(here, "..", "bench.py"))
         rc = subprocess.check_call(["python"] + coverage_opts() + [
-            bench, "upload", "--filename=%s" % os.path.join(here, "report.json"),
+            bench, "upload", "--filename=%s" % os.path.join(here, "testdata", "report.json"),
             "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
         ], stdout=subprocess.PIPE)
         eq_(rc, 0)
