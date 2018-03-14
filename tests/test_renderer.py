@@ -29,6 +29,12 @@ class RendererTest(unittest.TestCase):
     REPORT2 = os.path.join(DATADIR, "report2.json")
     BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
 
+    def tearDown(self):
+        try:
+            os.remove(self.RENDER_FILE)
+        except OSError:
+            pass
+
     def test_render_simple(self):
         # the simplest case: render just one report
         cmdline = ["python"] + coverage_opts() + \

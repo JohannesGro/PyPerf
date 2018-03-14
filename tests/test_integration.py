@@ -23,6 +23,7 @@ __revision__ = "$Id$"
 class Test_Integration(unittest.TestCase):
     here = os.path.abspath(os.path.dirname(__file__))
     REPORTFILE = os.path.join(here, "report_tmp.json")
+    RENDERFILE = "render.html"
     BENCH = os.path.normpath(os.path.join(here, "..", "bench.py"))
 
     def setUp(self):
@@ -36,6 +37,8 @@ class Test_Integration(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.REPORTFILE):
             os.remove(self.REPORTFILE)
+        if os.path.exists(self.RENDERFILE):
+            os.remove(self.RENDERFILE)
 
     def test_upload(self):
         # assumes a running influx on con-wen
@@ -48,7 +51,9 @@ class Test_Integration(unittest.TestCase):
         eq_(rc, 0)
 
     def test_render(self):
-        cmdline = ["python"] + coverage_opts() + [self.BENCH, "render", self.REPORTFILE]
+        cmdline = ["python"] + coverage_opts() + [
+            self.BENCH, "render", self.REPORTFILE, "-o", self.RENDERFILE
+        ]
         rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 
