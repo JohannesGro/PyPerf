@@ -33,7 +33,7 @@ class Test_Integration(unittest.TestCase):
         ]
         subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def teardown(self):
+    def tearDown(self):
         if os.path.exists(self.REPORTFILE):
             os.remove(self.REPORTFILE)
 
@@ -44,12 +44,12 @@ class Test_Integration(unittest.TestCase):
         rc = subprocess.check_call(["python"] + coverage_opts() + [
             self.BENCH, "upload", "--filename=%s" % self.REPORTFILE,
             "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
-        ], stdout=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 
     def test_render(self):
         cmdline = ["python"] + coverage_opts() + [self.BENCH, "render", self.REPORTFILE]
-        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE)
+        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 
 

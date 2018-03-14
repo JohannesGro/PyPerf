@@ -51,8 +51,8 @@ class RendererTest(unittest.TestCase):
                                        self.RENDER_FILE)
         assert html_as_expected
 
-    # rendering with reference this one seems to be broken.
-    # include this tests as change/regression detector
+    # Rendering with reference seems to be broken.
+    # Include this tests though: as change/regression detector.
     @raises(subprocess.CalledProcessError)
     def test_render_reference(self):
         # render with reference
@@ -60,7 +60,7 @@ class RendererTest(unittest.TestCase):
                   [self.BENCH, "render", self.REPORT1, "-r", self.REPORT2, "-o", self.RENDER_FILE]
         subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def test_render_two(self):
+    def test_render_trend(self):
         # render two benchmark results with trend
         cmdline = ["python"] + coverage_opts() + \
                   [self.BENCH, "render", self.REPORT1, self.REPORT2, "-t", "-o", self.RENDER_FILE]

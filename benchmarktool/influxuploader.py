@@ -36,12 +36,12 @@ MSG_TMPL = "%s,%s %s %s"
 # https://docs.influxdata.com/influxdb/v1.4/concepts/schema_and_data_layout/
 #
 RELEVANT_SYSINFOS = {
-    "Current User": "user",
-    "CPU Count (locial CPUs)": "CPU_count",
-    "Memory Total (MB)": "memory_total",
-    "OS-Platform": "OS",
+    "user": "user",
+    "cpu_cores_logical": "cpu_count",
+    "mem_total": "mem_total",
+    "os": "os",
     # "Processor": "CPU",
-    "VM running?: (probably) ": "VM"
+    "vm": "vm"
 }
 
 
@@ -66,7 +66,7 @@ def upload_to_influxdb(lines, influxurl, database, precision):
 
 
 def extract_hostname(sysinfo):
-    hostnames = sysinfo["Hostnames"]
+    hostnames = sysinfo["hostnames"]
     for name in hostnames:
         if "." not in name and name != "localhost":
             return name
@@ -101,7 +101,7 @@ def parse_additional_values(values):
 
 
 def extract_timestamp(sysinfos):
-    time_iso = sysinfos["Current Time (UTC)"]
+    time_iso = sysinfos["time"]
     return dateparser.parse(time_iso).strftime('%s%f')
 
 
