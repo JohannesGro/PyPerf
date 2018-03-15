@@ -14,11 +14,18 @@ import logging
 import platform
 import subprocess
 import sys
-
+import os
 import psutil
 
-from cdb import rte, version
-from cdb.uberserver import usutil
+cdb = None
+try:
+    import cdb
+    from cdb import version  # noqa
+    from cdb import rte  # noqa
+    from cdb.uberserver import usutil  # noqa
+except ImportError:
+    pass
+
 
 logger = logging.getLogger("[" + __name__ + " - sysEnv]")
 
@@ -120,12 +127,8 @@ def getMacInfo():
     return {"mac_adress": getMac()}
 
 
-def getAllHostnames():
-    return usutil.gethostnames()
-
-
 def getAllHostnamesInfo(verbose=True):
-    hostnames = getAllHostnames() if verbose else [platform.node()]
+    hostnames = cdb.uberserver.usutil.gethostnames() if cdb and verbose else [platform.node()]
     return {"hostnames": hostnames}
 
 
@@ -153,19 +156,21 @@ def getSysInfo():
     """Get the general infos like time, OS etc.
 
     :returns: dict with the infos"""
-    logger.info("Elements Version: %s", version.getVersionDescription())
     logger.info("Current Time (UTC): %s", datetime.datetime.utcnow().isoformat())
     logger.info("Current User: %s", getpass.getuser())
     logger.info("OS-Platform: %s", sys.platform)
     logger.info("OS-Platform Version: %s", platform.platform())
     logger.info("Processor: %s", platform.processor())
     res = {}
-    res["ce_version"] = version.getVersionDescription()
     res["time"] = datetime.datetime.utcnow().isoformat()
     res["user"] = getpass.getuser()
     res["os"] = sys.platform
     res["os_version"] = platform.platform()
     res["cpu"] = platform.processor()
+    if cdb:
+        logger.info("Elements Version: %s", cdb.version.getVersionDescription())
+        res["ce_version"] = cdb.version.getVersionDescription()
+
     return res
 
 
@@ -204,9 +209,11 @@ def getCPUInfo(verbose=True):
     res['cpu_cores_physical'] = cores_physical
 
     # 3. Current CPU frequency
-    cpu_freq_curr = psutil.cpu_freq(percpu=False).current
-    logger.info("CPU Frenquency: {}".format(cpu_freq_curr))
-    res['cpu_frequency'] = cpu_freq_curr
+    if hasattr(psutil, "cpu_freq"):
+        cpu_freq_curr = psutil.cpu_freq(percpu=False).current
+        logger.info("CPU Frenquency: {}".format(cpu_freq_curr))
+        res['cpu_frequency'] = cpu_freq_curr
+
     return res
 
 
@@ -256,9 +263,10 @@ def getCADDOKInfos():
                 'CADDOK_PACKAGE_REPOSITORY_DIR',
                 'CADDOK_TOOL',
                 'CADDOK_SCRIPTDIR'):
-        if var in rte.environ:
-            logger.info("%s: %s", var, rte.environ[var])
-            res[var] = rte.environ[var]
+        environ = cdb.rte.environ if cdb else os.environ
+        if var in environ:
+            logger.info("%s: %s", var, environ[var])
+            res[var] = environ[var]
     return res
 
 
