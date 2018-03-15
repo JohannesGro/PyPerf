@@ -102,7 +102,7 @@ def parse_additional_values(values):
 
 def extract_timestamp(sysinfos):
     time_iso = sysinfos["time"]
-    return dateparser.parse(time_iso).strftime('%s%f')
+    return dateparser.parse(time_iso).strftime('%S%f')
 
 
 def upload(report, influxdburl, database, timestamp=None, precision=None, values=None):

@@ -6,6 +6,7 @@
 
 import unittest
 import os
+from os.path import join
 
 from ..benchrunner import Benchrunner
 from nose.tools import eq_
@@ -16,6 +17,9 @@ class TestBenchrunner(unittest.TestCase):
         pass
 
     def test_normalize_bench_path(self):
+        def abspath(path):
+            return join(os.path.abspath(os.sep), path)
+        
         # positive cases:
         # - both absolute
         # - benchpath is relative, the suite is absolute
@@ -23,17 +27,38 @@ class TestBenchrunner(unittest.TestCase):
 
         cwd = os.getcwd()
         cases = [
-            # <suitepath>, <benchpath>, <expected result>
-            ("suite.json", "/benchmark.py", "/benchmark.py"),
-            ("/suite.json", "/benchmark.py", "/benchmark.py"),
-            ("/suite.json", "benchmark.py", "/benchmark.py"),
-            ("/folder/suite.json", "benchmark.py", "/folder/benchmark.py"),
-            ("/folder/suite.json", "subfolder/benchmark.py", "/folder/subfolder/benchmark.py"),
-            ("folder/suite.json", "subfolder/benchmark.py",
-             os.path.join(cwd, "folder/subfolder/benchmark.py")),
+            # (<suitepath>,
+            # <benchpath>,
+            # <expected result>)
+            
+            ("suite.json",
+             abspath("benchmark.py"),
+             abspath("benchmark.py")),
+            
+            (abspath("suite.json"),
+             abspath("benchmark.py"),
+             abspath("benchmark.py")),
+            
+            (abspath("suite.json"),
+             "benchmark.py",
+             abspath("benchmark.py")),
+            
+            (abspath(join("folder", "suite.json")),
+             "benchmark.py",
+             abspath(join("folder", "benchmark.py"))),
+            
+            (abspath(join("folder", "suite.json")),
+             join("subfolder", "benchmark.py"),
+             abspath(join("folder", "subfolder", "benchmark.py"))),
+            
+            (join("folder", "suite.json"),
+             join("subfolder", "benchmark.py"),
+             join(cwd, "folder", "subfolder", "benchmark.py")),
 
             # one backstep case
-            ("/folder/../suite.json", "benchmark.py", "/benchmark.py")
+            (abspath(join("folder", "..", "suite.json")),
+             "benchmark.py",
+             abspath("benchmark.py"))
         ]
 
         benchrunner = Benchrunner()

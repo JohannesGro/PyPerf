@@ -307,8 +307,8 @@ def msinfo32():
         from lxml import etree
 
         fileName = "msinfo32.xml"
-        subprocess.Popen(['msinfo32', "/nfo", fileName],
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        subprocess.check_call(['msinfo32', "/nfo", fileName],
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         with io.open(fileName, encoding="UTF-16le") as fd:
             xml_string = fd.read().encode("utf-8", "ignore")
 
