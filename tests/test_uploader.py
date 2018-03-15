@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- mode: python; coding: utf-8 -*-
 #
 # Copyright (C) 1990 - 2018 CONTACT Software GmbH
@@ -6,33 +5,88 @@
 # https://www.contact-software.com/
 
 import unittest
-import subprocess
 import os
-from nose.tools import eq_
-from .utils import coverage_opts
+import requests
+from nose.tools import raises
+from mock import patch
 
-"""
-Contains basic CLI tests for the 'upload' subcommand
-"""
-
-__docformat__ = "restructuredtext en"
-__revision__ = "$Id$"
+from benchmarktool import influxuploader as uploader
+from .utils import InfluxMock
 
 
-class UploaderTest(unittest.TestCase):
-    def test_basic_upload(self):
-        # assumes a running influx on localhost
-        # and an 'sdperf' database inside of it
-        # TODO: assume less or automate the setup
-        here = os.path.abspath(os.path.dirname(__file__))
-        bench = os.path.normpath(os.path.join(here, "..", "bench.py"))
-        rc = subprocess.check_call(["python"] + coverage_opts() + [
-            bench, "upload", "--filename=%s" % os.path.join(here, "testdata", "report.json"),
-            "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
-        ], stdout=subprocess.PIPE)
-        eq_(rc, 0)
+class TestInfluxdbUploader(unittest.TestCase):
+    influxdburl = "http://con-wen:8086"
+    database = "sdperf"
+    here = os.path.abspath(os.path.dirname(__file__))
+    testdata = os.path.join(here, "testdata")
+    influxmock = InfluxMock()
+
+    @patch('benchmarktool.influxuploader.requests.post', new=influxmock)
+    def test_happy_case(self):
+        uploader.upload(os.path.join(self.testdata, "report_happy.json"),
+                        self.influxdburl, self.database)
+        lp_msg = self.influxmock.data_last
+        print lp_msg
+        assert lp_msg.startswith("SomeBenchmark")
+        assert lp_msg.find("user=wen") != -1
+        assert lp_msg.find("runtime_avr=0.01") != -1
+
+    @raises(uploader.InvalidReportError)
+    def test_sysinfos_incomplete(self):
+        uploader.upload(os.path.join(self.testdata, "report_no_sysinfos.json"),
+                        self.influxdburl, self.database)
+
+    @raises(uploader.InvalidReportError)
+    def test_no_results(self):
+        uploader.upload(os.path.join(self.testdata, "report_no_results.json"),
+                        self.influxdburl, self.database)
+
+    @raises(uploader.InvalidReportError)
+    def test_invalid_report(self):
+        uploader.upload(os.path.join(self.testdata, "report_invalid.json"),
+                        self.influxdburl, self.database)
+
+    @patch('benchmarktool.influxuploader.requests.post', new=influxmock)
+    def test_with_additional_values(self):
+        uploader.upload(os.path.join(self.testdata, "report.json"),
+                        self.influxdburl, self.database, values="buildno=15.2.1")
+        lp_msg = self.influxmock.data_last
+        assert lp_msg.find("buildno=15.2.1") != -1
+
+    @patch('benchmarktool.influxuploader.requests.post', new=influxmock)
+    def test_report_with_number(self):
+        uploader.upload(os.path.join(self.testdata, "report_number.json"),
+                        self.influxdburl, self.database)
+        lp_msg = self.influxmock.data_last
+        assert lp_msg.find("sqlstms=0") != -1
+
+    @raises(requests.exceptions.ConnectionError)
+    @patch('benchmarktool.influxuploader.requests.post',
+           new=InfluxMock(exception=requests.exceptions.ConnectionError))
+    def test_failed_connection(self):
+        uploader.upload(os.path.join(self.testdata, "report.json"),
+                        self.influxdburl, self.database)
+
+    @raises(Exception)
+    @patch('benchmarktool.influxuploader.requests.post', new=InfluxMock(sc=500))
+    def test_influx_error(self):
+        uploader.upload(os.path.join(self.testdata, "report.json"),
+                        self.influxdburl, self.database)
 
 
-# Allow running this testfile directly
-if __name__ == "__main__":
-    unittest.main()
+# Further testcases:
+# * tagging:
+#   - happy case
+#   - nothing relevant in sysinfo
+#   - empty sysinfo
+#
+# * aggregating_time_series:
+#   - empty series
+#   - trivial
+#   - second trivial
+#   - a big one
+
+# * extract_hostname:
+#   - happy case
+#   - no valid hostname there
+#   - empty dict

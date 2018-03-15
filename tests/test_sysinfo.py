@@ -4,7 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from .. import systemInfos as si
+from benchmarktool import systemInfos as si
 import unittest
 
 def test_getcpuifo_verbose():
