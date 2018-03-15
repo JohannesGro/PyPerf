@@ -21,12 +21,17 @@ __docformat__ = "restructuredtext en"
 __revision__ = "$Id$"
 
 
+INFLUX = "http://localhost:8086"
+INFLUXDB = "sdperf"
+HERE = os.path.abspath(os.path.dirname(__file__))
+BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
+DEVNULL = open(os.devnull, "w")
+DATADIR = os.path.join(HERE, "testdata")
+SUITE = os.path.join(DATADIR, "dummy.json")
+
+
 class RunnerTest(unittest.TestCase):
     REPORTFILE = "report_tmp.json"
-    HERE = os.path.abspath(os.path.dirname(__file__))
-    BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
-    SUITE = os.path.join(HERE, "testdata", "dummy.json")
-    DEVNULL = open(os.devnull, "w")
 
     def tearDown(self):
         if os.path.exists(self.REPORTFILE):
@@ -34,9 +39,11 @@ class RunnerTest(unittest.TestCase):
 
     def test_trivial_run(self):
         cmdline = ["python"] + coverage_opts() + [
-            self.BENCH, "runner", "--suite", self.SUITE, "-o", self.REPORTFILE
+            BENCH, "runner",
+            "--suite", SUITE,
+            "-o", self.REPORTFILE
         ]
-        proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=self.DEVNULL)
+        proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=DEVNULL)
 
         expected = [
             "setUpClass called",
@@ -63,10 +70,12 @@ class RunnerTest(unittest.TestCase):
 
     def test_run_with_verbose_sysinfos(self):
         cmdline = ["python"] + coverage_opts() + [
-            self.BENCH, "runner", "--suite", self.SUITE, "-o", self.REPORTFILE,
+            BENCH, "runner",
+            "--suite", SUITE,
+            "-o", self.REPORTFILE,
             "--verbose"
         ]
-        rc = subprocess.check_call(cmdline, stdout=self.DEVNULL, stderr=self.DEVNULL)
+        rc = subprocess.check_call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
 
         # 1. exit code is zero
         # 2. there are some sysinfos
@@ -79,11 +88,8 @@ class RunnerTest(unittest.TestCase):
 
 class RendererTest(unittest.TestCase):
     RENDER_FILE = "render.html"
-    HERE = os.path.abspath(os.path.dirname(__file__))
-    DATADIR = os.path.join(HERE, "testdata")
     REPORT1 = os.path.join(DATADIR, "report.json")
     REPORT2 = os.path.join(DATADIR, "report2.json")
-    BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
 
     def tearDown(self):
         try:
@@ -93,10 +99,12 @@ class RendererTest(unittest.TestCase):
 
     def test_render_simple(self):
         # the simplest case: render just one report
-        cmdline = ["python"] + coverage_opts() + \
-                  [self.BENCH, "render", self.REPORT1, "-o", self.RENDER_FILE]
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "render",
+            self.REPORT1,
+            "-o", self.RENDER_FILE
+        ]
         rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
         eq_(rc, 0)
         # The output differs for different OSes
         # Retain for on-demand usage though
@@ -106,10 +114,13 @@ class RendererTest(unittest.TestCase):
 
     def test_render_two(self):
         # render two benchmark results
-        cmdline = ["python"] + coverage_opts() + \
-                  [self.BENCH, "render", self.REPORT1, self.REPORT2, "-o", self.RENDER_FILE]
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "render",
+            self.REPORT1,
+            self.REPORT2,
+            "-o", self.RENDER_FILE
+        ]
         rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
         eq_(rc, 0)
         # The output differs for different OSes
         # Retain for on-demand usage though
@@ -122,16 +133,24 @@ class RendererTest(unittest.TestCase):
     @raises(subprocess.CalledProcessError)
     def test_render_reference(self):
         # render with reference
-        cmdline = ["python"] + coverage_opts() + \
-                  [self.BENCH, "render", self.REPORT1, "-r", self.REPORT2, "-o", self.RENDER_FILE]
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "render",
+            self.REPORT1,
+            "-r", self.REPORT2,
+            "-o", self.RENDER_FILE
+        ]
         subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def test_render_trend(self):
         # render two benchmark results with trend
-        cmdline = ["python"] + coverage_opts() + \
-                  [self.BENCH, "render", self.REPORT1, self.REPORT2, "-t", "-o", self.RENDER_FILE]
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "render",
+            self.REPORT1,
+            self.REPORT2,
+            "-t",
+            "-o", self.RENDER_FILE
+        ]
         rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
         eq_(rc, 0)
         # The output differs for different OSes
         # Retain for on-demand usage though
@@ -142,28 +161,29 @@ class RendererTest(unittest.TestCase):
 
 class UploaderTest(unittest.TestCase):
     def test_basic_upload(self):
-        # assumes a running influx on localhost
-        # and an 'sdperf' database inside of it
-        # TODO: assume less or automate the setup
-        here = os.path.abspath(os.path.dirname(__file__))
-        bench = os.path.normpath(os.path.join(here, "..", "bench.py"))
         rc = subprocess.check_call(["python"] + coverage_opts() + [
-            bench, "upload", "--filename=%s" % os.path.join(here, "testdata", "report.json"),
-            "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
+            BENCH, "upload",
+            "--filename=%s" % os.path.join(HERE, "testdata", "report.json"),
+            "--influxdburl=%s" % INFLUX,
+            "--database=%s" % INFLUX
         ], stdout=subprocess.PIPE)
         eq_(rc, 0)
 
+    # TODO: upload without file given should be rejected by the CLI
+    # test CLI!
+    # upload blocks?
+
 
 class Test_Integration(unittest.TestCase):
-    here = os.path.abspath(os.path.dirname(__file__))
-    REPORTFILE = os.path.join(here, "report_tmp.json")
+    REPORTFILE = os.path.join(HERE, "report_tmp.json")
     RENDERFILE = "render.html"
-    BENCH = os.path.normpath(os.path.join(here, "..", "bench.py"))
 
     def setUp(self):
         cmdline = [
-            "python", self.BENCH, "runner", "--suite",
-            os.path.join(self.here, "testdata", "dummy.json"),
+            "python",
+            BENCH,
+            "runner",
+            "--suite", os.path.join(HERE, "testdata", "dummy.json"),
             "-o", self.REPORTFILE
         ]
         subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -175,18 +195,21 @@ class Test_Integration(unittest.TestCase):
             os.remove(self.RENDERFILE)
 
     def test_upload(self):
-        # assumes a running influx on con-wen
-        # and an 'sdperf' database inside of it
-        # TODO: assume less or automate the setup
         rc = subprocess.check_call(["python"] + coverage_opts() + [
-            self.BENCH, "upload", "--filename=%s" % self.REPORTFILE,
-            "--influxdburl=http://con-wen.contact.de:8086", "--database=sdperf"
+            BENCH,
+            "upload",
+            "--filename=%s" % self.REPORTFILE,
+            "--influxdburl=%s" % INFLUX,
+            "--database=%s" % INFLUXDB
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 
     def test_render(self):
         cmdline = ["python"] + coverage_opts() + [
-            self.BENCH, "render", self.REPORTFILE, "-o", self.RENDERFILE
+            BENCH,
+            "render",
+            self.REPORTFILE,
+            "-o", self.RENDERFILE
         ]
         rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)

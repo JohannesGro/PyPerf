@@ -11,7 +11,7 @@ from nose.tools import raises
 from mock import patch
 
 from benchmarktool import influxuploader as uploader
-from .utils import InfluxMock
+from benchmarktool.influxmock import InfluxMock
 
 
 class TestInfluxdbUploader(unittest.TestCase):
@@ -20,6 +20,19 @@ class TestInfluxdbUploader(unittest.TestCase):
     here = os.path.abspath(os.path.dirname(__file__))
     testdata = os.path.join(here, "testdata")
     influxmock = InfluxMock()
+
+    @classmethod
+    def setUpClass(cls):
+        if "FAKEINFLUX" in os.environ:
+            cls.orig_env = os.environ.copy()
+            del os.environ["FAKEINFLUX"]
+        else:
+            cls.orig_env = None
+
+    @classmethod
+    def teardDownClass(cls):
+        if cls.orig_env:
+            os.environ = cls.orig_env
 
     @patch('benchmarktool.influxuploader.requests.post', new=influxmock)
     def test_happy_case(self):

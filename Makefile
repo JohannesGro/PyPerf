@@ -75,7 +75,7 @@ clean:
 ##              make tests TESTS=benchmarktool/test/test_bla.py
 tests:
 	rm -f .noseids
-	$(NOSE) $(NOSEOPTS) $(TESTS)
+	FAKEINFLUX=true $(NOSE) $(NOSEOPTS) $(TESTS)
 
 ##
 ## testfailed   Re-run the failed unit tests. This is useful to save time while

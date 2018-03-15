@@ -20,6 +20,9 @@ The data mapping is as follows:
 import requests
 import dateutil.parser as dateparser
 import json
+import os
+
+from influxmock import InfluxMock
 
 
 __docformat__ = "restructuredtext en"
@@ -57,6 +60,9 @@ def extract_tags(sysinfo):
 
 
 def upload_to_influxdb(lines, influxurl, database, precision):
+    if os.environ.get("FAKEINFLUX", "false") == "true":
+        requests.post = InfluxMock()
+
     rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
                         data="\n".join(lines))
 
