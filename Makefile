@@ -62,7 +62,7 @@ else
 endif
 
 clean:
-	git clean -fd
+	git clean -fdx
 
 ##
 ## tests        Run all Python unit tests using 'nosetests'.
