@@ -160,18 +160,57 @@ class RendererTest(unittest.TestCase):
 
 
 class UploaderTest(unittest.TestCase):
-    def test_basic_upload(self):
-        rc = subprocess.check_call(["python"] + coverage_opts() + [
+    def test_basic_default_upload(self):
+        cmdline = ["python"] + coverage_opts() + [
             BENCH, "upload",
-            "--filename=%s" % os.path.join(HERE, "testdata", "report.json"),
-            "--influxdburl=%s" % INFLUX,
-            "--database=%s" % INFLUX
-        ], stdout=subprocess.PIPE)
-        eq_(rc, 0)
+            os.path.join(DATADIR, "report.json"),
+            "--url=%s" % INFLUX,
+            "--db=%s" % INFLUXDB
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        eq_(rc, 0, "'%s' failed." % subprocess.list2cmdline(cmdline))
 
-    # TODO: upload without file given should be rejected by the CLI
-    # test CLI!
-    # upload blocks?
+    def test_fully_parametrized_upload(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "upload",
+            os.path.join(DATADIR, "report.json"),
+            "--url=%s" % INFLUX,
+            "--db=%s" % INFLUXDB,
+            "--ts=%s" % "111111111111ms",
+            "--values=CI:yes"
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        eq_(rc, 0, "'%s' failed." % subprocess.list2cmdline(cmdline))
+
+    def test_target_not_supported(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "upload",
+            "--target=SAP",
+            os.path.join(DATADIR, "report.json"),
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        eq_(rc, 21, "'%s' failed." % subprocess.list2cmdline(cmdline))
+
+    def test_bad_url(self):
+        # TODO
+        pass
+
+    def test_bad_db(self):
+        # TODO
+        pass
+
+    def test_bad_timestamp(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "upload",
+            os.path.join(DATADIR, "report.json"),
+            "--ts=111XX"
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        eq_(rc, 22, "'%s' failed." % subprocess.list2cmdline(cmdline))
+
+    def test_bad_values(self):
+        # TODO
+        pass
 
 
 class Test_Integration(unittest.TestCase):
@@ -183,7 +222,7 @@ class Test_Integration(unittest.TestCase):
             "python",
             BENCH,
             "runner",
-            "--suite", os.path.join(HERE, "testdata", "dummy.json"),
+            "--suite", os.path.join(DATADIR, "dummy.json"),
             "-o", self.REPORTFILE
         ]
         subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -198,9 +237,9 @@ class Test_Integration(unittest.TestCase):
         rc = subprocess.check_call(["python"] + coverage_opts() + [
             BENCH,
             "upload",
-            "--filename=%s" % self.REPORTFILE,
-            "--influxdburl=%s" % INFLUX,
-            "--database=%s" % INFLUXDB
+            self.REPORTFILE,
+            "--url=%s" % INFLUX,
+            "--db=%s" % INFLUXDB
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 

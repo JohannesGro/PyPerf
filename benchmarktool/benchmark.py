@@ -8,10 +8,36 @@
 
 import argparse
 import time
+import sys
+import re
 
 SUITEFILE_DEFAULT = "benchsuite.json"
 REPORTFILE_DEFAULT = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
 RENDERFILE_DEFAULT = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
+UPLOADTARGET_DEFAULT = "influx"
+INFLUXURL_DEFAULT = "http://localhost:8086"
+INFLUXDB_DEFAULT = "perf"
+
+UNKNOWN_SUBCOMMAND = 1
+UPLOAD_TARGET_NOT_SUPPORTED = 21
+UPLOAD_BAD_TIMESTAMP = 22
+
+
+class BadTimestampError(Exception):
+    pass
+
+
+def parse_timestamp_param(timestamp):
+    TS_RE = "^([\d]{1,16})([a-z]{1,4})$"
+    match = re.match(TS_RE, timestamp)
+    if match and len(match.groups()) == 2:
+        ts, unit = match.groups()
+        if unit in ["s", "ms"]:
+            return ts, unit
+        else:
+            raise BadTimestampError("Invalid unit: '%s'" % unit)
+    else:
+        raise BadTimestampError("Invalid time stamp: '%s'" % timestamp)
 
 
 def main():
@@ -47,33 +73,61 @@ def main():
                         help="Using the benchmarks to show a trend of a system.")
 
     upload_parser = subparsers.add_parser("upload")
-    upload_parser.add_argument("--influxdburl", "-u",
-                               help="The URL to the Influx DBMS to upload the results onto.")
-    upload_parser.add_argument("--database", "-d",
-                               help="The database to upload the results into.")
-    upload_parser.add_argument("--filename", "-f",
-                               help="JSON report to upload.")
-    upload_parser.add_argument("--precision", "-p",
-                               help="The precision of the timestamp.")
-    upload_parser.add_argument("--timestamp", "-t",
-                               help="If given, overrides the timestamp given in the report.")
-    upload_parser.add_argument("--values", "-v",
-                               help="Additional values to upload.")
+    upload_parser.add_argument("filename", help="JSON report to upload.")
+    upload_parser.add_argument(
+        "--target", "-t",
+        default=UPLOADTARGET_DEFAULT,
+        help="The target storage to upload to (default: %s)." % UPLOADTARGET_DEFAULT
+    )
+    upload_parser.add_argument(
+        "--url",
+        default=INFLUXURL_DEFAULT,
+        help="The URL of the Influx DBMS to upload onto (default: %s)." % INFLUXURL_DEFAULT
+    )
+    upload_parser.add_argument(
+        "--db",
+        default=INFLUXDB_DEFAULT,
+        help="The database to upload the results into (default: %s)." % INFLUXDB_DEFAULT
+    )
+    upload_parser.add_argument(
+        "--ts",
+        metavar="<timestamp><unit>",
+        help="If given, overrides the timestamp given in the report. Valid units are 's' and 'us'."
+    )
+    upload_parser.add_argument("--values", help="Additional values to upload.")
 
     args = parser.parse_args()
     subcommand = args.subcommand
+    rc = 0
     if subcommand == "runner":
         from benchrunner import Benchrunner
-        Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
+        return(Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose))
     elif subcommand == "render":
         from renderer import Renderer
         rend = Renderer(args.benchmarks, args.outfile, args.reference,
                         args.logconfig, args.trend)
-        rend.main()
+        return(rend.main())
     elif subcommand == "upload":
-        from influxuploader import upload
-        upload(args.filename, args.influxdburl, args.database,
-               args.timestamp, args.precision, args.values)
+        if args.target == "influx":
+            try:
+                ts, unit = parse_timestamp_param(args.ts) if args.ts else (None, None)
+                from uploader import upload_2_influx
+                upload_2_influx(args.filename, args.url, args.db, ts, unit, args.values)
+            except BadTimestampError, tse:
+                sys.stderr.write("%s %s: %s\n" %
+                                 (parser.prog, args.subcommand, str(tse)))
+                rc = UPLOAD_BAD_TIMESTAMP
+        else:
+            sys.stderr.write("%s %s: Target '%s' is not supported\n" %
+                             (parser.prog, args.subcommand, args.target))
+            rc = UPLOAD_TARGET_NOT_SUPPORTED
+    else:
+        # defensive programming, should never happen...
+        system.error.write("%s: Unknown subcommand '%s'" % (parser.prog, args.subcommand))
+        rc = UNKNOWN_SUBCOMMAND
+
+    return rc
+
 
 if __name__ == "__main__":
-    main()
+    system.exit(main())

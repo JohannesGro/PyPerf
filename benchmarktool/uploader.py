@@ -29,7 +29,7 @@ __docformat__ = "restructuredtext en"
 __revision__ = "$Id$"
 
 # Exported objects
-__all__ = ["upload", "InvalidReportError"]
+__all__ = ["upload_2_influx", "InvalidReportError"]
 
 
 # <measurement>[,<tag_key>=<tag_value>[,...]] <field_key>=<field_value>[,...] [<timestamp>]
@@ -111,7 +111,7 @@ def extract_timestamp(sysinfos):
     return dateparser.parse(time_iso).strftime('%S%f')
 
 
-def upload(report, influxdburl, database, timestamp=None, precision=None, values=None):
+def upload_2_influx(report, influxdburl, database, timestamp=None, precision=None, values=None):
     with open(report, "r") as fd:
         try:
             results = json.load(fd)
