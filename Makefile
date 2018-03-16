@@ -87,7 +87,7 @@ testfailed:
 ##
 ## coverage     Run nose coverage and generate reports
 pycoverage:
-	COVERAGE_OPTS='-m coverage run' $(NOSE) $(NOSECOVOPTS) $(NOSEOPTS) $(TESTS)
+	FAKEINFLUX=true COVERAGE_OPTS='-m coverage run' $(NOSE) $(NOSECOVOPTS) $(NOSEOPTS) $(TESTS)
 
 coverage: pycoverage
 
