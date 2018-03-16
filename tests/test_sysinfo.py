@@ -7,14 +7,6 @@
 from benchmarktool import systemInfos as si
 import unittest
 
-def test_getcpuifo_verbose():
-    cpuinfos_verbose = si.getCPUInfo(verbose=True)
-    cpuinfos_sparse = si.getCPUInfo(verbose=False)
-    assert cpuinfos_verbose
-    assert cpuinfos_sparse
-    assert len(cpuinfos_verbose) > len(cpuinfos_sparse)
-
-
 def test_getAllSysInfos():
     sysinfos_verbose = si.getAllSysInfos(verbose=True)
     sysinfos_sparse = si.getAllSysInfos(verbose=False)
