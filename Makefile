@@ -45,20 +45,16 @@ info:
 
 help: info
 
-dist/.build: benchmarktool setup.py MANIFEST.in README.rst
+egg: benchmarktool setup.py README.rst
+	rm -r build dist
 	python setup.py bdist_egg
-	touch dist/.build
-egg: dist/.build
 
 upload: egg
 ifeq ($(ARMED),True)
 	devpi login wen
-	devpi upload --index apps/15.3 dist/benchmarktool-0.1-py2.7.egg
+	devpi upload --index apps/15.3 dist/benchmarktool-0.?-py2.7.egg
 else
-	# TODO: remove this temp. hack after the code base has been refactored
-	rm -rf /home/wen/src/performance_testing/generate_series/benchmarktool-0.1-py2.7.egg/*
-	unzip dist/benchmarktool-0.1-py2.7.egg -d /home/wen/src/performance_testing/generate_series/benchmarktool-0.1-py2.7.egg
-	# devpi upload --index apps/15.3 --dry-run dist/benchmarktool-0.1-py2.7.egg
+	devpi upload --index apps/15.3 --dry-run dist/benchmarktool-0.?-py2.7.egg
 endif
 
 clean:
