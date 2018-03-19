@@ -137,18 +137,19 @@ def diskIOCounter():
     # write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
     res = {}
     diskcounters = psutil.disk_io_counters(perdisk=False)
-    logger.info('Disk IO read (count): {}'.format(diskcounters.read_count))
-    res['io_read_count'] = diskcounters.read_count
-    logger.info('Disk IO write (count): {}'.format(diskcounters.write_count))
-    res['io_write_count'] = diskcounters.write_count
-    logger.info('Disk IO read (MB): {}'.format(diskcounters.read_bytes / 1024))
-    res['io_read_mb'] = diskcounters.read_bytes
-    logger.info('Disk IO write (MB): {}'.format(diskcounters.write_bytes / 1024))
-    res['io_write_mb'] = diskcounters.write_bytes
-    logger.info('Disk IO read (time): {}'.format(diskcounters.read_time))
-    res['io_read_time'] = diskcounters.read_time
-    logger.info('Disk IO write (time): {}'.format(diskcounters.write_time))
-    res['io_write_time'] = diskcounters.write_time
+    if diskcounters:
+        logger.info('Disk IO read (count): {}'.format(diskcounters.read_count))
+        res['io_read_count'] = diskcounters.read_count
+        logger.info('Disk IO write (count): {}'.format(diskcounters.write_count))
+        res['io_write_count'] = diskcounters.write_count
+        logger.info('Disk IO read (MB): {}'.format(diskcounters.read_bytes / 1024))
+        res['io_read_mb'] = diskcounters.read_bytes
+        logger.info('Disk IO write (MB): {}'.format(diskcounters.write_bytes / 1024))
+        res['io_write_mb'] = diskcounters.write_bytes
+        logger.info('Disk IO read (time): {}'.format(diskcounters.read_time))
+        res['io_read_time'] = diskcounters.read_time
+        logger.info('Disk IO write (time): {}'.format(diskcounters.write_time))
+        res['io_write_time'] = diskcounters.write_time
     return res
 
 
