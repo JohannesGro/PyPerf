@@ -13,7 +13,7 @@ PY_FILE_DIRS = .
 
 NOSE = nosetests
 NOSEOPTS = -v --exe --with-id --with-timer --timer-top-n 0
-NOSECOVOPTS = --with-coverage --cover-erase --cover-inclusive --cover-html --cover-package=benchmarktool
+NOSECOVOPTS = --with-coverage --cover-erase --cover-inclusive --cover-html --cover-package=pyperf
 PYLINT = pylint
 PYLINTOPTS = --rcfile=.pylintrc -E
 PYCHECKER = flake8
@@ -45,16 +45,16 @@ info:
 
 help: info
 
-egg: benchmarktool setup.py README.rst
-	rm -r build dist
+egg: pyperf setup.py README.rst
+	rm -rf build dist
 	python setup.py bdist_egg
 
 upload: egg
 ifeq ($(ARMED),True)
 	devpi login wen
-	devpi upload --index apps/15.3 dist/benchmarktool-0.?-py2.7.egg
+	devpi upload --index apps/15.3 dist/pyperf-0.?-py2.7.egg
 else
-	devpi upload --index apps/15.3 --dry-run dist/benchmarktool-0.?-py2.7.egg
+	devpi upload --index apps/15.3 --dry-run dist/pyperf-0.?-py2.7.egg
 endif
 
 clean:
@@ -68,7 +68,7 @@ clean:
 ##              the make command line, using nose's test selection syntax,
 ##              for example:
 ##
-##              make tests TESTS=benchmarktool/test/test_bla.py
+##              make tests TESTS=pyperf/test/test_bla.py
 tests:
 	rm -f .noseids
 	FAKEINFLUX=true $(NOSE) $(NOSEOPTS) $(TESTS)

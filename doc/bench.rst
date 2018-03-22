@@ -1,6 +1,6 @@
 Bench
 ***********
 
-.. autoclass:: benchmarktool.bench.Bench
+.. autoclass:: pyperf.bench.Bench
 	:members:
 	:noindex:

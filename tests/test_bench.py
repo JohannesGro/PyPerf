@@ -8,7 +8,7 @@
 
 import unittest
 
-from benchmarktool.bench import Bench
+from pyperf.bench import Bench
 
 
 class test_class(Bench):

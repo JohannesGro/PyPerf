@@ -8,7 +8,7 @@ import unittest
 import os
 from os.path import join
 
-from benchmarktool.benchrunner import Benchrunner
+from pyperf.benchrunner import Benchrunner
 from nose.tools import eq_
 
 

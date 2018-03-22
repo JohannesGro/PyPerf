@@ -6,8 +6,8 @@ import os
 import sys
 import time
 
-from benchmarktool.bench import Bench
-from benchmarktool.timer import Timer
+from pyperf.bench import Bench
+from pyperf.timer import Timer
 from cdb import rte
 from cdb.storage import blob
 from cs.documents import Document
@@ -137,4 +137,4 @@ class BlobstoreTiming(Bench):
 
 
 if __name__ == '__main__':
-    BlobstoreTiming().run({"loops": 2, "blobfolder": u"./benchmarktool/blobdata/blobs/*"})
+    BlobstoreTiming().run({"loops": 2, "blobfolder": u"./pyperf/blobdata/blobs/*"})

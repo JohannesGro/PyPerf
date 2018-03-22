@@ -5,7 +5,7 @@ and a interface for the :doc:`benchrunner`.
 
 .. code-block:: py
 
-  from benchmarktool.bench import Bench
+  from pyperf.bench import Bench
   class SqliteBenchmark(Bench):
 
 logging
@@ -45,7 +45,7 @@ is used to associate the call to *bench_update*. The measurements are store unde
 
 .. code-block:: py
 
-  from benchmarktool.timer import Timer
+  from pyperf.timer import Timer
   def bench_update(self):
         self.namespace = "bench_update_"
         self.do_inserts(self.args['rows'])

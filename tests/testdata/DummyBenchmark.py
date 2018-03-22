@@ -1,4 +1,4 @@
-from benchmarktool.bench import Bench
+from pyperf.bench import Bench
 
 
 class DummyBenchmark(Bench):

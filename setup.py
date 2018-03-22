@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-setup(name='benchmarktool',
+setup(name='pyperf',
       version='0.2',
       description='This project aims to provide a base for creating and rendering standardized benchmarks.',
       long_description=long_description,
@@ -20,7 +20,7 @@ setup(name='benchmarktool',
       license='',
       packages=find_packages(exclude=["tests"]),
       entry_points={
-          "console_scripts": ["benchmark=benchmarktool.benchmark:main"]
+          "console_scripts": ["benchmark=pyperf.benchmark:main"]
       },
       include_package_data=True
       )

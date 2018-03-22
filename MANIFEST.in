@@ -1,2 +1,2 @@
-include benchmarktool/html/assets/js/*.js
-include benchmarktool/html/assets/css/*.css
+include pyperf/html/assets/js/*.js
+include pyperf/html/assets/css/*.css

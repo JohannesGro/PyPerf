@@ -11,7 +11,7 @@ import os
 import pkg_resources
 
 import ioservice
-from benchmarktool.log import customlogging
+from pyperf.log import customlogging
 
 
 KEY_2_GUILABEL = {

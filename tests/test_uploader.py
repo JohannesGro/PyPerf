@@ -10,8 +10,8 @@ import requests
 from nose.tools import raises
 from mock import patch
 
-from benchmarktool import uploader
-from benchmarktool.influxmock import InfluxMock
+from pyperf import uploader
+from pyperf.influxmock import InfluxMock
 
 
 class TestInfluxdbUploader(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestInfluxdbUploader(unittest.TestCase):
         if cls.orig_env:
             os.environ = cls.orig_env
 
-    @patch('benchmarktool.uploader.requests.post', new=influxmock)
+    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_happy_case(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_happy.json"),
                                  self.influxdburl, self.database)
@@ -58,14 +58,14 @@ class TestInfluxdbUploader(unittest.TestCase):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_invalid.json"),
                                  self.influxdburl, self.database)
 
-    @patch('benchmarktool.uploader.requests.post', new=influxmock)
+    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_with_additional_values(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database, values="buildno=15.2.1")
         lp_msg = self.influxmock.data_last
         assert lp_msg.find("buildno=15.2.1") != -1
 
-    @patch('benchmarktool.uploader.requests.post', new=influxmock)
+    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_report_with_number(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_number.json"),
                                  self.influxdburl, self.database)
@@ -73,14 +73,14 @@ class TestInfluxdbUploader(unittest.TestCase):
         assert lp_msg.find("sqlstms=0") != -1
 
     @raises(requests.exceptions.ConnectionError)
-    @patch('benchmarktool.uploader.requests.post',
+    @patch('pyperf.uploader.requests.post',
            new=InfluxMock(exception=requests.exceptions.ConnectionError))
     def test_failed_connection(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database)
 
     @raises(Exception)
-    @patch('benchmarktool.uploader.requests.post', new=InfluxMock(sc=500))
+    @patch('pyperf.uploader.requests.post', new=InfluxMock(sc=500))
     def test_influx_error(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database)

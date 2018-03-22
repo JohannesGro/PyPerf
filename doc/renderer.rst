@@ -1,7 +1,7 @@
 Renderer
 ***********
 
-.. automodule:: benchmarktool.renderer
+.. automodule:: pyperf.renderer
 	:members:
 
 	Members
@@ -17,7 +17,7 @@ In the following the command line interface will be shown.
                         [--logconfig [LOGCONFIG]] [--trend]
                         benchmarks [benchmarks ...]
 
-		The class renderer reads the results of one or several benchmarks and creates    
+		The class renderer reads the results of one or several benchmarks and creates
 		a human readable output for example showing table or diagrams. The renderer
 		provides two use cases. Firstly, a comparison between a plurality of
 		benchmarks. Secondly, a analysis and determine a trend of a single system. A

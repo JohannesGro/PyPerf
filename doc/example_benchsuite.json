@@ -1,7 +1,7 @@
 {
   "suite": {
     "SqlApiBenchmark": {
-      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\sqlapi_benchmark",
+      "file": "C:\\pyperf\\pyperf\\benchmarks\\sqlapi_benchmark",
       "className": "SqlApiBenchmark",
       "args": {
         "rows": 10000,
@@ -11,7 +11,7 @@
       }
     },
     "LoadAssemblyTiming": {
-      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\load_assembly_timing",
+      "file": "C:\\pyperf\\pyperf\\benchmarks\\load_assembly_timing",
       "className": "LoadAssemblyTiming",
       "args": {
         "z_nummer": "9502656-1",
@@ -20,15 +20,15 @@
       }
     },
     "BlobstoreTiming": {
-      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\blobstore_benchmark",
+      "file": "C:\\pyperf\\pyperf\\benchmarks\\blobstore_benchmark",
       "className": "BlobstoreTiming",
       "args": {
         "loops": 3,
-        "blobfolder": "c:/benchmarktool/benchmarktool/blobdata/blobs/*"
+        "blobfolder": "c:/pyperf/pyperf/blobdata/blobs/*"
       }
     },
     "WriteAssemblyTiming": {
-      "file": "C:\\benchmarktool\\benchmarktool\\benchmarks\\write_assembly_timing",
+      "file": "C:\\pyperf\\pyperf\\benchmarks\\write_assembly_timing",
       "className": "WriteAssemblyTiming",
       "args": {
         "z_nummer": "9502656-1",

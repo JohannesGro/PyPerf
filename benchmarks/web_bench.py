@@ -9,8 +9,8 @@ logger = logging.getLogger("[" + __name__ + " - WebBenchmark]")
 ch = logging.StreamHandler()
 logger.addHandler(ch)
 
-from benchmarktool.bench import Bench
-from benchmarktool.timer import Timer
+from pyperf.bench import Bench
+from pyperf.timer import Timer
 
 from cdb import sqlapi, constants, rte
 rte.ensure_run_level(rte.USER_IMPERSONATED, prog="", user="caddok")
@@ -27,15 +27,15 @@ from cs.restgenericfixture import TestBenchmark
 class WebBenchmark(Bench):
     def setUpClass(self):
         app = Root()
-        self.client = Client(app)    
+        self.client = Client(app)
         self.table = "test_benchmark"
 
     def bench_get_all(self):
-        logger.info("bench_get_all")   
+        logger.info("bench_get_all")
         sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
         with Timer() as t:
-            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'") 
-        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']    
+            response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'")
+        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
         self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection All Rows: no_cache")
         self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection All Rows: SQL-Count", type="count", unit="statements")
@@ -52,8 +52,8 @@ class WebBenchmark(Bench):
             maxrows = 100 * i
             sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
             with Timer() as t:
-                response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}".format(maxrows)) 
-            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']    
+                response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}".format(maxrows))
+            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection (Rows: {}): no_cache".format(maxrows))
             self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection (Rows: {}): SQL-Count".format(maxrows), type="count", unit="statements")
@@ -75,7 +75,7 @@ class WebBenchmark(Bench):
         sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
         with Timer() as t:
             response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}".format(table))
-        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
+        sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
         self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' All Rows: no cache".format(table))
         self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection as table '{}' All Rows SQL-Count".format(table), type="count", unit="statements")
@@ -87,7 +87,7 @@ class WebBenchmark(Bench):
 
     def bench_get_subset_as_table(self):
         logger.info("bench_get_subset_as_table")
-        
+
         for i in range(1,6):
             maxrows = 100 * i
             self.get_subset_as_table(self.table, maxrows)
@@ -99,7 +99,7 @@ class WebBenchmark(Bench):
             sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}&maxrows={}".format(table, maxrows))
-            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
+            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' (Rows: {}): no cache".format(table, maxrows))
             self.storeResult(sql_count_after - sql_count_before, name="RestApi Collection as table '{}' (Rows: {}) SQL-Count".format(table, maxrows), type="count", unit="statements")
@@ -107,18 +107,18 @@ class WebBenchmark(Bench):
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&_as_table={}&maxrows={}".format(table, maxrows))
             self.storeResult(t.elapsed.total_seconds(), name="RestApi Collection as table '{}' (Rows: {}): cache".format(table, maxrows))
-         
+
 
     def bench_get_progesseviley(self):
         logger.info("bench_get_progressively")
         time_series = []
         statements = []
-        totalRows = 2000 
+        totalRows = 2000
         for i in range(self.args["step"], totalRows, self.args["step"]):
-            sql_count_before =  sqlapi.SQLget_statistics()['statement_count']  
+            sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}".format(i))
-            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
+            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
             time_series.append(t.elapsed.total_seconds())
             statements.append(sql_count_after - sql_count_before)
@@ -150,10 +150,10 @@ class WebBenchmark(Bench):
         statements = []
         totalRows = 2000
         for i in range(self.args["step"], totalRows, self.args["step"]):
-            sql_count_before =  sqlapi.SQLget_statistics()['statement_count']  
+            sql_count_before =  sqlapi.SQLget_statistics()['statement_count']
             with Timer() as t:
                 response = self.client.get(u"/api/v1/collection/TestBench?$filter=cdb_module_id eq 'cs.restgenericfixture'&maxrows={}&_as_table={}".format(i, table))
-            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']  
+            sql_count_after =  sqlapi.SQLget_statistics()['statement_count']
 
             time_series.append(t.elapsed.total_seconds())
             statements.append(sql_count_after - sql_count_before)
@@ -170,7 +170,7 @@ class WebBenchmark(Bench):
             if i > 0:
                 statements[i] = val - tmp[i-1]
 
-        self.storeResult(statements, name="RestApi Collection with maxrows Intervals as table '{}' SQL-Count".format(table), type="count_series", unit="statements")  
+        self.storeResult(statements, name="RestApi Collection with maxrows Intervals as table '{}' SQL-Count".format(table), type="count_series", unit="statements")
 
 
     def bench_search_operation(self):
@@ -197,7 +197,7 @@ class WebBenchmark(Bench):
             res = op.get_result()[1].as_table(table_name + "_no_uuid").getData()
         self.storeResult(t.elapsed.total_seconds(), name="Retrieve Table data without UUID (Kernel Operation)", type="time")
 
-        
+
     def test_retrieve_table_data_elements_ui(self, op, table_name):
         logger.info("test_retrieve_table_data_elements_ui")
         params = {"object_navigation_id": None,
@@ -208,14 +208,10 @@ class WebBenchmark(Bench):
                     params)
         self.storeResult(t.elapsed.total_seconds(), name="Retrieve Table data elements ui operations", type="time")
 
-        
+
 
 
 if __name__ == "__main__":
     step = 100
     webui = WebBenchmark()
     webui.run({'step': step})
-
-
-
-

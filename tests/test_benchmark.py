@@ -4,7 +4,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-from benchmarktool import benchmark
+from pyperf import benchmark
 from nose.tools import eq_, raises
 
 

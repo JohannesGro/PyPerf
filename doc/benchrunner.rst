@@ -1,7 +1,7 @@
 BenchRunner
 ***********
 
-.. automodule:: benchmarktool.benchrunner
+.. automodule:: pyperf.benchrunner
 	:members:
 
 	Members

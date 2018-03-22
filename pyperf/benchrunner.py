@@ -1,18 +1,15 @@
-#!demoLauncher.cmd
 # -*- mode: python; coding: utf-8 -*-
 #
 # Copyright (C) 1990 - 2017 CONTACT Software GmbH
 # All rights reserved.
 # https://www.contact-software.com/
-"""
-"""
 
 import os
 import sys
 
 import ioservice
 import systemInfos
-from benchmarktool.log import customlogging
+from pyperf.log import customlogging
 
 
 class Benchrunner(object):
