@@ -9,3 +9,16 @@ It is possible to define a suite of benchmarks, run the suite on several systems
 and compare the results or display a trend on a single system.
 
 For more information have a look at our documentation.
+
+
+History
+=======
+
+0.3.0
+-----
+* Improvement:
+  Make callable as a module (python -m pyperf)
+
+0.2
+---
+Initial release
