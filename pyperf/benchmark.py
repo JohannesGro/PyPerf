@@ -123,11 +123,11 @@ def main():
             rc = UPLOAD_TARGET_NOT_SUPPORTED
     else:
         # defensive programming, should never happen...
-        system.error.write("%s: Unknown subcommand '%s'" % (parser.prog, args.subcommand))
+        sys.stderr.write("%s: Unknown subcommand '%s'" % (parser.prog, args.subcommand))
         rc = UNKNOWN_SUBCOMMAND
 
     return rc
 
 
 if __name__ == "__main__":
-    system.exit(main())
+    sys.exit(main())

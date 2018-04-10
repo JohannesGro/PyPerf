@@ -8,7 +8,7 @@ import datetime
 import timeit
 
 
-class Timer():
+class Timer(object):
     def __init__(self):
         self.start = None
         self.elapsed = None
