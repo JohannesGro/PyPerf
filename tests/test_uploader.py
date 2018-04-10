@@ -61,7 +61,7 @@ class TestInfluxdbUploader(unittest.TestCase):
     @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_with_additional_values(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
-                                 self.influxdburl, self.database, values="buildno=15.2.1")
+                                 self.influxdburl, self.database, values="buildno:15.2.1")
         lp_msg = self.influxmock.data_last
         assert lp_msg.find("buildno=15.2.1") != -1
 

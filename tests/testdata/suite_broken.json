@@ -1,0 +1,10 @@
+{
+  "suite": {
+    "Benchmark": {
+      "file": "not_there.py",
+      "className": "X",
+      "args": {
+      }
+    }
+  }
+}

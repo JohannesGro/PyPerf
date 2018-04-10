@@ -9,7 +9,7 @@ import unittest
 import subprocess
 import os
 import json
-from nose.tools import eq_, raises
+from nose.tools import eq_, raises, assert_not_equals
 from .utils import coverage_opts
 
 """
@@ -28,6 +28,8 @@ BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
 DEVNULL = open(os.devnull, "w")
 DATADIR = os.path.join(HERE, "testdata")
 SUITE = os.path.join(DATADIR, "dummy.json")
+SUITE_BROKEN = os.path.join(DATADIR, "suite_broken.json")
+SUITE_BENCH_BROKEN = os.path.join(DATADIR, "suite_bench_broken.json")
 
 
 class RunnerTest(unittest.TestCase):
@@ -75,7 +77,7 @@ class RunnerTest(unittest.TestCase):
             "-o", self.REPORTFILE,
             "--verbose"
         ]
-        rc = subprocess.check_call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
 
         # 1. exit code is zero
         # 2. there are some sysinfos
@@ -84,6 +86,25 @@ class RunnerTest(unittest.TestCase):
         report = json.load(open(self.REPORTFILE))
         sysinfos = report["Sysinfos"]
         assert sysinfos
+
+    def test_run_broken_suite(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "runner",
+            "--suite", SUITE_BROKEN,
+            "-o", self.REPORTFILE
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        assert_not_equals(rc, 0)
+
+    def test_run_broken_benchmark(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "runner",
+            "--suite", SUITE_BENCH_BROKEN,
+            "-o", self.REPORTFILE
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        assert_not_equals(rc, 0)
+
 
 
 class RendererTest(unittest.TestCase):
@@ -177,7 +198,7 @@ class UploaderTest(unittest.TestCase):
             "--url=%s" % INFLUX,
             "--db=%s" % INFLUXDB,
             "--ts=%s" % "111111111111ms",
-            "--values=CI:yes"
+            "--values=CI:1"
         ]
         rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
         eq_(rc, 0, "'%s' failed." % subprocess.list2cmdline(cmdline))
@@ -191,13 +212,13 @@ class UploaderTest(unittest.TestCase):
         rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
         eq_(rc, 21, "'%s' failed." % subprocess.list2cmdline(cmdline))
 
-    def test_bad_url(self):
-        # TODO
-        pass
-
-    def test_bad_db(self):
-        # TODO
-        pass
+    def test_bad_report(self):
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "upload",
+            os.path.join(DATADIR, "bad_report.json"),
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        assert_not_equals(rc, 0, "'%s' failed." % subprocess.list2cmdline(cmdline))
 
     def test_bad_timestamp(self):
         cmdline = ["python"] + coverage_opts() + [
@@ -209,8 +230,13 @@ class UploaderTest(unittest.TestCase):
         eq_(rc, 22, "'%s' failed." % subprocess.list2cmdline(cmdline))
 
     def test_bad_values(self):
-        # TODO
-        pass
+        cmdline = ["python"] + coverage_opts() + [
+            BENCH, "upload",
+            os.path.join(DATADIR, "report.json"),
+            "--values=bad"
+        ]
+        rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)
+        assert_not_equals(rc, 0, "'%s' failed." % subprocess.list2cmdline(cmdline))
 
 
 class Test_Integration(unittest.TestCase):

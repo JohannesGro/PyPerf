@@ -52,6 +52,14 @@ class InvalidReportError(Exception):
     pass
 
 
+class ValuesParseError(Exception):
+    def __init__(self, values):
+        self.values = values
+
+    def __str__(self):
+        return "Additional values '%s' cannot be parsed" % self.values
+
+
 def extract_tags(sysinfo):
     tags = {}
     for info, tag_name in RELEVANT_SYSINFOS.iteritems():
@@ -99,10 +107,12 @@ def aggregate_series(bench, series):
 def parse_additional_values(values):
     res = {}
     for pair in values.split(","):
-        parts = pair.split("=")
+        parts = pair.split(":")
         if len(parts) == 2:
             key, value = parts
             res[key] = value
+        else:
+            raise ValuesParseError(values)
     return res
 
 
@@ -111,16 +121,16 @@ def extract_timestamp(sysinfos):
     return dateparser.parse(time_iso).strftime('%S%f')
 
 
-def upload_2_influx(report, influxdburl, database, timestamp=None, precision=None, values=None):
-    with open(report, "r") as fd:
+def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None, values=None):
+    with open(reportpath, "r") as fd:
         try:
-            results = json.load(fd)
+            report = json.load(fd)
         except ValueError:
-            raise InvalidReportError("Report '%s' cannot be parsed." % report)
+            raise InvalidReportError("Report '%s' cannot be parsed." % reportpath)
 
-        sysinfos = results["Sysinfos"]
+        sysinfos = report["Sysinfos"]
         if len(sysinfos) == 0:
-            raise InvalidReportError("Report '%s' doesn't contain sysinfos." % report)
+            raise InvalidReportError("Report '%s' doesn't contain sysinfos." % reportpath)
 
         time_epoch = timestamp or extract_timestamp(sysinfos)
 
@@ -131,11 +141,18 @@ def upload_2_influx(report, influxdburl, database, timestamp=None, precision=Non
         lines = []
         fields = {}
 
-        if "results" not in results:
-            raise InvalidReportError("Report '%s' doesn't contain any results." % report)
+        if "results" not in report:
+            raise InvalidReportError("Report '%s' doesn't contain any results." % reportpath)
 
-        for benchmark, benchmark_results in results["results"].iteritems():
-            for bench, bench_results in benchmark_results["data"].iteritems():
+        for benchmark, args_and_data in report["results"].iteritems():
+            data = args_and_data["data"]
+            if not data:
+                raise InvalidReportError(
+                    "Report '%s' doesn't contain any result data for the benchmark '%s'."
+                    % (reportpath, benchmark)
+                )
+            for bench, bench_results in args_and_data["data"].iteritems():
+
                 report_values = bench_results["value"]
                 if isinstance(report_values, list):
                     fields.update(aggregate_series(bench, report_values))

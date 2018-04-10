@@ -65,16 +65,16 @@ class Benchrunner(object):
             bench_class = getattr(mod, class_name)
         except ImportError as err:
             logger.exception("Could not import bench file! {}".format(str(err)))
-            return
+            raise
         except AttributeError as err:
             logger.exception("Could not find className: {0}! {1}".format(class_name, str(err)))
-            return
+            raise
         except ValueError as err:
             logger.exception(str(err))
-            return
+            raise
         except:
             logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
-            return
+            raise
         finally:
             sys.path = prevSysPath
 
