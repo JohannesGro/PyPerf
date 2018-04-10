@@ -52,9 +52,9 @@ egg: pyperf setup.py README.rst
 upload: egg
 ifeq ($(ARMED),True)
 	devpi login wen
-	devpi upload --index apps/15.3 dist/pyperf-0.?-py2.7.egg
+	devpi upload --index tools/misc dist/pyperf-0.?.?-py2.7.egg
 else
-	devpi upload --index apps/15.3 --dry-run dist/pyperf-0.?-py2.7.egg
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py2.7.egg
 endif
 
 clean:
