@@ -14,6 +14,11 @@ For more information have a look at our documentation.
 History
 =======
 
+0.3.1
+-----
+* Fix:
+  Pyperf should set the exit code in error cases appropriately
+
 0.3.0
 -----
 * Improvement:
