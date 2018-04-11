@@ -1,0 +1,9 @@
+{
+  "suite": {
+    "Benchmark": {
+        "file": "egal",
+        "className": "egal",
+        "args": {}
+    }
+  }
+}

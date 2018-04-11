@@ -36,6 +36,10 @@ class Benchrunner(object):
 
         # iterating the suite
         for bench_key, bench_val in data["suite"].iteritems():
+            if bench_val.get("active", True) is False:
+                logger.info("Bench '%s' is inactive, skipping" % bench_key)
+                continue
+
             logger.info("Execute bench: " + bench_key)
             result = self.start_bench_script(suite, bench_val["file"],
                                              bench_val["className"], bench_val["args"])

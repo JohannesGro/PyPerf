@@ -1,0 +1,10 @@
+{
+  "suite": {
+    "InactiveBenchmark": {
+        "file": "egal",
+        "className": "egal",
+        "args": {},
+        "active": false
+    }
+  }
+}
