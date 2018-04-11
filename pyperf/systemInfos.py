@@ -335,7 +335,7 @@ def getAllSysInfos(verbose=True):
     :returns: dict with all system infos."""
 
     logger.info("Fetching system infos (verbose: %s, CONTACT Elements available: %s)"
-                % (verbose, cdb is None))
+                % (verbose, cdb is not None))
 
     res = {}
     res.update(getSysInfo())
