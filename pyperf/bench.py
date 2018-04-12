@@ -98,6 +98,7 @@ class Bench(object):
             E.g. iterations could be used for the repitition of an insert query.
         :returns: a dict with the result of the benchmark.
         """
+        # pylint: disable=broad-except, too-many-nested-blocks
         self.args = args
         self.results = {}
         rc = True
@@ -110,24 +111,25 @@ class Bench(object):
                         getattr(self, test)()
                     except Exception:
                         rc = False
-                        logger.exception("Exception while running '%s'"
-                                         % self.__class__)
+                        logger.exception("Exception while running '%s'",
+                                         self.__class__.__name__)
                     finally:
                         try:
                             self.tearDown()
                         except Exception:
                             rc = False
-                            logger.exception("Exception while running tearDown of '%s'"
-                                             % self.__class__)
+                            logger.exception("Exception while running tearDown of '%s'",
+                                             self.__class__.__name__)
         except Exception:
             rc = False
-            logger.exception("Exception while running '%s'" % self.__class__)
+            logger.exception("Exception while running '%s'",
+                             self.__class__.__name__)
         finally:
             try:
                 self.tearDownClass()
             except Exception:
                 rc = False
-                logger.exception("Exception while running tearDownClass of '%s'"
-                                 % self.__class__)
+                logger.exception("Exception while running tearDownClass of '%s'",
+                                 self.__class__.__name__)
 
         return rc, self.results

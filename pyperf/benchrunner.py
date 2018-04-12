@@ -31,17 +31,17 @@ class Benchrunner(object):
                                             fileName=self.logging_file)
         self.sys_infos(verbose)
         logger.info("Starting")
-        logger.info("Reading the benchsuite: " + suite)
+        logger.info("Reading the benchsuite '%s'", suite)
         data = ioservice.loadJSONData(suite)
 
         # iterating the suite
         rc_all = True
         for bench_key, bench_val in data["suite"].iteritems():
             if bench_val.get("active", True) is False:
-                logger.info("Bench '%s' is inactive, skipping" % bench_key)
+                logger.info("Bench '%s' is inactive, skipping", bench_key)
                 continue
 
-            logger.info("Execute bench: " + bench_key)
+            logger.info("Executing bench '%s'", bench_key)
             rc, results = self.start_bench_script(suite, bench_val["file"],
                                                   bench_val["className"], bench_val["args"])
             rc_all &= rc
@@ -65,7 +65,7 @@ class Benchrunner(object):
             dirPath = os.path.dirname(benchpath)
             fileName = os.path.basename(benchpath)
             module, extension = os.path.splitext(fileName)
-            if (not extension == '' and not extension == '.py') or module == '':
+            if (extension != '' and extension != '.py') or module == '':
                 raise ValueError("The bench file '{}' is not specified correctly.".format(fileName))
             sys.path.append(dirPath)
             mod = __import__(module, fromlist=[class_name])
@@ -80,7 +80,7 @@ class Benchrunner(object):
             logger.exception(str(err))
             raise
         except:
-            logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
+            logger.exception("Unexpected error occurred! %s", sys.exc_info()[0:1])
             raise
         finally:
             sys.path = prevSysPath

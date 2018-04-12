@@ -28,7 +28,7 @@ class BadTimestampError(Exception):
 
 
 def parse_timestamp_param(timestamp):
-    TS_RE = "^([\d]{1,16})([a-z]{1,4})$"
+    TS_RE = r"^([\d]{1,16})([a-z]{1,4})$"
     match = re.match(TS_RE, timestamp)
     if match and len(match.groups()) == 2:
         ts, unit = match.groups()

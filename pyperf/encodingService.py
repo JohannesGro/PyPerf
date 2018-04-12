@@ -97,7 +97,7 @@ def _WinRegistryGetCP():
     keyname = r"SYSTEM\CurrentControlSet\Control\Nls\CodePage"
     try:
         key = wreg.OpenKey(wreg.HKEY_LOCAL_MACHINE, keyname)
-        cp, t = wreg.QueryValueEx(key, "OEMCP")
+        cp, _t = wreg.QueryValueEx(key, "OEMCP")
         wreg.CloseKey(key)
     except Exception:
         return None

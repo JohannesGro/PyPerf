@@ -53,7 +53,7 @@ class InvalidReportError(Exception):
 
 
 class ValuesParseError(Exception):
-    def __init__(self, values):
+    def __init__(self, values):  # pylint: disable=super-init-not-called
         self.values = values
 
     def __str__(self):

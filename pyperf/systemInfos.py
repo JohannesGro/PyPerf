@@ -67,7 +67,7 @@ def getMemoryInfos(verbose=True):
         res['mem_used'] = mem.used / mb
         res['mem_free'] = mem.free / mb
         res['mem_available'] = mem.available / mb
-        if(psutil.POSIX):
+        if psutil.POSIX:
             res['mem_active'] = mem.active / mb
             res['mem_inactive'] = mem.inactive / mb
 
@@ -259,9 +259,8 @@ def msinfo32():
     :returns: dict with infos
     """
     res = {}
-    if(psutil.WINDOWS):
+    if psutil.WINDOWS:
         import io
-        import os
         from lxml import etree
 
         fileName = "msinfo32.xml"
@@ -288,12 +287,12 @@ def traceroute(dest):
 
     import re
 
-    m = re.search("\/\/(.*):", dest)
+    m = re.search(r"\/\/(.*):", dest)
     if m is None:
         dest = "localhost"
     else:
         dest = m.group(1)
-    if(psutil.WINDOWS):
+    if psutil.WINDOWS:
         # find encoding
         import encodingService
         cp = encodingService.guess_console_encoding()
@@ -303,21 +302,21 @@ def traceroute(dest):
         output = output.decode(cp).replace("\r\n", "")
 
         # shorten en/de tracert msg
-        regex = '.*(Routenverfolgung\szu|Tracing\sroute\sto)\s(.*?\[.*?\]).*?:(.*)'
+        regex = r".*(Routenverfolgung\szu|Tracing\sroute\sto)\s(.*?\[.*?\]).*?:(.*)"
         m = re.match(regex, output)
         if m is not None:
             server = m.group(2)
             route = m.group(3)
             tracertString = "{}: {}".format(server, route)
             return {"route": tracertString}
-    elif(psutil.POSIX):
+    elif psutil.POSIX:
         # traceroute to google.com (172.217.23.14),
         output = subprocess.check_output(["traceroute", "-w", "100", dest],
                                          stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = output.replace("\n", "")
 
         # shorten traceroute msg
-        regex = '.*(traceroute\sto)\s(.*?\(.*?\)).*?packets(.*)'
+        regex = r".*(traceroute\sto)\s(.*?\(.*?\)).*?packets(.*)"
         m = re.match(regex, output)
         if m is not None:
             server = m.group(2)
@@ -334,8 +333,8 @@ def getAllSysInfos(verbose=True):
     :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
     :returns: dict with all system infos."""
 
-    logger.info("Fetching system infos (verbose: %s, CONTACT Elements available: %s)"
-                % (verbose, cdb is not None))
+    logger.info("Fetching system infos (verbose: %s, CONTACT Elements available: %s)",
+                verbose, cdb is not None)
 
     res = {}
     res.update(getSysInfo())

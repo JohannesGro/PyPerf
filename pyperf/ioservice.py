@@ -46,18 +46,18 @@ def saveJSONData(fileName, data):
 
     :param data: json data which will be saved to file
     """
-    logger.info("Saving json to file: " + fileName)
+    logger.info("Saving json to file '%s'", fileName)
     try:
         with io.open(fileName, 'w', encoding="utf-8") as outfile:
             outfile.write(unicode(json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)))
     except IOError as err:
-        logger.exception("Could not open file to save the data! " + str(err))
+        logger.exception("Could not open file to save the data! %s", err)
     except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.exception("Could not decode values! " + str(err))
+        logger.exception("Could not decode values! %s", err)
     except TypeError as err:
-        logger.exception("Could not serialize object! " + str(err))
+        logger.exception("Could not serialize object! %s", err)
     except:
-        logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
+        logger.exception("Unexpected error occurred! %s", sys.exc_info()[0:1])
     else:
         logger.info("Saving successful")
 
@@ -79,13 +79,13 @@ def writeToFile(data, outfile):
     :param data: json data
     :param outfile: name of the output file
     """
-    logger.info("Saving Results to file: " + outfile)
+    logger.info("Saving results to file '%s'", outfile)
     try:
         with io.open(outfile, 'w', encoding="UTF-8") as out:
             out.write(unicode(data))
     except IOError as err:
-        logger.exception("Could not open file to save the data! " + str(err))
+        logger.exception("Could not open file to save the data! %s", err)
     except:
-        logger.exception("Unexpected error occurred! " + str(sys.exc_info()[0:1]))
+        logger.exception("Unexpected error occurred! %s", sys.exc_info()[0:1])
     else:
         logger.info("Saving successful")
