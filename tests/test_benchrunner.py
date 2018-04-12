@@ -85,7 +85,7 @@ class TestBenchrunner(unittest.TestCase):
 
     def test_bench_is_active_by_default(self):
         suite = os.path.join(HERE, "testdata", "suite_without_active_property.json")
-        method_mock = mock.MagicMock(return_value={})
+        method_mock = mock.MagicMock(return_value=(True, {}))
         self.benchrunner.start_bench_script = method_mock
 
         self.benchrunner.main(suite, self.outfile, "", False)

@@ -100,19 +100,34 @@ class Bench(object):
         """
         self.args = args
         self.results = {}
+        rc = True
         try:
             self.setUpClass()
-            try:
-                for test, val in sorted(self.__class__.__dict__.iteritems()):
-                    if test.find('bench_') == 0:
-                        test_method = getattr(self, test)
+            for test in dir(self):
+                if test.find('bench_') == 0:
+                    try:
                         self.setUp()
-                        test_method()
-                        self.tearDown()
-            except Exception:
-                logger.exception("Exception while running Bench")
-            finally:
-                self.tearDownClass()
+                        getattr(self, test)()
+                    except Exception:
+                        rc = False
+                        logger.exception("Exception while running '%s'"
+                                         % self.__class__)
+                    finally:
+                        try:
+                            self.tearDown()
+                        except Exception:
+                            rc = False
+                            logger.exception("Exception while running tearDown of '%s'"
+                                             % self.__class__)
         except Exception:
-            logger.exception("Exception while running Bench")
-        return self.results
+            rc = False
+            logger.exception("Exception while running '%s'" % self.__class__)
+        finally:
+            try:
+                self.tearDownClass()
+            except Exception:
+                rc = False
+                logger.exception("Exception while running tearDownClass of '%s'"
+                                 % self.__class__)
+
+        return rc, self.results

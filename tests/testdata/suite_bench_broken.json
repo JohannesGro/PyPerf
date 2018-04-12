@@ -2,7 +2,7 @@
   "suite": {
     "Benchmark": {
       "file": "bench_broken.py",
-      "className": "X",
+      "className": "Benchmark",
       "args": {
       }
     }

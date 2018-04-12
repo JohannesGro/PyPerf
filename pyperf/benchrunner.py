@@ -35,16 +35,19 @@ class Benchrunner(object):
         data = ioservice.loadJSONData(suite)
 
         # iterating the suite
+        rc_all = True
         for bench_key, bench_val in data["suite"].iteritems():
             if bench_val.get("active", True) is False:
                 logger.info("Bench '%s' is inactive, skipping" % bench_key)
                 continue
 
             logger.info("Execute bench: " + bench_key)
-            result = self.start_bench_script(suite, bench_val["file"],
-                                             bench_val["className"], bench_val["args"])
-            self.results['results'][bench_key] = {'args': bench_val["args"], 'data': result}
+            rc, results = self.start_bench_script(suite, bench_val["file"],
+                                                  bench_val["className"], bench_val["args"])
+            rc_all &= rc
+            self.results['results'][bench_key] = {'args': bench_val["args"], 'data': results}
         ioservice.saveJSONData(outfile, self.results)
+        return int(not rc_all)
 
     def start_bench_script(self, suitepath, benchpath, class_name, args):
         """This functions imports the bench module and creates an instance of the given
