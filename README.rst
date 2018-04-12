@@ -14,6 +14,14 @@ For more information have a look at our documentation.
 History
 =======
 
+0.3.2
+-----
+* Fix:
+  Improve error handling and setting of exit code
+
+* Improvement:
+  Evaluate the 'active' configuration property
+
 0.3.1
 -----
 * Fix:
