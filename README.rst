@@ -14,6 +14,12 @@ For more information have a look at our documentation.
 History
 =======
 
+
+0.3.4
+-----
+* Fix:
+  Fix the InfluxDB upload URL
+
 0.3.3
 -----
 * Fix:
