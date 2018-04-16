@@ -14,6 +14,11 @@ For more information have a look at our documentation.
 History
 =======
 
+0.3.3
+-----
+* Fix:
+  Fix a time conversion bug when uploading to InfluxDB
+
 0.3.2
 -----
 * Fix:
