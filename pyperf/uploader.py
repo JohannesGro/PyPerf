@@ -140,6 +140,8 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
         if len(sysinfos) == 0:
             raise InvalidReportError("Report '%s' doesn't contain sysinfos." % reportpath)
 
+        if not precision:
+            precision = "s"
         time_epoch = timestamp or extract_timestamp(sysinfos)
 
         tags = extract_tags(sysinfos)

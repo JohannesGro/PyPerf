@@ -5,6 +5,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
+
 class InfluxMock(object):
     data_last = None
 
@@ -23,7 +24,10 @@ class InfluxMock(object):
 
         # record for later checking
         self.data_last = data
-        with open(".influxupload", "w") as fd:
+        self.url_last = url
+        with open(".influxdata", "w") as fd:
             fd.write(data)
+        with open(".influxurl", "w") as fd:
+            fd.write(url)
 
         return self.MockedResponse(self.sc)

@@ -38,10 +38,13 @@ class TestInfluxdbUploader(unittest.TestCase):
     def test_happy_case(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_happy.json"),
                                  self.influxdburl, self.database)
-        lp_msg = self.influxmock.data_last
-        assert lp_msg.startswith("SomeBenchmark")
-        assert lp_msg.find("user=wen") != -1
-        assert lp_msg.find("runtime_avr=0.01") != -1
+        data = self.influxmock.data_last
+        url = self.influxmock.url_last
+
+        assert data.startswith("SomeBenchmark")
+        assert data.find("user=wen") != -1
+        assert data.find("runtime_avr=0.01") != -1
+        assert url.find("precision=s") != -1
 
     @raises(uploader.InvalidReportError)
     def test_sysinfos_incomplete(self):

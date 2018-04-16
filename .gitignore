@@ -9,3 +9,5 @@ cover
 build
 dist
 *.egg-info
+.influxdata
+.influxurl
