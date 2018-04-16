@@ -7,7 +7,7 @@
 import unittest
 import os
 import requests
-from nose.tools import raises
+from nose.tools import raises, eq_
 from mock import patch
 
 from pyperf import uploader
@@ -84,6 +84,11 @@ class TestInfluxdbUploader(unittest.TestCase):
     def test_influx_error(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database)
+
+
+def test_convert_to_timestamp():
+    eq_(uploader.convert_to_timestamp("2018-03-13T15:40:04.859709"), "1520955604")
+    eq_(uploader.convert_to_timestamp("1970-01-01T00:0:00.000000"), "0")
 
 
 # Further testcases:

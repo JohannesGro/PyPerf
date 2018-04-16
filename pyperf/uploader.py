@@ -21,6 +21,7 @@ import requests
 import dateutil.parser as dateparser
 import json
 import os
+import datetime
 
 from influxmock import InfluxMock
 
@@ -46,6 +47,9 @@ RELEVANT_SYSINFOS = {
     # "Processor": "CPU",
     "vm": "vm"
 }
+
+
+EPOCH = datetime.datetime(1970, 1, 1)
 
 
 class InvalidReportError(Exception):
@@ -116,9 +120,13 @@ def parse_additional_values(values):
     return res
 
 
+def convert_to_timestamp(time_iso):
+    dt = dateparser.parse(time_iso)
+    return "%i" % ((dt - EPOCH).total_seconds())
+
+
 def extract_timestamp(sysinfos):
-    time_iso = sysinfos["time"]
-    return dateparser.parse(time_iso).strftime('%S%f')
+    return convert_to_timestamp(sysinfos["time"])
 
 
 def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None, values=None):
