@@ -106,7 +106,6 @@ class RunnerTest(unittest.TestCase):
         assert_not_equals(rc, 0)
 
 
-
 class RendererTest(unittest.TestCase):
     RENDER_FILE = "render.html"
     REPORT1 = os.path.join(DATADIR, "report.json")
@@ -198,6 +197,7 @@ class UploaderTest(unittest.TestCase):
             "--url=%s" % INFLUX,
             "--db=%s" % INFLUXDB,
             "--ts=%s" % "111111111111ms",
+            "--tags=arch:x64",
             "--values=CI:1"
         ]
         rc = subprocess.call(cmdline, stdout=DEVNULL, stderr=DEVNULL)

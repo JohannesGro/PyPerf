@@ -69,6 +69,13 @@ class TestInfluxdbUploader(unittest.TestCase):
         assert lp_msg.find("buildno=15.2.1") != -1
 
     @patch('pyperf.uploader.requests.post', new=influxmock)
+    def test_with_additional_tags(self):
+        uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
+                                 self.influxdburl, self.database, add_tags="arch:x64")
+        lp_msg = self.influxmock.data_last
+        assert lp_msg.find("arch=x64") != -1
+
+    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_report_with_number(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_number.json"),
                                  self.influxdburl, self.database)

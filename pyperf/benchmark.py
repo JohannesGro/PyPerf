@@ -95,6 +95,7 @@ def main():
         help="If given, overrides the timestamp given in the report. Valid units are 's' and 'us'."
     )
     upload_parser.add_argument("--values", help="Additional values to upload.")
+    upload_parser.add_argument("--tags", help="Additional tags to upload.")
 
     args = parser.parse_args()
     subcommand = args.subcommand
@@ -112,7 +113,8 @@ def main():
             try:
                 ts, unit = parse_timestamp_param(args.ts) if args.ts else (None, None)
                 from uploader import upload_2_influx
-                return upload_2_influx(args.filename, args.url, args.db, ts, unit, args.values)
+                return upload_2_influx(args.filename, args.url, args.db, ts, unit,
+                                       args.values, args.tags)
             except BadTimestampError, tse:
                 sys.stderr.write("%s %s: %s\n" %
                                  (parser.prog, args.subcommand, str(tse)))

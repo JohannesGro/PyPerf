@@ -129,7 +129,8 @@ def extract_timestamp(sysinfos):
     return convert_to_timestamp(sysinfos["time"])
 
 
-def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None, values=None):
+def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None,
+                    values=None, add_tags=None):
     with open(reportpath, "r") as fd:
         try:
             report = json.load(fd)
@@ -146,8 +147,12 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
 
         tags = extract_tags(sysinfos)
         tags["hostname"] = extract_hostname(sysinfos)
+        if add_tags:
+            tags.update(parse_additional_values(add_tags))
+
         tags_str = ",".join(["%s=%s" % (tagname, tagvalue)
                              for tagname, tagvalue in tags.iteritems()])
+
         lines = []
         fields = {}
 
