@@ -15,6 +15,12 @@ History
 =======
 
 
+0.3.5
+-----
+* Improvement:
+  Passing additional tags to "pyperf upload"
+  https://de-git01.contact.de/SD/pyperf/issues/3
+
 0.3.4
 -----
 * Fix:
