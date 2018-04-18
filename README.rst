@@ -14,6 +14,11 @@ For more information have a look at our documentation.
 History
 =======
 
+0.3.6
+-----
+* Improvement:
+  Better names for the CLI
+  https://de-git01.contact.de/SD/pyperf/issues/4
 
 0.3.5
 -----

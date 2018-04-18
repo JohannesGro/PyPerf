@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyperf',
-      version='0.3.5',
+      version='0.3.6',
       description='This project aims to provide a base for creating and rendering standardized benchmarks.',
       long_description=long_description,
       url='http://git.contact.de/tst/Benchmarking-Tool',
