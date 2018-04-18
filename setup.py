@@ -20,7 +20,7 @@ setup(name='pyperf',
       license='',
       packages=find_packages(exclude=["tests"]),
       entry_points={
-          "console_scripts": ["benchmark=pyperf.benchmark:main"]
+          "console_scripts": ["bench=pyperf.benchmark:main"]
       },
       include_package_data=True
       )

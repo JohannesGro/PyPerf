@@ -41,7 +41,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_trivial_run(self):
         cmdline = ["python"] + coverage_opts() + [
-            BENCH, "runner",
+            BENCH, "run",
             "--suite", SUITE,
             "-o", self.REPORTFILE
         ]
@@ -72,7 +72,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_run_with_verbose_sysinfos(self):
         cmdline = ["python"] + coverage_opts() + [
-            BENCH, "runner",
+            BENCH, "run",
             "--suite", SUITE,
             "-o", self.REPORTFILE,
             "--verbose"
@@ -89,7 +89,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_run_broken_suite(self):
         cmdline = ["python"] + coverage_opts() + [
-            BENCH, "runner",
+            BENCH, "run",
             "--suite", SUITE_BROKEN,
             "-o", self.REPORTFILE
         ]
@@ -98,7 +98,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_run_broken_benchmark(self):
         cmdline = ["python"] + coverage_opts() + [
-            BENCH, "runner",
+            BENCH, "run",
             "--suite", SUITE_BENCH_BROKEN,
             "-o", self.REPORTFILE
         ]
@@ -247,7 +247,7 @@ class Test_Integration(unittest.TestCase):
         cmdline = [
             "python",
             BENCH,
-            "runner",
+            "run",
             "--suite", os.path.join(DATADIR, "dummy.json"),
             "-o", self.REPORTFILE
         ]

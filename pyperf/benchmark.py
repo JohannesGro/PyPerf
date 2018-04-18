@@ -45,7 +45,7 @@ def main():
     parser = argparse.ArgumentParser(description=help_txt)
     subparsers = parser.add_subparsers(dest='subcommand')
 
-    runner = subparsers.add_parser("runner")
+    runner = subparsers.add_parser("run")
     helpstr = "A JSON file which contains the benches (default: %s)." % SUITEFILE_DEFAULT
     runner.add_argument("--suite", "-s", nargs='?', default=SUITEFILE_DEFAULT, help=helpstr)
     helpstr = "The results will be stored in this file (default: %s)." % REPORTFILE_DEFAULT
@@ -100,7 +100,7 @@ def main():
     args = parser.parse_args()
     subcommand = args.subcommand
     rc = 0
-    if subcommand == "runner":
+    if subcommand == "run":
         from benchrunner import Benchrunner
         return Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
     elif subcommand == "render":
