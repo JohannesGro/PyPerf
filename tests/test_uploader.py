@@ -15,8 +15,8 @@ from pyperf.influxmock import InfluxMock
 
 
 class TestInfluxdbUploader(unittest.TestCase):
-    influxdburl = "http://con-wen:8086"
-    database = "sdperf"
+    influxdburl = "http://localhost:8086"
+    database = "_test"
     here = os.path.abspath(os.path.dirname(__file__))
     testdata = os.path.join(here, "testdata")
     influxmock = InfluxMock()

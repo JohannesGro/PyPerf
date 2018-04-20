@@ -22,7 +22,7 @@ __revision__ = "$Id$"
 
 
 INFLUX = "http://localhost:8086"
-INFLUXDB = "sdperf"
+INFLUXDB = "_test"
 HERE = os.path.abspath(os.path.dirname(__file__))
 BENCH = os.path.normpath(os.path.join(HERE, "..", "bench.py"))
 DEVNULL = open(os.devnull, "w")
