@@ -154,12 +154,12 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
                              for tagname, tagvalue in tags.iteritems()])
 
         lines = []
-        fields = {}
 
         if "results" not in report:
             raise InvalidReportError("Report '%s' doesn't contain any results." % reportpath)
 
         for benchmark, args_and_data in report["results"].iteritems():
+            fields = {}
             data = args_and_data["data"]
             if not data:
                 raise InvalidReportError(

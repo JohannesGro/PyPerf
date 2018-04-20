@@ -49,12 +49,12 @@
         "vm": "No"
     },
     "results": {
-        "SomeBenchmark": {
+        "BenchmarkB": {
             "args": {
                 "iterations": 100
             },
             "data": {
-                "bench_runtime": {
+                "bench_b1": {
                     "type": "time_series",
                     "unit": "seconds",
                     "value": [
@@ -62,7 +62,31 @@
                         0.01
                     ]
                 },
-                "bench_sqlstms": {
+                "bench_b2": {
+                    "type": "count",
+                    "unit": "statements",
+                    "value": [
+                        6,
+                        6
+                    ]
+                }
+            }
+        },
+
+        "BenchmarkA": {
+            "args": {
+                "iterations": 100
+            },
+            "data": {
+                "bench_a1": {
+                    "type": "time_series",
+                    "unit": "seconds",
+                    "value": [
+                        0.01,
+                        0.01
+                    ]
+                },
+                "bench_a2": {
                     "type": "count",
                     "unit": "statements",
                     "value": [

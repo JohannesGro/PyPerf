@@ -40,10 +40,24 @@ class TestInfluxdbUploader(unittest.TestCase):
                                  self.influxdburl, self.database)
         data = self.influxmock.data_last
         url = self.influxmock.url_last
+        benchmark_a, benchmark_b = data.split("\n")
+        print benchmark_a
+        print benchmark_b
 
-        assert data.startswith("SomeBenchmark")
-        assert data.find("user=wen") != -1
-        assert data.find("runtime_avr=0.01") != -1
+        assert benchmark_a.startswith("BenchmarkA")
+        assert benchmark_a.find("user=wen") != -1
+        assert benchmark_a.find("a1_min=0.01") != -1
+        assert benchmark_a.find("a2_avr=6") != -1
+
+        assert benchmark_b.startswith("BenchmarkB")
+        assert benchmark_b.find("user=wen") != -1
+        assert benchmark_b.find("b1_min=0.01") != -1
+        assert benchmark_b.find("b2_avr=6") != -1
+
+        # but the benchmark lines arent mangled
+        assert benchmark_a.find("b1") == -1
+        assert benchmark_b.find("a1") == -1
+
         assert url.find("precision=s") != -1
 
     @raises(uploader.InvalidReportError)
