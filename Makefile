@@ -46,6 +46,7 @@ info:
 help: info
 
 egg: pyperf setup.py README.rst
+	make -C doc html
 	rm -rf build dist
 	python setup.py bdist_egg
 

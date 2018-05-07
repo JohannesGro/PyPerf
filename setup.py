@@ -3,8 +3,10 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+from glob import glob
 
 here = path.abspath(path.dirname(__file__))
+doxbase = path.join("doc", "pyperf", "html")
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
@@ -22,5 +24,12 @@ setup(name='pyperf',
       entry_points={
           "console_scripts": ["bench=pyperf.benchmark:main"]
       },
-      include_package_data=True
+      data_files=[
+          ('doc',
+           glob(path.join(doxbase, "*.html"))
+           + glob(path.join(doxbase, "*.js"))
+          ),
+          (path.join("doc", "_static"), glob(path.join(doxbase, "_static", "*"))),
+          (path.join("doc", "_sources"), glob(path.join(doxbase, "_sources", "*")))
+      ]
       )
