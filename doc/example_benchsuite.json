@@ -1,7 +1,7 @@
 {
     "suite": {
         "OperationCreate": {
-            "file": "fixture/performance/bench/operation_create.py",
+            "file": "fixture/performance/bench/platform_operation_create.py",
             "className": "OperationCreate",
             "active": true,
             "args": {
@@ -9,7 +9,7 @@
             }
         },
         "OperationInfo": {
-            "file": "fixture/performance/bench/operation_info.py",
+            "file": "fixture/performance/bench/platform_operation_info.py",
             "className": "OperationInfo",
             "active": true,
             "args": {
@@ -17,7 +17,7 @@
             }
         },
         "LoginBenchmark": {
-            "file": "fixture/performance/bench/login_benchmark.py",
+            "file": "fixture/performance/bench/platform_login_benchmark.py",
             "className": "LoginBenchmark",
             "active": true,
             "args": {

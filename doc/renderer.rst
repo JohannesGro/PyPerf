@@ -13,7 +13,7 @@ In the following the command line interface will be shown.
 
 .. code-block:: none
 
-    usage: pyperf render [-h] [--outfile [OUTFILE]] [--reference [REFERENCE]]
+    usage: bench render [-h] [--outfile [OUTFILE]] [--reference [REFERENCE]]
                         [--logconfig [LOGCONFIG]] [--trend]
                         benchmarks [benchmarks ...]
 
@@ -21,18 +21,18 @@ In the following the command line interface will be shown.
 		a human readable output, showing tables or diagrams. The renderer
 		provides two use cases. Firstly, a comparison between a plurality of
 		benchmarks. Secondly, an analysis and determination of a trend of a single system. A
-		json file created by the benchrunner can be taken as input. Currently this
-		module supports html output only.
+		JSON file created by the benchrunner can be taken as input. Currently this
+		module supports HTML output only.
 
 		positional arguments:
-		  benchmarks            One or more json files which contain the benchmarks.
-		                        It is also possible to use folders. All json files
+		  benchmarks            One or more JSON files which contain the benchmarks.
+		                        It is also possible to use folders. All JSON files
 		                        from a folder will be loaded.
 
 		optional arguments:
 		  -h, --help            show this help message and exit
 		  --outfile [OUTFILE], -o [OUTFILE]
-		                        The results will be stored in this file (html).
+		                        The results will be stored in this file (HTML).
 		  --reference [REFERENCE], -r [REFERENCE]
 		                        A referenced benchmark for the comparison. Uses the
 		                        reference to mark some benchmarks result as positive or

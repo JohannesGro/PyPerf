@@ -23,7 +23,7 @@ If you want to learn how to create a benchmark, please read :doc:`howtoBenchmark
 Benchsuite
 ==========
 A benchsuite describes a number of benches and their call
-parameters. The suite is stored in json format.
+parameters. The suite is stored in JSON format.
 Add the created Benchmarks of the previous step to a benchsuite
 (Read more: :doc:`benchsuite`).
 
@@ -32,15 +32,15 @@ Runner
 ======
 The benchrunner runs different benchmarks. It reads the benchsuite and
 executes each bench. The benches return measurements which will be gathered
-and stored in a json formatted output file.
+and stored in a JSON formatted output file.
 
 .. code-block:: sh
 
-	pyperf run --suite suite.json --outfile out.json
+	bench run --suite suite.json --outfile out.json
 
 The parameter `--suite` or `-s` specifies a benchsuite. Replace `suite.json` with your benchsuite.
 
-The parameter `--outfile` or `-o` defines a name for the json/html file.
+The parameter `--outfile` or `-o` defines a name for the JSON/HTML file.
 `date` is a placeholder for the current date.
 
 Read more: :doc:`benchrunner`
@@ -48,7 +48,7 @@ Read more: :doc:`benchrunner`
 
 Renderer
 ========
-The renderer creates a html file to display the results of the benchmarks.
+The renderer creates a HTML file to display the results of the benchmarks.
 There are two modes for the rendering. The default mode is comparison.
 Benchmarks from several systems can be compared. A reference benchmark might be
 specified to detect deviations. The `--trend` option is for showing trends in recurring
@@ -58,13 +58,13 @@ E.g.:
 
 .. code-block:: sh
 
-	pyperf render [yourbenchmarks] --outfile out.html
+	bench render [yourbenchmarks] --outfile out.html
 
 The benchmarks value defines a list of benchmarks files. It also possible to pass
 folders instead of a file. In this case the whole directory will be searched
 for '.json' files.
 
-The parameter `--outfile` or `-o` defines a name for the html file.
+The parameter `--outfile` or `-o` defines a name for the HTML file.
 
 The renderer tries to display as much information as possible, that means
 benchmarks will not be omitted if the benchmarks do not have the same benches or tests.
@@ -100,12 +100,12 @@ the reference option is ignored.
 Upload
 ========
 PyPerf is also able to upload the gathered data to an instance of InfluxDB in order
-for the data to be then displayed in Grafana. The upload option takes a json-file
+for the data to be then displayed in Grafana. The upload option takes a JSON-file
 to upload.
 
 .. code-block:: sh
 
-	pyperf upload report.json --target=influx --db=[yourDBname] --url=[yourInfluxDBhost]
+	bench upload report.json --target=influx --db=[yourDBname] --url=[yourInfluxDBhost]
 
 The optional parameter `--target` or `-t` specifies the target storage to upload to with
 influx as default.

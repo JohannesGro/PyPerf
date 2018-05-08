@@ -14,13 +14,13 @@ In the following the command line interface will be shown.
 
 .. code-block:: none
 
-	usage: pyperf run [-h] [--suite [SUITE]] [--outfile [OUTFILE]]
-                        [--logconfig [LOGCONFIG]] [--verbose]
+	usage: bench run [-h] [--suite [SUITE]] [--outfile [OUTFILE]]
+                     [--logconfig [LOGCONFIG]] [--verbose]
 
     optional arguments:
       -h, --help            show this help message and exit
       --suite [SUITE], -s [SUITE]
-                            A json file which contains the benches. (default:
+                            A JSON file which contains the benches. (default:
                             benchsuite.json)
       --outfile [OUTFILE], -o [OUTFILE]
                             The results will be stored in this file. (default:
