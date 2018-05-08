@@ -13,15 +13,15 @@ In the following the command line interface will be shown.
 
 .. code-block:: none
 
-    usage: benchmark render [-h] [--outfile [OUTFILE]] [--reference [REFERENCE]]
+    usage: pyperf render [-h] [--outfile [OUTFILE]] [--reference [REFERENCE]]
                         [--logconfig [LOGCONFIG]] [--trend]
                         benchmarks [benchmarks ...]
 
 		The class renderer reads the results of one or several benchmarks and creates
-		a human readable output for example showing table or diagrams. The renderer
+		a human readable output, showing tables or diagrams. The renderer
 		provides two use cases. Firstly, a comparison between a plurality of
-		benchmarks. Secondly, a analysis and determine a trend of a single system. A
-		json file created by the benchrunner can be taken as a input. Currently this
+		benchmarks. Secondly, an analysis and determination of a trend of a single system. A
+		json file created by the benchrunner can be taken as input. Currently this
 		module supports html output only.
 
 		positional arguments:
@@ -34,9 +34,9 @@ In the following the command line interface will be shown.
 		  --outfile [OUTFILE], -o [OUTFILE]
 		                        The results will be stored in this file (html).
 		  --reference [REFERENCE], -r [REFERENCE]
-		                        A referenced benchmark for the comparision. Uses the
-		                        reference to mark some benchmarks result as positiv or
-		                        negativ. This option will be ignored if the -trend
+		                        A referenced benchmark for the comparison. Uses the
+		                        reference to mark some benchmarks result as positive or
+		                        negative. This option will be ignored if the -trend
 		                        option is active.
 		  --logconfig [LOGCONFIG], -l [LOGCONFIG]
 		                        Configuration file for the logger.

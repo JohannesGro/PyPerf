@@ -1,41 +1,29 @@
 {
-  "suite": {
-    "SqlApiBenchmark": {
-      "file": "C:\\pyperf\\pyperf\\benchmarks\\sqlapi_benchmark",
-      "className": "SqlApiBenchmark",
-      "args": {
-        "rows": 10000,
-        "iterations": 10,
-        "tablename": "x_cdb_testperf",
-        "warmup": 100
-      }
-    },
-    "LoadAssemblyTiming": {
-      "file": "C:\\pyperf\\pyperf\\benchmarks\\load_assembly_timing",
-      "className": "LoadAssemblyTiming",
-      "args": {
-        "z_nummer": "9502656-1",
-        "z_index": "",
-        "loops": 3
-      }
-    },
-    "BlobstoreTiming": {
-      "file": "C:\\pyperf\\pyperf\\benchmarks\\blobstore_benchmark",
-      "className": "BlobstoreTiming",
-      "args": {
-        "loops": 3,
-        "blobfolder": "c:/pyperf/pyperf/blobdata/blobs/*"
-      }
-    },
-    "WriteAssemblyTiming": {
-      "file": "C:\\pyperf\\pyperf\\benchmarks\\write_assembly_timing",
-      "className": "WriteAssemblyTiming",
-      "args": {
-        "z_nummer": "9502656-1",
-        "z_index": "",
-        "loops": 3,
-        "tmpdir": "tmpDir"
-      }
+    "suite": {
+        "OperationCreate": {
+            "file": "fixture/performance/bench/operation_create.py",
+            "className": "OperationCreate",
+            "active": true,
+            "args": {
+                "iterations": 200
+            }
+        },
+        "OperationInfo": {
+            "file": "fixture/performance/bench/operation_info.py",
+            "className": "OperationInfo",
+            "active": true,
+            "args": {
+                "iterations": 200
+            }
+        },
+        "LoginBenchmark": {
+            "file": "fixture/performance/bench/login_benchmark.py",
+            "className": "LoginBenchmark",
+            "active": true,
+            "args": {
+                "server": "127.0.0.1:7000",
+                "iterations": 5
+            }
+        }
     }
-  }
 }

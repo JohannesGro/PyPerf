@@ -18,7 +18,7 @@ import sys
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath('.'))
-sys.path.append('c:\\ce\\trunk\\cdb\\python\\')
+sys.path.append(os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -39,8 +39,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'BenchmarkTool'
-copyright = u'2017, Timo Stüber'
+project = u'PyPerf'
+copyright = u'2018, CONTACT Software GmbH'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -162,7 +162,7 @@ html_static_path = ['_static']
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BenchmarkTooldoc'
+htmlhelp_basename = 'PyPerfdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -176,8 +176,8 @@ htmlhelp_basename = 'BenchmarkTooldoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'BenchmarkTool.tex', u'BenchmarkTool Documentation',
-   u'Timo Stüber', 'manual'),
+  ('index', 'pyperf.tex', u'Pyperf Documentation',
+   u'CONTACT Software GmbH', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

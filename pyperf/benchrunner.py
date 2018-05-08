@@ -14,12 +14,12 @@ from pyperf.log import customlogging
 
 class Benchrunner(object):
     """The benchrunner runs different benchmarks. These benchmarks inherit from the
-    abstract class 'Bench'. Several different benches can be collected and define by a
-    benchsuite. A benchsuite describes a list of benches and their call parameter.
+    abstract class 'Bench'. Several different benches can be collected and defined by a
+    benchsuite. A benchsuite describes a list of benches and their call parameters.
     The suite is stored in json format (Read more: :doc:`benchsuite`).
     The benchrunner reads the benchsuite and executes each bench. The benches return
-    measurements which will be gathered and stored by the benchrunner. The result is
-    stored in a json formatted outputfile.
+    measurements which will be gathered and stored by the benchrunner as
+    a json formatted output file.
     """
 
     logging_file = 'benchrunner.log'
@@ -50,7 +50,7 @@ class Benchrunner(object):
         return int(not rc_all)
 
     def start_bench_script(self, suitepath, benchpath, class_name, args):
-        """This functions imports the bench module and creates an instance of the given
+        """This function imports the bench module and creates an instance of the given
         class_name. It calls the method run(args) which is the entry point for
         the test classes. Returns the result of the bench.
 
@@ -89,15 +89,15 @@ class Benchrunner(object):
         return bench_class().run(args)
 
     def sys_infos(self, verbose):
-        """Detect serveral system infos. This infos will be saved later with the
-        results of the benchmarks.
+        """Detect several system information. These information will be saved later
+        with the results of the benchmarks.
         """
         self.results['Sysinfos'] = systemInfos.getAllSysInfos(verbose)
 
     def normalize_bench_path(self, suitepath, benchpath):
         """
-        Normalizes the path to the benchmark, given absolute or
-        relative path to the suite and absolute or relative path to
+        Normalizes the path to the benchmark, given an absolute or
+        relative path to the suite and an absolute or relative path to
         the benchmark
 
         :param suitepath: path to the benchsuite file

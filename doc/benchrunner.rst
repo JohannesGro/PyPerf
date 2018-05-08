@@ -14,16 +14,8 @@ In the following the command line interface will be shown.
 
 .. code-block:: none
 
-	usage: benchmark runner [-h] [--suite [SUITE]] [--outfile [OUTFILE]]
-                        [--logconfig [LOGCONFIG]]
-
-    The benchrunner runs different benchmarks. These benchmarks inherit from the
-    abstract class 'Bench'. Several different benches can be collected and define
-    by a benchsuite. A benchsuite describes a list of benches and their call
-    parameter. The suite is stored in json format (Read more: :doc:`benchsuite`).
-    The benchrunner reads the benchsuite and executes each bench. The benches
-    return measurements which will be gathered and stored by the benchrunner. The
-    result is stored in a json formatted outputfile.
+	usage: pyperf run [-h] [--suite [SUITE]] [--outfile [OUTFILE]]
+                        [--logconfig [LOGCONFIG]] [--verbose]
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -36,3 +28,4 @@ In the following the command line interface will be shown.
       --logconfig [LOGCONFIG], -l [LOGCONFIG]
                             Configuration file for the logger. (default:
                             benchrunner.log)
+	  --verbose, -v			Get more detailed system information.
