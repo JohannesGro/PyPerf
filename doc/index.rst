@@ -1,9 +1,9 @@
-.. BenchmarkTool documentation master file, created by
+.. PyPerf documentation master file, created by
    sphinx-quickstart on Wed Aug 23 14:38:51 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to BenchmarkTool's documentation!
+Welcome to PyPerf's documentation!
 =========================================
 
 Contents:

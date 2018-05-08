@@ -61,11 +61,11 @@ KEY_2_GUILABEL = {
 
 
 class Renderer(object):
-    """The class renderer reads the results of one or several benchmarks and
-    creates a human readable output for example showing table or diagrams. The renderer provides two
-    use cases. Firstly, a comparison between a plurality of benchmarks. Secondly, a analysis and
-    determine a trend of a single system.
-    A json file created by the benchrunner can be taken as a input. Currently this
+    """The class renderer reads the results of one or several benchmarks and creates
+    a human readable output, showing tables or diagrams. The renderer
+    provides two use cases. Firstly, a comparison between a plurality of
+    benchmarks. Secondly, an analysis and determination of a trend of a single system. A
+    json file created by the benchrunner can be taken as input. Currently this
     module supports html output only.
     """
     currentDir = os.path.dirname(__file__)
@@ -119,10 +119,10 @@ class Renderer(object):
         self.renderAllData()
 
     def organizeData(self, data):
-        """Takes the read-in data and puts the data in a format for further processing.
-        In order to use as much data as possible the renderer iterates over all benches and tests of all files
-        and shows the information. Older benchmarks can be compared with newer ones if the bench arguments and the test parameter
-        are identical.
+        """Takes the data and formats it for further processing. In order to use as much
+        data as possible the renderer iterates over all benches and tests of all files
+        and shows the information. Older benchmarks can be compared with newer ones if
+        the bench arguments and the test parameters are identical.
 
         :param data: a dict with the data of benchmark files.
         :raises RuntimeError: the data of the benches or tests is invalid
@@ -218,8 +218,8 @@ class Renderer(object):
                 self.benchmarkData[bench][test]['values'] = resultValues
 
     def renderBenchMeasurementsTrend(self, benchName):
-        """Produces html code for the data of the given bench name.
-        Diagrams are created only if there are more than one file. Otherwise
+        """Produces html code using the data of the given bench name.
+        Diagrams are created only if there is more than one file. Otherwise
         a table is created.
 
         :param benchName: name of the bench
@@ -235,8 +235,8 @@ class Renderer(object):
         return body
 
     def createTrendDiagramForBenchName(self, benchName):
-        """Produce html/js code to display the data of a benchmark as diagram.
-        The javascript function can be find in chart.js.
+        """Produces html/js code to display the data of a benchmark as a diagram.
+        The javascript function can be found in chart.js.
 
         :param benchName: name of the benchmark
         :returns: html/js code of the diagram.
@@ -270,8 +270,9 @@ class Renderer(object):
 
     def renderSysInfosTrend(self):
         """Produces the html code for the system infos. The infos are separated into 6 different groups.
-        This groups are determined by prefix. There are 5 default prefixes ('Memory', 'CPU', 'CADDOK', 'Disk', 'Swap').
-        The infos that could not be assigned to a group will be placed under 'Others'.
+        These groups are determined by a prefix. There are 5 default prefixes ('Memory', 'CPU',
+        'CADDOK', 'Disk', 'Swap'). The infos that could not be assigned to a group will
+        be placed under 'Other'.
 
         :returns: html code for displaying the system infos.
         """
@@ -321,7 +322,7 @@ class Renderer(object):
 
     def createTrendDiagramForSysInfo(self, SysInfoName):
         """Some system infos can be shown as a diagram. This method produces the
-        html/js for the given system info.
+        html/js code for the given system information.
 
         :returns: html code for displaying system infos"""
         sysinfovalues = self.sysInfos[SysInfoName]
@@ -334,12 +335,12 @@ class Renderer(object):
         return self.createTrendDiagram({'name': SysInfoName, 'meas': measurements}, createElementId(SysInfoName), SysInfoName)
 
     def createTrendDiagram(self, data, elementId, title):
-        """Produce html js code to display the data of a benchmark as diagram.
-        The javascript function can be find in chart.js.
+        """Produces html/js code to display the data of a benchmark as diagram.
+        The javascript function can be found in chart.js.
 
         :param benchName: name of the benchmark
-        :param elementId: if of the dom element of the diagram
-        :param title: displayed title for the diagram
+        :param elementId: id of the dom element of the diagram
+        :param title: displayed title of the diagram
 
         :returns: html/js code of the diagram.
         """
@@ -434,7 +435,7 @@ class Renderer(object):
     def renderAllData(self):
         """Iterates over each bench and calls a render function to display the data.
         The render functions will produce html code. This code will be put together and
-        saved as .html file.
+        saved as a .html file.
         """
         inlineCss = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/css/main.css"))
         d3Lib = ioservice.readFile(pkg_resources.resource_filename(__name__, "html/assets/js/d3.v4.min.js"))
@@ -482,7 +483,7 @@ class Renderer(object):
         return body
 
     def createDiagramsForBenchName(self, benchName):
-        """Creates a diagramm for every test within the bench.
+        """Creates a diagram for every test within the bench.
 
         :param benchName: name of the bench.
         :returns: html/js code containing all diagrams for the given benchmark."""
@@ -521,11 +522,11 @@ class Renderer(object):
         return htmlCode
 
     def createBarDiagram(self, data, elementId, title):
-        """Produce html js code to display the data of a benchmark as diagram.
-        The javascript function can be find in chart.js.
+        """Produces html js code to display the data of a benchmark as diagram.
+        The javascript function can be found in chart.js.
 
         :param benchName: name of the benchmark
-        :param elementId: if of the dom element of the diagram
+        :param elementId: id of the dom element of the diagram
         :param title: displayed title for the diagram
 
         :returns: html/js code of the diagram.
@@ -581,11 +582,11 @@ class Renderer(object):
         return header + content
 
     def renderRows(self, benchName, test):
-        """Creates the rows for the table. Each row display data of type 'time'.
+        """Creates the rows for the table. Each row displays data of type 'time'.
         The elements parameter contains a dict which is already filtered by this type.
 
         :param benchName: name of the benchmark
-        :param elements: filtered dict which is containing test
+        :param elements: filtered dict which is containing tests
         :returns: string containing the rows
         """
         htmlCode = ""
@@ -617,11 +618,11 @@ class Renderer(object):
         return htmlCode
 
     def renderSeriesRows(self, benchName, tests):
-        """Creates the rows for the table. Each row display data of type 'time_series'.
+        """Creates the rows for the table. Each row displays data of type 'time_series'.
         The values are aggregated and displayed as a single value.
 
         :param benchName: name of the benchmark
-        :param tests: filtered dict which is containing test
+        :param tests: filtered dict which is containing tests
         :returns: string containing the html rows
         """
         htmlCode = ""
@@ -725,11 +726,11 @@ class Renderer(object):
 
     def markBounds(self, referenceValue, data, testType):
         """Iterate through the data and compare it to the reference value.
-        The data will be marked with red or green if several bounds are reached.
+        The data will be marked red or green if thresholds are broken.
 
         :param referenceValue: reference value for the comparison
         :param data: a list with values
-        :param testType: type of the test. important to determine the upper/lower bounds.
+        :param testType: type of the test. important to determine the upper/lower thresholds.
             E.g. the smaller time the better but the more operations per minute the better."""
         # reference could be None or non float
         if referenceValue is None or not isFloat(referenceValue):
@@ -779,10 +780,11 @@ class Renderer(object):
 
 
 def isFloat(s):
-    """A helper function for determining if a value (string) could be converted to to float.
+    """A helper function to determine whether a value (string) could be converted to
+    to float.
 
     :param s: the string to be checked
-    :returns: boolean if the string can be cast to float"""
+    :returns: boolean if the string might be cast to float"""
     try:
         float(s)
         return True

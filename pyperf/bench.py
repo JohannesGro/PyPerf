@@ -13,11 +13,11 @@ logger = logging.getLogger("[" + __name__ + " - Bench]")
 
 
 class Bench(object):
-    """'Bench' is abstract class which has to be used for creating benchmarks.
+    """'Bench' is an abstract class which has to be used for creating benchmarks.
     """
     __metaclass__ = ABCMeta
     args = {}
-    """This dict contains the arguments for the benchmark. These arguments are set
+    """This dict contains the arguments for the benchmark. The arguments are set
     in a benchsuite, read by the benchrunner and passed by the run method. """
 
     results = {}
