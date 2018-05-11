@@ -2,7 +2,7 @@ __pycache__/
 *.py[cod]
 *.log
 *.db
-doc/_build/*
+doc/pyperf/*
 .coverage
 .noseids
 cover
