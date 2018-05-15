@@ -49,7 +49,7 @@ def saveJSONData(fileName, data):
     logger.info("Saving json to file '%s'", fileName)
     try:
         with io.open(fileName, 'w', encoding="utf-8") as outfile:
-            outfile.write(unicode(json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)))
+            outfile.write(json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False))
     except IOError as err:
         logger.exception("Could not open file to save the data! %s", err)
     except ValueError as err:  # JSONDecodeError inherrits from ValueError
@@ -82,7 +82,7 @@ def writeToFile(data, outfile):
     logger.info("Saving results to file '%s'", outfile)
     try:
         with io.open(outfile, 'w', encoding="UTF-8") as out:
-            out.write(unicode(data))
+            out.write(data)
     except IOError as err:
         logger.exception("Could not open file to save the data! %s", err)
     except:

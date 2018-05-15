@@ -2,12 +2,10 @@ __pycache__/
 *.py[cod]
 *.log
 *.db
-doc/pyperf/*
+doc/_build/*
 .coverage
 .noseids
 cover
 build
 dist
 *.egg-info
-.influxdata
-.influxurl

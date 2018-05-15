@@ -14,15 +14,6 @@ For more information have a look at our documentation.
 History
 =======
 
-0.3.7
------
-* Improvement:
-  Include docs in distribution
-  https://de-git01.contact.de/SD/pyperf/issues/1
-
-* Fix:
-  'bench upload' uploads results from other benches
-
 0.3.6
 -----
 * Improvement:

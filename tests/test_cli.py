@@ -9,6 +9,7 @@ import unittest
 import subprocess
 import os
 import json
+import six
 from nose.tools import eq_, raises, assert_not_equals
 from .utils import coverage_opts
 
@@ -56,7 +57,12 @@ class RunnerTest(unittest.TestCase):
             "tearDownClass called"
         ]
 
-        stdout = proc.stdout.read().splitlines()
+        if six.PY3:
+            stdout = []
+            for entry in proc.stdout.read().splitlines():
+                stdout.append(bytes.decode(entry))
+        else:
+            stdout = proc.stdout.read().splitlines()
         rc = proc.wait()
 
         # 1. exit code is zero
