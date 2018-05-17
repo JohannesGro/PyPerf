@@ -90,7 +90,7 @@ def _WinRegistryGetCP():
     # The needed key is OEMCP
 
     try:
-        import _winreg as wreg
+        import winreg as wreg
     except ImportError:
         return None
 
