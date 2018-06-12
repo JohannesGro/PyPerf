@@ -1,6 +1,6 @@
 
 tests_linux:
-  image: "dhub.contact.de/centos_ci_trunk"
+  image: "registry.contact.de/centos_ci_trunk"
   script: "make coverage"
   tags:
     - Docker

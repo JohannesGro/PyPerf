@@ -14,6 +14,13 @@ For more information have a look at our documentation.
 History
 =======
 
+
+0.3.8
+-----
+* Improvement:
+  Port to Py3
+  https://de-git01.contact.de/SD/pyperf/issues/2
+
 0.3.7
 -----
 * Improvement:
