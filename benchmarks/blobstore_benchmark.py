@@ -96,7 +96,7 @@ class BlobstoreTiming(Bench):
                 raise RuntimeError("Source file %s does not exist" % fn)
 
         all_blob_ids = []
-        for i in range(self.args['loops']):
+        for i in xrange(self.args['loops']):
             logger.debug("saveFilesIntoBlobStore: Starting to write blobs %d/%d" % (i + 1, self.args['loops']))
             dlen = 0
             blob_ids = []
@@ -137,4 +137,4 @@ class BlobstoreTiming(Bench):
 
 
 if __name__ == '__main__':
-    BlobstoreTiming().run({"loops": 2, "blobfolder": "./pyperf/blobdata/blobs/*"})
+    BlobstoreTiming().run({"loops": 2, "blobfolder": u"./pyperf/blobdata/blobs/*"})

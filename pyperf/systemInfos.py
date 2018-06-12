@@ -271,7 +271,7 @@ def msinfo32():
 
         root = etree.fromstring(xml_string)
 
-        cat_list = ['Systemübersicht', 'Datenträger']
+        cat_list = [u'Systemübersicht', u'Datenträger']
         for cat in root.findall("Category"):
             if cat.get('name') in cat_list:
                 for data in cat.findall("Data"):
@@ -294,7 +294,7 @@ def traceroute(dest):
         dest = m.group(1)
     if psutil.WINDOWS:
         # find encoding
-        from . import encodingService
+        import encodingService
         cp = encodingService.guess_console_encoding()
 
         output = subprocess.check_output(["tracert", "-w", "100", dest],

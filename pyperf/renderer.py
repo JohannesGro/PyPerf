@@ -10,7 +10,7 @@ import json
 import os
 import pkg_resources
 
-from . import ioservice
+import ioservice
 from pyperf.log import customlogging
 
 
@@ -136,14 +136,14 @@ class Renderer(object):
         self.benchmarkData = {}
 
         # create a list of all files
-        for fileName in list(data.keys()):
+        for fileName in data.keys():
             self.fileList.append(fileName)
 
         # collect system infos keys of all files
         allSystemInfosKeys = set([])
         for fileName in self.fileList:
             # union the keys
-            allSystemInfosKeys.update(list(data[fileName]["Sysinfos"].keys()))
+            allSystemInfosKeys.update(data[fileName]["Sysinfos"].keys())
 
         # create dict of all sysinfos. The values of all files are represented as a list.
         for sysinfo in allSystemInfosKeys:
@@ -159,7 +159,7 @@ class Renderer(object):
         allBenchKeys = set([])
         for fileName in self.fileList:
             # union the keys
-            allBenchKeys.update(list(data[fileName]["results"].keys()))
+            allBenchKeys.update(data[fileName]["results"].keys())
 
         # create dict of all benches->test->results. The values all files are represented as a list.
         for bench in allBenchKeys:
@@ -183,7 +183,7 @@ class Renderer(object):
             allBenchTestKeys = set([])
             for fileName in self.fileList:
                 # union the keys
-                allBenchTestKeys.update(list(data[fileName]["results"][bench]['data'].keys()))
+                allBenchTestKeys.update(data[fileName]["results"][bench]['data'].keys())
 
             # iterate over all bench tests. if the benchmarks does not contain this bench None is used.
             for test in allBenchTestKeys:
@@ -243,7 +243,7 @@ class Renderer(object):
         """
         htmlCode = ""
         # iterate over all tests within in a bench
-        for benchTestName, benchTestData in sorted(self.benchmarkData[benchName].items()):
+        for benchTestName, benchTestData in sorted(self.benchmarkData[benchName].iteritems()):
             measurements = []
             if benchTestName == 'args':
                 continue
@@ -298,10 +298,10 @@ class Renderer(object):
                 groupElements = sysinfosList
             else:
                 # find the element for the current group
-                groupElements = {key: val for key, val in sysinfosList.items() if key.startswith(groupkey)}
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.startswith(groupkey)}
 
             groupRows = ""
-            for sysinfoname, values in sorted(groupElements.items()):
+            for sysinfoname, values in sorted(groupElements.iteritems()):
                 sysinfoname = KEY_2_GUILABEL.get(sysinfoname, sysinfoname)
                 # no diagram for one entry
                 if len(self.fileList) > 1:
@@ -316,7 +316,7 @@ class Renderer(object):
                 groupRows += rowTempl.format(sysinfoname, values[0])
             groups += groupsTemp.format(group, graphs + tableTemp.format(groupRows))
             # remove the elements from the list
-            sysinfosList = {key: val for key, val in sysinfosList.items() if key not in list(groupElements.keys())}
+            sysinfosList = {key: val for key, val in sysinfosList.iteritems() if key not in groupElements.keys()}
 
         return templ.format(groups)
 
@@ -387,14 +387,14 @@ class Renderer(object):
                 groupElements = sysinfosList
             else:
                 # find the element for the current group
-                groupElements = {key: val for key, val in sysinfosList.items() if key.startswith(groupkey)}
+                groupElements = {key: val for key, val in sysinfosList.iteritems() if key.startswith(groupkey)}
             groupRows = ""
-            for sysinfoname, values in sorted(groupElements.items()):
+            for sysinfoname, values in sorted(groupElements.iteritems()):
                 groupRows += rowTempl.format(KEY_2_GUILABEL.get(sysinfoname, sysinfoname), *values)
 
             groups += groupsTemp.format(group, tableTemp.format(headerTempl.format("System Info", *self.fileList), groupRows))
             # remove the elements from the list
-            sysinfosList = {key: val for key, val in sysinfosList.items() if key not in list(groupElements.keys())}
+            sysinfosList = {key: val for key, val in sysinfosList.iteritems() if key not in groupElements.keys()}
 
         return templ.format(groups)
 
@@ -414,7 +414,7 @@ class Renderer(object):
             data = {}
             for fileName in self.benchmarks:
                 if os.path.isdir(fileName):
-                    (_, _, fileNames) = next(os.walk(fileName))
+                    (_, _, fileNames) = os.walk(fileName).next()
                     for fn in fileNames:
                         # use only json files
                         _, fileExt = os.path.splitext(fn)
@@ -493,7 +493,7 @@ class Renderer(object):
             return ""
 
         htmlCode = ""
-        for (benchTestName, testData) in sorted(benchTests.items()):
+        for (benchTestName, testData) in sorted(benchTests.iteritems()):
             diagramData = []
             # one entry represents the args for the bench
             if benchTestName == 'args':
@@ -568,7 +568,7 @@ class Renderer(object):
             return ""
 
         # filter tests by type
-        tests = {benchTestName: testData for benchTestName, testData in benchTests.items() if not benchTestName == 'args' and testData["type"] == dataType}
+        tests = {benchTestName: testData for benchTestName, testData in benchTests.iteritems() if not benchTestName == 'args' and testData["type"] == dataType}
         if len(tests) == 0:
             return ""
 
@@ -603,7 +603,7 @@ class Renderer(object):
         else:
             htmlCode += headerTempl.format("Test", *self.fileList)
 
-        for benchTestName, testData in sorted(test.items()):
+        for benchTestName, testData in sorted(test.iteritems()):
             # replace none with '-'
             values = ['-' if val is None else val for val in testData['values']]
             if self.reference:
@@ -640,7 +640,7 @@ class Renderer(object):
         else:
             htmlCode += headerTempl.format("Test", "Aggregation", *self.fileList)
 
-        for benchTestName, testData in sorted(tests.items()):
+        for benchTestName, testData in sorted(tests.iteritems()):
             innerhtmlCode = ""
             listMax = []
             listMin = []
@@ -719,7 +719,7 @@ class Renderer(object):
         """
         args = self.benchmarkData[benchName]['args']
         rows = ""
-        for key, val in sorted(args.items()):
+        for key, val in sorted(args.iteritems()):
             rows = rows + "\n<tr><td>{0}</td><td>{1}</td></tr>".format(key, val)
         result = result.format(rows)
         return result
@@ -798,13 +798,7 @@ def createElementId(name):
 
     :param name: name of the element
     :returns: base64 encoded string without newline and '='"""
-    import base64, six
-    if six.PY3:
-        return bytes.decode(base64.b64encode(name.encode('utf-8'))).replace('=', '').replace('\n', '')
-    else:
-        return name.encode('Base64').replace('\n', '').replace('=', '')
-
-    # return name.encode('Base64').replace('\n', '').replace('=', '')
+    return name.encode('Base64').replace('\n', '').replace('=', '')
 
 
 def calcAvg(values):

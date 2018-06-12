@@ -61,21 +61,21 @@ class TestBenchMethods(unittest.TestCase):
         val = [1, 2, 3]
         expected = {"test_storeResult1": {"value": val, "unit": "hour", "type": "time_series"}}
         self.t.storeResult(val, name="", type="time_series", unit="hour")
-        self.assertTrue(dict(self.t.results, **expected) == self.t.results)
+        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
 
     def test_storeResult2(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = [1, 2, 3]
         expected = {"test_storeResult2": {"value": val, "unit": "seconds", "type": "time_series"}}
         self.t.storeResult(val, name="", type="time_series", unit="seconds")
-        self.assertTrue(dict(self.t.results, **expected) == self.t.results)
+        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
 
     def test_storeResult3(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = 1
         expected = {"test_storeResult3": {"value": val, "unit": "seconds", "type": "time"}}
         self.t.storeResult(val)
-        self.assertTrue(dict(self.t.results, **expected) == self.t.results)
+        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
 
     def test_storeResult4(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
@@ -83,16 +83,16 @@ class TestBenchMethods(unittest.TestCase):
         val = [1, 2, 3]
         expected = {"prefix_test_storeResult4": {"value": val, "unit": "seconds", "type": "time"}}
         self.t.storeResult(val)
-        self.assertTrue(dict(self.t.results, **expected) == self.t.results)
+        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
 
     def test_discard(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = [1, 2, 3]
         expected = {"test_discard": {"value": val, "unit": "seconds", "type": "time_series"}}
         self.t.storeResult(val, name="", type="time_series", unit="seconds")
-        self.assertTrue(expected.items() <= self.t.results.items())
+        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
         self.t.discard("test_")
-        self.assertFalse(dict(self.t.results, **expected) == self.t.results)
+        self.assertFalse(expected.viewitems() <= self.t.results.viewitems())
 
 
 class Test_ErrorHandling(unittest.TestCase):

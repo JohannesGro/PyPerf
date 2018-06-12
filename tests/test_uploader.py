@@ -40,11 +40,9 @@ class TestInfluxdbUploader(unittest.TestCase):
                                  self.influxdburl, self.database)
         data = self.influxmock.data_last
         url = self.influxmock.url_last
-        benchmarks = sorted(data.split("\n"))
-        benchmark_a, benchmark_b = benchmarks
-
-        print(benchmark_a)
-        print(benchmark_b)
+        benchmark_a, benchmark_b = data.split("\n")
+        print benchmark_a
+        print benchmark_b
 
         assert benchmark_a.startswith("BenchmarkA")
         assert benchmark_a.find("user=wen") != -1

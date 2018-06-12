@@ -208,7 +208,7 @@ class SqlApiBenchmark(Bench):
         rec["schriftkopf_ok"] = 1
 
         res = []
-        for i in range(rows):
+        for i in xrange(rows):
             rec["z_nummer"] = _quote("%d" % i)
             # rec["z_index"] = _quote("%d" % i)
             with Timer() as t:
@@ -220,7 +220,7 @@ class SqlApiBenchmark(Bench):
     def do_select_one_by_one(self, rows, table):
         logger.info("\nSelect row by row for %d rows", rows)
         res = []
-        for i in range(rows):
+        for i in xrange(rows):
             with Timer() as t:
                 sqlapi.SQLselect("* from %s where z_nummer='%d'" % (table, i))
             res.append(t.elapsed.total_seconds())
@@ -242,7 +242,7 @@ class SqlApiBenchmark(Bench):
     def update_one_by_one(self, rows, table):
         logger.info("\nUpdate row by row for %d rows", rows)
         res = []
-        for i in range(rows):
+        for i in xrange(rows):
             with Timer() as t:
                 sqlapi.SQLupdate("%s set z_status=20 where z_nummer='%d'"
                                  % (table, i))
@@ -258,7 +258,7 @@ class SqlApiBenchmark(Bench):
         logger.setLevel(logging.ERROR)
         self.namespace = "warmup_"
         with Timer() as t:
-            for i in range(cycles):
+            for i in xrange(cycles):
                 self.create_table(table)
                 self.test_run(table, self.args["warmup"])
                 self.cleanup(table)
@@ -285,9 +285,9 @@ class SqlApiBenchmark(Bench):
          circumstances this view is sometimes very slow."""
         logger.info("\nselect %d times from cdb_keys" % rows)
         with Timer() as t:
-            for i in range(rows):
+            for i in xrange(rows):
                 sqlapi.SQLselect("table_name, column_name FROM cdb_keys ORDER BY table_name, keyno")
-        logger.info("Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
+        logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
         self.storeResult(t.elapsed.total_seconds(), name="Select cdbKeys")
 
     def nope_statement(self, rows):
@@ -301,13 +301,13 @@ class SqlApiBenchmark(Bench):
                 # stmt with mssql
                 sqlapi.SQL("select 1 from angestellter where 1=2")
             with Timer() as t:
-                for i in range(rows):
+                for i in xrange(rows):
                     if sqlapi.SQLdbms() == sqlapi.DBMS_ORACLE:
                         sqlapi.SQLselect("1 from DUAL")
                     elif sqlapi.SQLdbms() == sqlapi.DBMS_MSSQL:
                             sqlapi.SQLselect("1")
-        logger.info("Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
+        logger.info(u"Stmts / second: %.2f stmts", rows / t.elapsed.total_seconds())
         self.storeResult(t.elapsed.total_seconds(), name="Nope statement")
 
 if __name__ == "__main__":
-    print(SqlApiBenchmark().run({"rows": 1000, "iterations": 10, "tablename": "x_cdb_testperf", "warmup": 100}))
+    print SqlApiBenchmark().run({"rows": 1000, "iterations": 10, "tablename": "x_cdb_testperf", "warmup": 100})

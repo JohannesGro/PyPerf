@@ -7,6 +7,7 @@
 
 import inspect
 import logging
+from abc import ABCMeta
 
 logger = logging.getLogger("[" + __name__ + " - Bench]")
 
@@ -14,6 +15,7 @@ logger = logging.getLogger("[" + __name__ + " - Bench]")
 class Bench(object):
     """'Bench' is an abstract class which has to be used for creating benchmarks.
     """
+    __metaclass__ = ABCMeta
     args = {}
     """This dict contains the arguments for the benchmark. The arguments are set
     in a benchsuite, read by the benchrunner and passed by the run method. """

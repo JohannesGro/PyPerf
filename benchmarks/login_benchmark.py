@@ -48,10 +48,10 @@ class LoginBenchmark(Bench):
                     try:
                         url = "http://%s%s" % (self.args["server"], self.args["self"].args["testpath"])
                         if payload:
-                            print("POST ", url)
+                            print "POST ", url
                             self.rsp = requests.post(url, data=payload, cookies=self.rsp.cookies)
                         else:
-                            print("GET ", url)
+                            print "GET ", url
                             self.rsp = requests.get(url, cookies=self.rsp.cookies)
                         break
                     except:
@@ -70,8 +70,8 @@ class LoginBenchmark(Bench):
 
 # Guard importing as main module
 if __name__ == "__main__":
-    print(LoginBenchmark().run({
+    print LoginBenchmark().run({
                                "server": "127.0.0.1:7000",
                                "testpath": "/server/__keep_alive__",
                                "iterations": 100
-                               }))
+                               })

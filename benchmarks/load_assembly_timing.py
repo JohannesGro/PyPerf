@@ -88,4 +88,4 @@ class LoadAssemblyTiming(Bench):
 
 
 if __name__ == '__main__':
-    print(LoadAssemblyTiming().run({"z_nummer": "000073-1", "z_index": "", "loops": 10}))
+    print LoadAssemblyTiming().run({"z_nummer": "000073-1", "z_index": "", "loops": 10})

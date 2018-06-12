@@ -23,7 +23,7 @@ import json
 import os
 import datetime
 
-from .influxmock import InfluxMock
+from influxmock import InfluxMock
 
 
 __docformat__ = "restructuredtext en"
@@ -66,7 +66,7 @@ class ValuesParseError(Exception):
 
 def extract_tags(sysinfo):
     tags = {}
-    for info, tag_name in RELEVANT_SYSINFOS.items():
+    for info, tag_name in RELEVANT_SYSINFOS.iteritems():
         tags[tag_name] = sysinfo[info]
     return tags
 
@@ -151,14 +151,14 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
             tags.update(parse_additional_values(add_tags))
 
         tags_str = ",".join(["%s=%s" % (tagname, tagvalue)
-                             for tagname, tagvalue in tags.items()])
+                             for tagname, tagvalue in tags.iteritems()])
 
         lines = []
 
         if "results" not in report:
             raise InvalidReportError("Report '%s' doesn't contain any results." % reportpath)
 
-        for benchmark, args_and_data in report["results"].items():
+        for benchmark, args_and_data in report["results"].iteritems():
             fields = {}
             data = args_and_data["data"]
             if not data:
@@ -166,7 +166,7 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
                     "Report '%s' doesn't contain any result data for the benchmark '%s'."
                     % (reportpath, benchmark)
                 )
-            for bench, bench_results in args_and_data["data"].items():
+            for bench, bench_results in args_and_data["data"].iteritems():
 
                 report_values = bench_results["value"]
                 if isinstance(report_values, list):
@@ -177,6 +177,6 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
                     fields.update(parse_additional_values(values))
 
             fields_str = ",".join(["%s=%s" % (name, value)
-                                   for name, value in fields.items()])
+                                   for name, value in fields.iteritems()])
             lines.append(MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
         upload_to_influxdb(lines, influxdburl, database, precision)

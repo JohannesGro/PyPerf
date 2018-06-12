@@ -101,10 +101,10 @@ def main():
     subcommand = args.subcommand
     rc = 0
     if subcommand == "run":
-        from .benchrunner import Benchrunner
+        from benchrunner import Benchrunner
         return Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
     elif subcommand == "render":
-        from .renderer import Renderer
+        from renderer import Renderer
         rend = Renderer(args.benchmarks, args.outfile, args.reference,
                         args.logconfig, args.trend)
         return rend.main()
@@ -112,10 +112,10 @@ def main():
         if args.target == "influx":
             try:
                 ts, unit = parse_timestamp_param(args.ts) if args.ts else (None, None)
-                from .uploader import upload_2_influx
+                from uploader import upload_2_influx
                 return upload_2_influx(args.filename, args.url, args.db, ts, unit,
                                        args.values, args.tags)
-            except BadTimestampError as tse:
+            except BadTimestampError, tse:
                 sys.stderr.write("%s %s: %s\n" %
                                  (parser.prog, args.subcommand, str(tse)))
                 rc = UPLOAD_BAD_TIMESTAMP
