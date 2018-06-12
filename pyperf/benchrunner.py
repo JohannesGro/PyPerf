@@ -25,7 +25,7 @@ class Benchrunner(object):
     logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    def main(self, suite, outfile, logconfig, verbose):
+    def main(self, suite, outfile, logconfig="", verbose=False):
         global logger
         logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig,
                                             fileName=self.logging_file)

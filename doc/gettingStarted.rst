@@ -45,6 +45,18 @@ The parameter `--outfile` or `-o` defines a name for the JSON/HTML file.
 
 Read more: :doc:`benchrunner`
 
+Running using the API
+---------------------
+If running using the CLI doesn't suite your needs (i.e. you want to
+debug just one module in the IDE), you may use the API. Herefore, call
+:samp:`pyperf/Benchrunner.main()` saying it where to read the configuration
+from and where to write the output to:
+
+.. code-block:: Python
+
+	from pyperf.benchrunner import Benchrunner
+	Benchrunner().main("path_to_config.json", "report.json")
+
 
 Renderer
 ========
