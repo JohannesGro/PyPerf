@@ -59,6 +59,13 @@ class TestInfluxdbUploader(unittest.TestCase):
 
         assert url.find("precision=s") != -1
 
+    def test_no_results(self):
+        # if there are no measurements, just do nothing
+        uploader.upload_2_influx(os.path.join(self.testdata, "report_no_measurements.json"),
+                                 self.influxdburl, self.database)
+        data = self.influxmock.data_last
+        eq_(data, None)
+
     @raises(uploader.InvalidReportError)
     def test_sysinfos_incomplete(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_no_sysinfos.json"),

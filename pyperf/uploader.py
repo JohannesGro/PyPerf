@@ -170,13 +170,15 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
 
                 report_values = bench_results["value"]
                 if isinstance(report_values, list):
-                    fields.update(aggregate_series(bench, report_values))
+                    if report_values:
+                        fields.update(aggregate_series(bench, report_values))
                 else:
                     fields[fieldname(bench)] = report_values
                 if values:
                     fields.update(parse_additional_values(values))
 
-            fields_str = ",".join(["%s=%s" % (name, value)
-                                   for name, value in fields.items()])
-            lines.append(MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
+            if fields:
+                fields_str = ",".join(["%s=%s" % (name, value)
+                                       for name, value in fields.items()])
+                lines.append(MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
         upload_to_influxdb(lines, influxdburl, database, precision)
