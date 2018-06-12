@@ -6,7 +6,7 @@
 # read the comments.
 
 .PHONY: info help tests testfailed pycoverage coverage preflight
-	egg upload pycheck check pylint lint clean
+	pack upload pycheck check pylint lint clean
 
 TESTS = .
 PY_FILE_DIRS = .
@@ -45,17 +45,23 @@ info:
 
 help: info
 
-egg: pyperf setup.py README.rst
+pack: pyperf setup.py README.rst
 	make -C doc html
 	rm -rf build dist
 	python setup.py bdist_egg
+	python setup.py bdist_wheel
+	python3 setup.py bdist_wheel
 
-upload: egg
+upload: pack
 ifeq ($(ARMED),True)
 	devpi login wen
 	devpi upload --index tools/misc dist/pyperf-0.?.?-py2.7.egg
+	devpi upload --index tools/misc dist/pyperf-0.?.?-py2-none-any.whl
+	devpi upload --index tools/misc dist/pyperf-0.?.?-py3-none-any.whl
 else
 	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py2.7.egg
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py2-none-any.whl
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py3-none-any.whl
 endif
 
 clean:

@@ -15,6 +15,24 @@ History
 =======
 
 
+0.3.9
+-----
+* Improvement:
+  Provide an easy method for calling from a debugger/IDE
+  https://de-git01.contact.de/SD/pyperf/issues/19
+
+* Fix:
+  'bench upload' throws a ZeroDevision exception when uploading a report with zero measurements
+  https://de-git01.contact.de/SD/pyperf/issues/6
+
+* Fix:
+  PyPerf's dependencies should be installed automatically
+  https://de-git01.contact.de/SD/pyperf/issues/17
+
+* Improvement:
+  Provide wheels to enable installing via pip
+
+
 0.3.8
 -----
 * Improvement:
