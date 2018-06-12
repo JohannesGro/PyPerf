@@ -9,6 +9,7 @@ import unittest
 import subprocess
 import os
 import json
+import six
 from nose.tools import eq_, raises, assert_not_equals
 from .utils import coverage_opts
 
@@ -57,6 +58,8 @@ class RunnerTest(unittest.TestCase):
         ]
 
         stdout = proc.stdout.read().splitlines()
+        if six.PY3:
+            stdout = [bytes.decode(entry) for entry in stdout]
         rc = proc.wait()
 
         # 1. exit code is zero

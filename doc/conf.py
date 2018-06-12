@@ -39,8 +39,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyPerf'
-copyright = u'2018, CONTACT Software GmbH'
+project = 'PyPerf'
+copyright = '2018, CONTACT Software GmbH'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -176,8 +176,8 @@ htmlhelp_basename = 'PyPerfdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pyperf.tex', u'Pyperf Documentation',
-   u'CONTACT Software GmbH', 'manual'),
+  ('index', 'pyperf.tex', 'Pyperf Documentation',
+   'CONTACT Software GmbH', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

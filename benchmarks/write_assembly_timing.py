@@ -113,7 +113,7 @@ class WriteAssemblyTiming(Bench):
                 raise RuntimeError("Source file %s does not exist" % fn)
 
         all_blob_ids = []
-        for i in xrange(self.args['loops']):
+        for i in range(self.args['loops']):
             logger.debug("saveFilesIntoBlobStore: Starting to write blobs %d/%d" % (i + 1, self.args['loops']))
             with Timer() as t:
                 dlen = 0
@@ -154,5 +154,5 @@ class WriteAssemblyTiming(Bench):
         os.rmdir(self.args['tmpdir'])
 
 if __name__ == '__main__':
-    print WriteAssemblyTiming().run({"z_nummer": "9502656-1", "z_index": "", "loops": 3,
-                                    "tmpdir": u"tmpDir"})
+    print(WriteAssemblyTiming().run({"z_nummer": "9502656-1", "z_index": "", "loops": 3,
+                                    "tmpdir": "tmpDir"}))

@@ -48,34 +48,36 @@ class TestBenchMethods(unittest.TestCase):
     def setUp(self):
         self.t = test_class()
 
+    def tearDown(self):
+        self.t.__class__.results = {}
+
     def test_exec_order(self):
         expected = ["setUpClass", "setUp", "bench_A", "tearDown", "setUp",
                     "bench_B", "help", "tearDown", "setUp", "bench_C",
                     "tearDown", "tearDownClass"]
         self.t.run({})
-        self.assertEqual(len(self.t.testString), len(expected))
-        self.assertEqual(self.t.testString, expected)
+        eq_(self.t.testString, expected)
 
     def test_storeResult1(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = [1, 2, 3]
         expected = {"test_storeResult1": {"value": val, "unit": "hour", "type": "time_series"}}
         self.t.storeResult(val, name="", type="time_series", unit="hour")
-        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
+        eq_(self.t.results, expected)
 
     def test_storeResult2(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = [1, 2, 3]
         expected = {"test_storeResult2": {"value": val, "unit": "seconds", "type": "time_series"}}
         self.t.storeResult(val, name="", type="time_series", unit="seconds")
-        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
+        eq_(self.t.results, expected)
 
     def test_storeResult3(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = 1
         expected = {"test_storeResult3": {"value": val, "unit": "seconds", "type": "time"}}
         self.t.storeResult(val)
-        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
+        eq_(self.t.results, expected)
 
     def test_storeResult4(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
@@ -83,16 +85,16 @@ class TestBenchMethods(unittest.TestCase):
         val = [1, 2, 3]
         expected = {"prefix_test_storeResult4": {"value": val, "unit": "seconds", "type": "time"}}
         self.t.storeResult(val)
-        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
+        eq_(self.t.results, expected)
 
     def test_discard(self):
         # {self.namespace + name: {"value": val, "unit": unit, "type": type}}
         val = [1, 2, 3]
-        expected = {"test_discard": {"value": val, "unit": "seconds", "type": "time_series"}}
+        expected = {}
         self.t.storeResult(val, name="", type="time_series", unit="seconds")
-        self.assertTrue(expected.viewitems() <= self.t.results.viewitems())
+        self.assertTrue(expected.items() <= self.t.results.items())
         self.t.discard("test_")
-        self.assertFalse(expected.viewitems() <= self.t.results.viewitems())
+        eq_(self.t.results, expected)
 
 
 class Test_ErrorHandling(unittest.TestCase):

@@ -12,7 +12,7 @@ TESTS = .
 PY_FILE_DIRS = .
 
 NOSE = nosetests
-NOSEOPTS = -v --exe --with-id --with-timer --timer-top-n 0
+NOSEOPTS = -v --exe --with-id
 NOSECOVOPTS = --with-coverage --cover-erase --cover-inclusive --cover-html --cover-package=pyperf
 PYLINT = pylint
 PYLINTOPTS = --rcfile=.pylintrc -E

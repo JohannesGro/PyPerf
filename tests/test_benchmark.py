@@ -16,7 +16,7 @@ def test_parse_timestamp():
         "2222222222222222s": ("2222222222222222", "s")
     }
 
-    for rawts, exp_output, in data.iteritems():
+    for rawts, exp_output, in data.items():
         output = benchmark.parse_timestamp_param(rawts)
         eq_(exp_output, output)
 

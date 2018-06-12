@@ -7,8 +7,8 @@
 import os
 import sys
 
-import ioservice
-import systemInfos
+from . import ioservice
+from . import systemInfos
 from pyperf.log import customlogging
 
 
@@ -36,7 +36,7 @@ class Benchrunner(object):
 
         # iterating the suite
         rc_all = True
-        for bench_key, bench_val in data["suite"].iteritems():
+        for bench_key, bench_val in data["suite"].items():
             if bench_val.get("active", True) is False:
                 logger.info("Bench '%s' is inactive, skipping", bench_key)
                 continue
