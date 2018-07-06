@@ -163,8 +163,14 @@ def getCPUInfo(verbose=True):
 
     # 3. Current CPU frequency
     if hasattr(psutil, "cpu_freq"):
-        cpu_freq_curr = psutil.cpu_freq(percpu=False).current
-        res['cpu_frequency'] = cpu_freq_curr
+        freq = psutil.cpu_freq(percpu=False)
+        # Can still be None if the system has no cpufreq module running
+        # e.g. raspi, some hyper-v systems etc.
+        if freq:
+            cpu_freq_curr = freq.current
+            res['cpu_frequency'] = cpu_freq_curr
+        else:
+            res['cpu_frequency'] = 0.0
 
     return res
 
