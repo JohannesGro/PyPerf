@@ -191,4 +191,6 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
                 fields_str = ",".join(["%s=%s" % (name, value)
                                        for name, value in fields.items()])
                 lines.append(MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
-        upload_to_influxdb(lines, influxdburl, database, precision)
+
+        if lines:
+            upload_to_influxdb(lines, influxdburl, database, precision)

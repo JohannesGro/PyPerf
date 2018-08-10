@@ -19,7 +19,6 @@ class TestInfluxdbUploader(unittest.TestCase):
     database = "_test"
     here = os.path.abspath(os.path.dirname(__file__))
     testdata = os.path.join(here, "testdata")
-    influxmock = InfluxMock()
 
     @classmethod
     def setUpClass(cls):
@@ -34,37 +33,41 @@ class TestInfluxdbUploader(unittest.TestCase):
         if cls.orig_env:
             os.environ = cls.orig_env
 
-    @patch('pyperf.uploader.requests.post', new=influxmock)
+    def setUp(self):
+        self.influxmock = InfluxMock()
+
     def test_happy_case(self):
-        uploader.upload_2_influx(os.path.join(self.testdata, "report_happy.json"),
-                                 self.influxdburl, self.database)
-        data = self.influxmock.data_last
-        url = self.influxmock.url_last
-        benchmarks = sorted(data.split("\n"))
-        benchmark_a, benchmark_b = benchmarks
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report_happy.json"),
+                                     self.influxdburl, self.database)
+            data = self.influxmock.data_last
+            url = self.influxmock.url_last
+            benchmarks = sorted(data.split("\n"))
+            benchmark_a, benchmark_b = benchmarks
 
-        assert benchmark_a.startswith("BenchmarkA")
-        assert benchmark_a.find("user=wen") != -1
-        assert benchmark_a.find("a1_min=0.01") != -1
-        assert benchmark_a.find("a2_avr=6") != -1
+            assert benchmark_a.startswith("BenchmarkA")
+            assert benchmark_a.find("user=wen") != -1
+            assert benchmark_a.find("a1_min=0.01") != -1
+            assert benchmark_a.find("a2_avr=6") != -1
 
-        assert benchmark_b.startswith("BenchmarkB")
-        assert benchmark_b.find("user=wen") != -1
-        assert benchmark_b.find("b1_min=0.01") != -1
-        assert benchmark_b.find("b2_avr=6") != -1
+            assert benchmark_b.startswith("BenchmarkB")
+            assert benchmark_b.find("user=wen") != -1
+            assert benchmark_b.find("b1_min=0.01") != -1
+            assert benchmark_b.find("b2_avr=6") != -1
 
-        # but the benchmark lines arent mangled
-        assert benchmark_a.find("b1") == -1
-        assert benchmark_b.find("a1") == -1
+            # but the benchmark lines arent mangled
+            assert benchmark_a.find("b1") == -1
+            assert benchmark_b.find("a1") == -1
 
-        assert url.find("precision=s") != -1
+            assert url.find("precision=s") != -1
 
-    def test_no_results(self):
-        # if there are no measurements, just do nothing
-        uploader.upload_2_influx(os.path.join(self.testdata, "report_no_measurements.json"),
-                                 self.influxdburl, self.database)
-        data = self.influxmock.data_last
-        eq_(data, None)
+    def test_no_measurements(self):
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            # if there are no measurements, just do nothing
+            uploader.upload_2_influx(os.path.join(self.testdata, "report_no_measurements.json"),
+                                     self.influxdburl, self.database)
+            data = self.influxmock.data_last
+            eq_(data, None)
 
     @raises(uploader.InvalidReportError)
     def test_sysinfos_incomplete(self):
@@ -81,26 +84,26 @@ class TestInfluxdbUploader(unittest.TestCase):
         uploader.upload_2_influx(os.path.join(self.testdata, "report_invalid.json"),
                                  self.influxdburl, self.database)
 
-    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_with_additional_values(self):
-        uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
-                                 self.influxdburl, self.database, values="buildno:15.2.1")
-        lp_msg = self.influxmock.data_last
-        assert lp_msg.find("buildno=15.2.1") != -1
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
+                                     self.influxdburl, self.database, values="buildno:15.2.1")
+            lp_msg = self.influxmock.data_last
+            assert lp_msg.find("buildno=15.2.1") != -1
 
-    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_with_additional_tags(self):
-        uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
-                                 self.influxdburl, self.database, add_tags="arch:x64")
-        lp_msg = self.influxmock.data_last
-        assert lp_msg.find("arch=x64") != -1
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
+                                     self.influxdburl, self.database, add_tags="arch:x64")
+            lp_msg = self.influxmock.data_last
+            assert lp_msg.find("arch=x64") != -1
 
-    @patch('pyperf.uploader.requests.post', new=influxmock)
     def test_report_with_number(self):
-        uploader.upload_2_influx(os.path.join(self.testdata, "report_number.json"),
-                                 self.influxdburl, self.database)
-        lp_msg = self.influxmock.data_last
-        assert lp_msg.find("sqlstms=0") != -1
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report_number.json"),
+                                     self.influxdburl, self.database)
+            lp_msg = self.influxmock.data_last
+            assert lp_msg.find("sqlstms=0") != -1
 
     @raises(requests.ConnectionError)
     @patch('pyperf.uploader.requests.post',
@@ -123,7 +126,6 @@ def test_convert_to_timestamp():
 
 # Further testcases:
 # * tagging:
-#   - happy case
 #   - nothing relevant in sysinfo
 #   - empty sysinfo
 #
