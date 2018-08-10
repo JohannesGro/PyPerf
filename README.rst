@@ -15,6 +15,13 @@ History
 =======
 
 
+0.3.10
+-----
+* Improvement:
+  The upload functionality should be more robust against InfluxDB outages
+  https://git.contact.de/SD/pyperf/issues/27
+
+
 0.3.9
 -----
 * Improvement:

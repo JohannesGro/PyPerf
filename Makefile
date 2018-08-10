@@ -55,13 +55,13 @@ pack: pyperf setup.py README.rst
 upload: pack
 ifeq ($(ARMED),True)
 	devpi login wen
-	devpi upload --index tools/misc dist/pyperf-0.?.?-py2.7.egg
-	devpi upload --index tools/misc dist/pyperf-0.?.?-py2-none-any.whl
-	devpi upload --index tools/misc dist/pyperf-0.?.?-py3-none-any.whl
+	devpi upload --index tools/misc dist/pyperf-0.?.??-py2.7.egg
+	devpi upload --index tools/misc dist/pyperf-0.?.??-py2-none-any.whl
+	devpi upload --index tools/misc dist/pyperf-0.?.??-py3-none-any.whl
 else
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py2.7.egg
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py2-none-any.whl
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.?-py3-none-any.whl
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py2.7.egg
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py2-none-any.whl
+	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py3-none-any.whl
 endif
 
 clean:
