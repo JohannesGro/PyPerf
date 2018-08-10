@@ -102,9 +102,9 @@ class TestInfluxdbUploader(unittest.TestCase):
         lp_msg = self.influxmock.data_last
         assert lp_msg.find("sqlstms=0") != -1
 
-    @raises(requests.exceptions.ConnectionError)
+    @raises(requests.ConnectionError)
     @patch('pyperf.uploader.requests.post',
-           new=InfluxMock(exception=requests.exceptions.ConnectionError))
+           new=InfluxMock(exception=requests.ConnectionError))
     def test_failed_connection(self):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database)

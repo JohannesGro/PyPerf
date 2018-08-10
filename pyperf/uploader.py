@@ -22,6 +22,7 @@ import dateutil.parser as dateparser
 import json
 import os
 import datetime
+import time
 
 from .influxmock import InfluxMock
 
@@ -50,6 +51,8 @@ RELEVANT_SYSINFOS = {
 
 
 EPOCH = datetime.datetime(1970, 1, 1)
+MAX_UPLOAD_RETRIES = 5
+UPLOAD_SLEEP = 1
 
 
 class InvalidReportError(Exception):
@@ -75,12 +78,19 @@ def upload_to_influxdb(lines, influxurl, database, precision):
     if os.environ.get("FAKEINFLUX", "false") == "true":
         requests.post = InfluxMock()
 
-    rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
-                        data="\n".join(lines))
-
-    if (rsp.status_code < 200 or rsp.status_code >= 400):
-        raise Exception("Error while uploading benchmark results: %i ('%s')"
-                        % (rsp.status_code, rsp.text))
+    for trial in range(MAX_UPLOAD_RETRIES+1):
+        try:
+            rsp = requests.post("%s/write?db=%s&precision=%s" % (influxurl, database, precision),
+                                data="\n".join(lines))
+            if (rsp.status_code < 200 or rsp.status_code >= 400):
+                raise Exception("Error while uploading benchmark results: %i ('%s')"
+                                % (rsp.status_code, rsp.text))
+        except requests.ConnectionError, ce:
+            if trial < MAX_UPLOAD_RETRIES:
+                # TODO: log the trial
+                time.sleep(UPLOAD_SLEEP)
+                continue
+            raise ce
 
 
 def extract_hostname(sysinfo):
