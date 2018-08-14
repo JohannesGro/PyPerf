@@ -75,6 +75,7 @@ def extract_tags(sysinfo):
         try:
             tags[tag_name] = sysinfo[info]
         except KeyError, ke:
+            # TODO: log the error
             continue
     return tags
 

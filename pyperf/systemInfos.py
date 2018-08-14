@@ -137,7 +137,7 @@ def getSysInfo():
         if "dev" in ver:
             res["ce_sl"] = "dev"
         else:
-            regex = re.compile(r'.*Level.*\s.*(\d)\s')
+            regex = re.compile(r'.*Level.*\s(?P<order>[0-9]+)\s')
             res["ce_sl"] = regex.findall(ver)[0]
 
     return res
