@@ -16,6 +16,7 @@ import subprocess
 import sys
 import os
 import psutil
+import re
 
 cdb = None
 try:
@@ -131,7 +132,13 @@ def getSysInfo():
     res["os_version"] = platform.platform()
     res["cpu"] = platform.processor()
     if cdb:
-        res["ce_version"] = cdb.version.getVersionDescription()
+        ver = cdb.version.getVersionDescription()
+        res["ce_minor"] = ver[:4]
+        if "dev" in ver:
+            res["ce_sl"] = "dev"
+        else:
+            regex = re.compile(r'.*Level.*\s.*(\d)\s')
+            res["ce_sl"] = regex.findall(ver)[0]
 
     return res
 
@@ -290,8 +297,6 @@ def traceroute(dest):
     """Executes tracert on windows and traceroute on linux systems.
 
     :returns: dict with infos."""
-
-    import re
 
     m = re.search(r"\/\/(.*):", dest)
     if m is None:
