@@ -121,6 +121,23 @@ def diskIOCounter():
     return res
 
 
+def matchVersion(ver):
+    reg_minor = "([0-9]+\.[0-9]+).*"
+    reg_sl = ".*Level\s([0-9]+).*"
+
+    minor = None
+    sl = None
+
+    if re.match(reg_minor, ver) is not None:
+        minor = re.match(reg_minor, ver).groups()[0]
+    if "dev" in ver:
+        sl = "dev"
+    elif re.match(reg_sl, ver) is not None:
+        sl = re.match(reg_sl, ver).groups()[0]
+
+    return minor, sl
+
+
 def getSysInfo():
     """Get the general infos like time, OS etc.
 
@@ -133,12 +150,7 @@ def getSysInfo():
     res["cpu"] = platform.processor()
     if cdb:
         ver = cdb.version.getVersionDescription()
-        res["ce_minor"] = ver[:4]
-        if "dev" in ver:
-            res["ce_sl"] = "dev"
-        else:
-            regex = re.compile(r'.*Level.*\s(?P<order>[0-9]+)\s')
-            res["ce_sl"] = regex.findall(ver)[0]
+        res["ce_minor"], res["ce_sl"] = matchVersion(ver)
 
     return res
 
