@@ -122,18 +122,12 @@ def diskIOCounter():
 
 
 def matchVersion(ver):
-    reg_minor = "([0-9]+\.[0-9]+).*"
-    reg_sl = ".*Level\s([0-9]+).*"
+    reg_minor = r"([0-9]+\.[0-9]+) Service Level (dev|[0-9]+).*"
+    minor = sl = None
 
-    minor = None
-    sl = None
-
-    if re.match(reg_minor, ver) is not None:
-        minor = re.match(reg_minor, ver).groups()[0]
-    if "dev" in ver:
-        sl = "dev"
-    elif re.match(reg_sl, ver) is not None:
-        sl = re.match(reg_sl, ver).groups()[0]
+    match = re.match(reg_minor, ver)
+    if match:
+        minor, sl = match.groups()
 
     return minor, sl
 
