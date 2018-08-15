@@ -46,7 +46,9 @@ RELEVANT_SYSINFOS = {
     "mem_total": "mem_total",
     "os": "os",
     # "Processor": "CPU",
-    "vm": "vm"
+    "vm": "vm",
+    "ce_minor": "ce_version",
+    "ce_sl": "ce_sl"
 }
 
 
@@ -70,7 +72,11 @@ class ValuesParseError(Exception):
 def extract_tags(sysinfo):
     tags = {}
     for info, tag_name in RELEVANT_SYSINFOS.items():
-        tags[tag_name] = sysinfo[info]
+        try:
+            tags[tag_name] = sysinfo[info]
+        except KeyError, ke:
+            # TODO: log the error
+            continue
     return tags
 
 

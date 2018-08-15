@@ -16,6 +16,7 @@ import subprocess
 import sys
 import os
 import psutil
+import re
 
 cdb = None
 try:
@@ -120,6 +121,17 @@ def diskIOCounter():
     return res
 
 
+def matchVersion(ver):
+    reg_minor = r"([0-9]+\.[0-9]+) Service Level (dev|[0-9]+).*"
+    minor = sl = None
+
+    match = re.match(reg_minor, ver)
+    if match:
+        minor, sl = match.groups()
+
+    return minor, sl
+
+
 def getSysInfo():
     """Get the general infos like time, OS etc.
 
@@ -131,7 +143,8 @@ def getSysInfo():
     res["os_version"] = platform.platform()
     res["cpu"] = platform.processor()
     if cdb:
-        res["ce_version"] = cdb.version.getVersionDescription()
+        ver = cdb.version.getVersionDescription()
+        res["ce_minor"], res["ce_sl"] = matchVersion(ver)
 
     return res
 
@@ -290,8 +303,6 @@ def traceroute(dest):
     """Executes tracert on windows and traceroute on linux systems.
 
     :returns: dict with infos."""
-
-    import re
 
     m = re.search(r"\/\/(.*):", dest)
     if m is None:
