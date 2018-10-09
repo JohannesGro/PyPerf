@@ -14,6 +14,12 @@ For more information have a look at our documentation.
 History
 =======
 
+0.3.11
+-----
+* Fix:
+  The exceptions are now Python3 compatible.
+
+
 
 0.3.10
 -----
