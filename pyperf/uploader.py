@@ -74,7 +74,7 @@ def extract_tags(sysinfo):
     for info, tag_name in RELEVANT_SYSINFOS.items():
         try:
             tags[tag_name] = sysinfo[info]
-        except KeyError, ke:
+        except KeyError as ke:
             # TODO: log the error
             continue
     return tags
@@ -91,7 +91,7 @@ def upload_to_influxdb(lines, influxurl, database, precision):
             if (rsp.status_code < 200 or rsp.status_code >= 400):
                 raise Exception("Error while uploading benchmark results: %i ('%s')"
                                 % (rsp.status_code, rsp.text))
-        except requests.ConnectionError, ce:
+        except requests.ConnectionError as ce:
             if trial < MAX_UPLOAD_RETRIES:
                 # TODO: log the trial
                 time.sleep(UPLOAD_SLEEP)
