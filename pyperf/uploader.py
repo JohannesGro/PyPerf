@@ -23,6 +23,7 @@ import json
 import os
 import datetime
 import time
+import logging
 
 from .influxmock import InfluxMock
 
@@ -55,6 +56,9 @@ RELEVANT_SYSINFOS = {
 EPOCH = datetime.datetime(1970, 1, 1)
 MAX_UPLOAD_RETRIES = 5
 UPLOAD_SLEEP = 1
+
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidReportError(Exception):
@@ -174,14 +178,16 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
         if "results" not in report:
             raise InvalidReportError("Report '%s' doesn't contain any results." % reportpath)
 
+        invalid_benchmarks = 0
+
         for benchmark, args_and_data in report["results"].items():
             fields = {}
             data = args_and_data["data"]
             if not data:
-                raise InvalidReportError(
-                    "Report '%s' doesn't contain any result data for the benchmark '%s'."
-                    % (reportpath, benchmark)
-                )
+                logger.warning("Report '%s' doesn't contain any result data for the benchmark '%s'.",
+                               reportpath, benchmark)
+                invalid_benchmarks += 1
+                continue
             for bench, bench_results in args_and_data["data"].items():
 
                 report_values = bench_results["value"]
@@ -197,6 +203,10 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
                 fields_str = ",".join(["%s=%s" % (name, value)
                                        for name, value in fields.items()])
                 lines.append(MSG_TMPL % (benchmark, tags_str, fields_str, time_epoch))
+
+        if invalid_benchmarks == len(report["results"]):
+            raise InvalidReportError("Report '%s' doesn't contain any result data for any benchmark."
+                                     % reportpath)
 
         if lines:
             upload_to_influxdb(lines, influxdburl, database, precision)
