@@ -118,6 +118,24 @@ class TestInfluxdbUploader(unittest.TestCase):
         uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
                                  self.influxdburl, self.database)
 
+    def test_multiple_benchmarks_one_without_data(self):
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report_one_valid_one_invalid.json"),
+                                     self.influxdburl, self.database)
+            data = self.influxmock.data_last
+            url = self.influxmock.url_last
+            benchmarks = sorted(data.split("\n"))
+            assert len(benchmarks) == 1
+
+            benchmark = benchmarks[0]
+
+            assert benchmark.startswith("BenchmarkA")
+            assert benchmark.find("user=wen") != -1
+            assert benchmark.find("a1_min=0.01") != -1
+            assert benchmark.find("a2_avr=6") != -1
+
+            assert url.find("precision=s") != -1
+
 
 def test_convert_to_timestamp():
     eq_(uploader.convert_to_timestamp("2018-03-13T15:40:04.859709"), "1520955604")
