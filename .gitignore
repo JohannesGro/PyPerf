@@ -3,7 +3,7 @@ __pycache__/
 *.log
 *.db
 doc/pyperf/*
-.coverage
+.coverage*
 .noseids
 cover
 build
@@ -11,3 +11,5 @@ dist
 *.egg-info
 .influxdata
 .influxurl
+.tox
+.idea

@@ -1,11 +1,10 @@
-
 tests_linux:
-  image: "registry.contact.de/centos_ci_trunk"
-  script: "make coverage"
+  image: "themattrix/tox"
+  script: "tox"
   tags:
     - Docker
 
 tests_windows:
-  script: "make coverage"
+  script: "tox"
   tags:
     - Windows
