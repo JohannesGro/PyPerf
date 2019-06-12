@@ -12,6 +12,7 @@ import pkg_resources
 
 from . import ioservice
 from pyperf.log import customlogging
+from pyperf.exceptions import PyperfError
 
 
 KEY_2_GUILABEL = {
@@ -407,11 +408,14 @@ class Renderer(object):
         :returns: a dict of files which contain the benchmarks"""
 
         if self.reference:
-            self.ref = ioservice.loadJSONData(self.reference)
+            try:
+                self.ref = ioservice.loadJSONData(self.reference)
+            except PyperfError as e:
+                logger.error("The Testsuite '%s' could not be loaded. %s" % (self.reference, e.message))
 
+        data = {}
         if isinstance(self.benchmarks, list):
             # Loads a bunch of benchmarks.
-            data = {}
             for fileName in self.benchmarks:
                 if os.path.isdir(fileName):
                     (_, _, fileNames) = next(os.walk(fileName))
@@ -419,12 +423,25 @@ class Renderer(object):
                         # use only json files
                         _, fileExt = os.path.splitext(fn)
                         if fileExt == ".json":
-                            data[fn] = ioservice.loadJSONData(os.path.join(fileName, fn))
+                            try:
+                                bench = os.path.join(fileName, fn)
+                                data[fn] = ioservice.loadJSONData(bench)
+                            except PyperfError as e:
+                                logger.error("The Benchmark '%s' could not be loaded. %s"
+                                             % (bench, e.message))
                     continue
-                data[fileName] = ioservice.loadJSONData(fileName)
+                try:
+                    data[fileName] = ioservice.loadJSONData(fileName)
+                except PyperfError as e:
+                    logger.error("The File '%s' could not be loaded. %s" % (fileName, e.message))
         else:
             # Loads a single benchmark
-            data[self.benchmarks] = ioservice.loadJSONData(self.benchmarks)
+            try:
+                data[self.benchmarks] = ioservice.loadJSONData(self.benchmarks)
+            except PyperfError as e:
+                logger.error("The Benchmark '%s' could not be loaded. %s"
+                             % (self.benchmarks, e.message))
+
         if(self.reference):
             numLoadedFiles = len(data) + 1
         else:

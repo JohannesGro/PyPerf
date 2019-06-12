@@ -10,7 +10,8 @@
 import logging
 import datetime
 
-from .. import ioservice
+from pyperf import ioservice
+from pyperf.exceptions import PyperfError
 
 
 def init_logging(logger_name, configFile="", fileName=""):
@@ -38,8 +39,12 @@ def init_logging(logger_name, configFile="", fileName=""):
 
     if configFile != "":
         # try to read configFile
-        config = ioservice.loadJSONData(configFile)
-        logging.config.dictConfig(config)
+        try:
+            config = ioservice.loadJSONData(configFile)
+        except PyperfError as e:
+            logging.exception("The config file '%s' could not be loaded. %s" % (configFile, e.message))
+        else:
+            logging.config.dictConfig(config)
 
     logger = logging.getLogger(logger_name)
     return logger
