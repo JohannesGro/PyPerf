@@ -11,7 +11,8 @@
 import io
 import json
 import logging
-import sys
+from six import PY2
+from pyperf.exceptions import PyperfError
 
 logger = logging.getLogger("[" + __name__ + " - I/O Service]")
 
@@ -22,55 +23,55 @@ def loadJSONData(json_file):
     :param fileName: name of the destination file
     :param json_file: the file in json format
     :returns: json object
+    :raises: ValueError: the file content could not be decoded as JSON
     """
     try:
         with io.open(json_file, encoding="UTF-8") as data_file:
-            data = json.load(data_file)
-    except IOError as err:
-        logger.exception("Could not open json file ({})! ".format(json_file, str(err)))
-        sys.exit(1)
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.exception("Could not decode json file ({})! {}".format(json_file, str(err)))
-        sys.exit(1)
-    except:
-        logger.exception("Unexpected error occurred! {}".format(str(sys.exc_info()[0:1])))
-        sys.exit(1)
-    else:
-        logger.info("Reading json file successful ({})".format(json_file))
-    return data
+            return json.load(data_file)
+    except ValueError:
+        raise PyperfError("The content of '%s' could not be decoded as JSON." % json_file)
+    except IOError:
+        raise PyperfError("Could not open file '%s' to load the data!" % json_file)
 
 
-def saveJSONData(fileName, data):
+def saveJSONData(data, fileName="benchmarkResults.json"):
     """This functions dumps json data into a file. The name of the output file
     is determined by parameter. The default output file is 'benchmarkResults.json'.
 
     :param data: json data which will be saved to file
+    :param fileName: the name of the file where the data will be saved
+    :raises TypeError: when data could not be converted to JSON
+    :raises IOError: when the JSON-data could not be written to fileName
+    :returns True when data could be written to fileName
     """
-    logger.info("Saving json to file '%s'", fileName)
     try:
-        with io.open(fileName, 'w', encoding="utf-8") as outfile:
-            outfile.write(json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False))
-    except IOError as err:
-        logger.exception("Could not open file to save the data! %s", err)
-    except ValueError as err:  # JSONDecodeError inherrits from ValueError
-        logger.exception("Could not decode values! %s", err)
-    except TypeError as err:
-        logger.exception("Could not serialize object! %s", err)
-    except:
-        logger.exception("Unexpected error occurred! %s", sys.exc_info()[0:1])
+        if PY2:
+            jsonData = json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False).decode(encoding="utf-8")
+        else:
+            jsonData = json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)
+    except TypeError:
+        raise PyperfError("Could not serialize object %s!" % data)
     else:
-        logger.info("Saving successful")
+        try:
+            with io.open(fileName, 'w', encoding="utf-8") as outfile:
+                outfile.write(jsonData)
+            return True
+        except IOError:
+            raise PyperfError("Could not open file '%s' to save the data!" % fileName)
 
 
 def readFile(fileName):
     """Reads a file and return the content
 
     :param fileName: name of the file
-    :returns: content of the file as string
+    :returns content of the file as string
     """
-    with io.open(fileName, 'r') as f:
-        data = f.read()
-    return data
+    try:
+        with io.open(fileName, 'r') as f:
+            data = f.read()
+        return data
+    except IOError:
+        raise PyperfError("Could not open file '%s' to load the data!" % fileName)
 
 
 def writeToFile(data, outfile):
@@ -78,14 +79,15 @@ def writeToFile(data, outfile):
 
     :param data: json data
     :param outfile: name of the output file
+    :raises IOError: when the data could not be written to outfile
+    :returns True when the data has been written to outfile
     """
-    logger.info("Saving results to file '%s'", outfile)
     try:
         with io.open(outfile, 'w', encoding="UTF-8") as out:
-            out.write(data)
-    except IOError as err:
-        logger.exception("Could not open file to save the data! %s", err)
-    except:
-        logger.exception("Unexpected error occurred! %s", sys.exc_info()[0:1])
-    else:
-        logger.info("Saving successful")
+            if PY2 and not isinstance(data, unicode):
+                out.write(data.decode("utf-8"))
+            else:
+                out.write(data)
+        return True
+    except IOError:
+        raise PyperfError("Could not open file '%s' to save the data!" % outfile)
