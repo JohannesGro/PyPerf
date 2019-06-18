@@ -109,79 +109,6 @@ class RunnerTest(unittest.TestCase):
         assert_not_equals(rc, 0)
 
 
-class RendererTest(unittest.TestCase):
-    RENDER_FILE = "render.html"
-    REPORT1 = os.path.join(DATADIR, "report.json")
-    REPORT2 = os.path.join(DATADIR, "report2.json")
-
-    def tearDown(self):
-        try:
-            os.remove(self.RENDER_FILE)
-        except OSError:
-            pass
-
-    def test_render_simple(self):
-        # the simplest case: render just one report
-        cmdline = ["python"] + coverage_opts() + [
-            BENCH, "render",
-            self.REPORT1,
-            "-o", self.RENDER_FILE
-        ]
-        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        eq_(rc, 0)
-        # The output differs for different OSes
-        # Retain for on-demand usage though
-        # html_as_expected = filecmp.cmp(os.path.join(self.DATADIR, "render_simple.html"),
-        #                               self.RENDER_FILE)
-        # assert html_as_expected
-
-    def test_render_two(self):
-        # render two benchmark results
-        cmdline = ["python"] + coverage_opts() + [
-            BENCH, "render",
-            self.REPORT1,
-            self.REPORT2,
-            "-o", self.RENDER_FILE
-        ]
-        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        eq_(rc, 0)
-        # The output differs for different OSes
-        # Retain for on-demand usage though
-        # html_as_expected = filecmp.cmp(os.path.join(self.DATADIR, "render_two.html"),
-        #                               self.RENDER_FILE)
-        # assert html_as_expected
-
-    # Rendering with reference seems to be broken.
-    # Include this tests though: as change/regression detector.
-    @raises(subprocess.CalledProcessError)
-    def test_render_reference(self):
-        # render with reference
-        cmdline = ["python"] + coverage_opts() + [
-            BENCH, "render",
-            self.REPORT1,
-            "-r", self.REPORT2,
-            "-o", self.RENDER_FILE
-        ]
-        subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    def test_render_trend(self):
-        # render two benchmark results with trend
-        cmdline = ["python"] + coverage_opts() + [
-            BENCH, "render",
-            self.REPORT1,
-            self.REPORT2,
-            "-t",
-            "-o", self.RENDER_FILE
-        ]
-        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        eq_(rc, 0)
-        # The output differs for different OSes
-        # Retain for on-demand usage though
-        # html_as_expected = filecmp.cmp(os.path.join(self.DATADIR, "render_trend.html"),
-        #                                self.RENDER_FILE)
-        # assert html_as_expected
-
-
 class UploaderTest(unittest.TestCase):
     def test_basic_default_upload(self):
         cmdline = ["python"] + coverage_opts() + [
@@ -244,7 +171,6 @@ class UploaderTest(unittest.TestCase):
 
 class Test_Integration(unittest.TestCase):
     REPORTFILE = os.path.join(HERE, "report_tmp.json")
-    RENDERFILE = "render.html"
 
     def setUp(self):
         cmdline = [
@@ -259,8 +185,6 @@ class Test_Integration(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.REPORTFILE):
             os.remove(self.REPORTFILE)
-        if os.path.exists(self.RENDERFILE):
-            os.remove(self.RENDERFILE)
 
     def test_upload(self):
         rc = subprocess.check_call(["python"] + coverage_opts() + [
@@ -270,16 +194,6 @@ class Test_Integration(unittest.TestCase):
             "--url=%s" % INFLUX,
             "--db=%s" % INFLUXDB
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        eq_(rc, 0)
-
-    def test_render(self):
-        cmdline = ["python"] + coverage_opts() + [
-            BENCH,
-            "render",
-            self.REPORTFILE,
-            "-o", self.RENDERFILE
-        ]
-        rc = subprocess.check_call(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         eq_(rc, 0)
 
 

@@ -55,23 +55,6 @@ def main():
     runner.add_argument("--verbose", "-v", default=False,
                         action='store_true', help="Get more detailled system infos.")
 
-    render = subparsers.add_parser("render")
-    render.add_argument("benchmarks", nargs='+',
-                        help="One or more json files which contain the benchmarks."
-                        "It is also possible to use folders. "
-                        "All JSON files from a folder will be loaded.")
-    render.add_argument("--outfile", "-o", nargs='?', default=RENDERFILE_DEFAULT,
-                        help="The results will be stored in this file (HTML).")
-    render.add_argument("--reference", "-r", nargs='?',
-                        help="A referenced benchmark for the comparision."
-                        "Uses the reference to mark some benchmarks result"
-                        "as positiv or negativ. This option will be ignored"
-                        "if the -trend option is active.")
-    render.add_argument("--logconfig", "-l", nargs='?', default="",
-                        help="Configuration file for the logger.")
-    render.add_argument("--trend", "-t", default=False, action="store_true",
-                        help="Using the benchmarks to show a trend of a system.")
-
     upload_parser = subparsers.add_parser("upload")
     upload_parser.add_argument("filename", help="JSON report to upload.")
     upload_parser.add_argument(
@@ -103,11 +86,6 @@ def main():
     if subcommand == "run":
         from .benchrunner import Benchrunner
         return Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
-    elif subcommand == "render":
-        from .renderer import Renderer
-        rend = Renderer(args.benchmarks, args.outfile, args.reference,
-                        args.logconfig, args.trend)
-        return rend.main()
     elif subcommand == "upload":
         if args.target == "influx":
             try:

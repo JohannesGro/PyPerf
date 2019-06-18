@@ -14,7 +14,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(name='pyperf',
       version='0.3.10',
-      description='This project aims to provide a base for creating and rendering standardized benchmarks.',
+      description='This project aims to provide a base for creating standardized benchmarks.',
       long_description=long_description,
       install_requires=["python-dateutil"],
       url='https://git.contact.de/SD/pyperf',
