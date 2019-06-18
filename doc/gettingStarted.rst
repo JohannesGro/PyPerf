@@ -58,57 +58,6 @@ from and where to write the output to:
 	Benchrunner().main("path_to_config.json", "report.json")
 
 
-Renderer
-========
-The renderer creates a HTML file to display the results of the benchmarks.
-There are two modes for the rendering. The default mode is comparison.
-Benchmarks from several systems can be compared. A reference benchmark might be
-specified to detect deviations. The `--trend` option is for showing trends in recurring
-runs of the given benchmark.
-
-E.g.:
-
-.. code-block:: sh
-
-	bench render [yourbenchmarks] --outfile out.html
-
-The benchmarks value defines a list of benchmarks files. It also possible to pass
-folders instead of a file. In this case the whole directory will be searched
-for '.json' files.
-
-The parameter `--outfile` or `-o` defines a name for the HTML file.
-
-The renderer tries to display as much information as possible, that means
-benchmarks will not be omitted if the benchmarks do not have the same benches or tests.
-
-Read more: :doc:`renderer`
-
-Compare
--------
-As mentioned before there are two different modes for rendering the data.
-The compare mode is used to compare benchmarks from several systems. It shows
-tables with the results of each benchmarks. The type `time_series` is a list of
-time measurements. These values can not be displayed as a list, they are therefore
-accumulated (sum, average, max, min). A bar chart is drawn for each test within a
-bench. For `time_series` the average value will be represented by the bars. This
-mode is default.
-
-Reference
-+++++++++
-The option `-r`or `--reference` can be used to define a reference file. This
-benchmark is indicative for the comparison. The reference is used to mark outlier
-or just values which distance to reference value exceed a certain limit.
-
-
-Trend
------
-This mode is used to display a collection of benchmarks over a period of time.
-The parameter `-t`or `-trend` has to be passed to start in this mode.
-This mode does not display tables but trend charts. One of the three
-(total, weekdays, 24h) time periods can be selected. When this mode is used
-the reference option is ignored.
-
-
 Upload
 ========
 PyPerf is also able to upload the gathered data to an instance of InfluxDB in order

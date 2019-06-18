@@ -2,11 +2,9 @@ PyPerf
 =======================
 
 The PyPerf project aims to provide a base for writing standardized benchmarks.
-For this purpose the project has two main parts. Firstly a runner executes the
-benchmakrs and saves the result. Secondly a renderer reads the results and displays
-it in a human readable manner.
-It is possible to define a suite of benchmarks, run the suite on several systems
-and compare the results or display a trend on a single system.
+For this purpose the project offers a runner to execute the
+benchmarks and save the result.
+It is possible to define a suite of benchmarks and run the suite on several systems.
 
 For more information have a look at our documentation.
 
