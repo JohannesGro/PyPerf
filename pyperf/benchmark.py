@@ -13,7 +13,6 @@ import re
 
 SUITEFILE_DEFAULT = "benchsuite.json"
 REPORTFILE_DEFAULT = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
-RENDERFILE_DEFAULT = 'benchmarkResults_{}.html'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
 UPLOADTARGET_DEFAULT = "influx"
 INFLUXURL_DEFAULT = "http://localhost:8086"
 INFLUXDB_DEFAULT = "perf"
