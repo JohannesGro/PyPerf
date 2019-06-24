@@ -24,6 +24,7 @@ try:
     from cdb import version  # noqa
     from cdb import rte  # noqa
     from cdb.uberserver import usutil  # noqa
+    from cdb.sqlapi import dbms_information  # noqa
 except ImportError:
     pass
 
@@ -145,7 +146,8 @@ def getSysInfo():
     if cdb:
         ver = cdb.version.getVersionDescription()
         res["ce_minor"], res["ce_sl"] = matchVersion(ver)
-
+        dbms = dbms_information()
+        res["dbms"] = [dbms["driver"], dbms["dbms_version"]]
     return res
 
 
