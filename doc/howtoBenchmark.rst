@@ -8,7 +8,7 @@ and an interface for the :doc:`benchrunner`.
   from pyperf.bench import Bench
   class OperationCreate(Bench):
 
-logging
+Logging
 =======
 The benchrunner initializes the logger.
 Import the *logging* module and call the *getLogger* function.
@@ -16,7 +16,7 @@ Import the *logging* module and call the *getLogger* function.
 .. code-block:: py
 
   import logging
-  logger = logging.getLogger("[" + __name__ + " - OperationCreate]")
+  logger = logging.getLogger(__name__)
 
 Tests
 =======

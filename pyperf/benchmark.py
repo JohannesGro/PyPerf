@@ -51,6 +51,8 @@ def main():
     runner.add_argument("--outfile", "-o", nargs='?', default=REPORTFILE_DEFAULT, help=helpstr)
     runner.add_argument("--logconfig", "-l", nargs='?', default="",
                         help="Configuration file for the logger.")
+    runner.add_argument("--debug", "-d", default=False,
+                        action='store_true', help="Get some more logging.")
     runner.add_argument("--verbose", "-v", default=False,
                         action='store_true', help="Get more detailled system infos.")
 
@@ -84,7 +86,7 @@ def main():
     rc = 0
     if subcommand == "run":
         from .benchrunner import Benchrunner
-        return Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose)
+        return Benchrunner().main(args.suite, args.outfile, args.logconfig, args.verbose, args.debug)
     elif subcommand == "upload":
         if args.target == "influx":
             try:
