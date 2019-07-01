@@ -14,8 +14,8 @@ The Benchrunner has the following Command Line Interface:
 
 .. code-block:: none
 
-	usage: __main__.py run	[-h] [--suite [SUITE]] [--outfile [OUTFILE]]
-							[--logconfig [LOGCONFIG]] [--debug] [--verbose]
+	usage: bench run	[-h] [--suite [SUITE]] [--outfile [OUTFILE]]
+						[--logconfig [LOGCONFIG]] [--debug] [--verbose]
 
 	optional arguments:
 		-h, --help            show this help message and exit
