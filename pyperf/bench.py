@@ -8,7 +8,7 @@
 import inspect
 import logging
 
-logger = logging.getLogger("[" + __name__ + " - Bench]")
+logger = logging.getLogger(__name__)
 
 
 class Bench(object):

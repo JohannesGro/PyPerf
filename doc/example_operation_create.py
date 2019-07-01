@@ -25,7 +25,7 @@ from cdb.platform.gui import Mask
 from cdb.testcase import run_level_setup
 
 
-logger = logging.getLogger("OperationCreate")
+logger = logging.getLogger(__name__)
 
 
 class OperationCreate(Bench):

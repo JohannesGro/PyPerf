@@ -36,12 +36,17 @@ and stored in a JSON formatted output file.
 
 .. code-block:: sh
 
-	bench run --suite suite.json --outfile out.json
+	bench run --debug --suite suite.json --outfile out.json --logconfig config.json
 
 The parameter `--suite` or `-s` specifies a benchsuite. Replace `suite.json` with your benchsuite.
 
 The parameter `--outfile` or `-o` defines a name for the JSON/HTML file.
 `date` is a placeholder for the current date.
+
+The parameter `--logconfig` or `-l` specifies a config file for the logging. Replace `config.json`
+with your logconfig.
+
+The parameter `--debug` or `-d` enables logging to the loglevel `DEBUG`.
 
 Read more: :doc:`benchrunner`
 

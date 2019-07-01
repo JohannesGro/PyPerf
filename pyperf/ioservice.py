@@ -10,11 +10,8 @@
 
 import io
 import json
-import logging
 from six import PY2
 from pyperf.exceptions import PyperfError
-
-logger = logging.getLogger("[" + __name__ + " - I/O Service]")
 
 
 def loadJSONData(json_file):

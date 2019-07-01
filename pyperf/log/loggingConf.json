@@ -1,29 +1,34 @@
 {
-  "version": 1,
-  "disable_existing_loggers": false,
-  "formatters": {
-    "standard": {
-      "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    }
-  },
-  "handlers": {
-    "default": {
-      "level": "INFO",
-      "formatter": "standard",
-      "class": "logging.StreamHandler"
+  "pyperf": {
+    "stdout": {
+      "min": "DEBUG",
+      "max": "INFO"
     },
-    "file_handler": {
-      "level": "DEBUG",
-      "filename": "log/benchmark.log",
-      "class": "logging.FileHandler",
-      "formatter": "standard",
-      "mode": "w"
+    "stderr": {
+      "min": "WARNING",
+      "max": "CRITICAL"
     }
   },
-  "loggers": {},
-  "root": {
-    "handlers": ["file_handler", "default"],
-    "level": "DEBUG",
-    "propagate": true
+  "benchmark": {
+    "stdout": {
+      "min": "DEBUG",
+      "max": "INFO"
+    },
+    "stderr": {
+      "min": "WARNING",
+      "max": "CRITICAL"
+    },
+    "file": {
+      "filename": "benchmark.log",
+      "min": "DEBUG",
+      "max": "CRITICAL"
+    }
+  },
+  "third-party": {
+    "file": {
+      "filename": "benchmark.log",
+      "min": "DEBUG",
+      "max": "CRITICAL"
+    }
   }
 }

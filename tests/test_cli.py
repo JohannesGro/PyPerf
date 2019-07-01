@@ -31,6 +31,7 @@ DATADIR = os.path.join(HERE, "testdata")
 SUITE = os.path.join(DATADIR, "dummy.json")
 SUITE_BROKEN = os.path.join(DATADIR, "suite_broken.json")
 SUITE_BENCH_BROKEN = os.path.join(DATADIR, "suite_bench_broken.json")
+LOGGING_CONFIG = os.path.abspath(os.path.join(HERE, "..", "pyperf", "log", "loggingConf.json"))
 
 
 class RunnerTest(unittest.TestCase):
@@ -49,12 +50,18 @@ class RunnerTest(unittest.TestCase):
         proc = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=DEVNULL)
 
         expected = [
-            "setUpClass called",
-            "setUp called",
-            "tearDown called",
-            "setUp called",
-            "tearDown called",
-            "tearDownClass called"
+            'Logging enabled using configuration file %s' % LOGGING_CONFIG,
+             'Fetching system infos (verbose: False, CONTACT Elements available: False)',
+             'Starting',
+             "Reading the benchsuite '%s'" % os.path.join(DATADIR, "dummy.json"),
+             "Executing bench 'DummyBenchmark'",
+             'setUpClass called',
+             'setUp called',
+             'tearDown called',
+             'setUp called',
+             'tearDown called',
+             'tearDownClass called',
+             'Results saved to %s' % self.REPORTFILE
         ]
 
         stdout = proc.stdout.read().splitlines()

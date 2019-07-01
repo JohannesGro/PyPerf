@@ -6,13 +6,14 @@
 
 import os
 import sys
+import logging
 
 from . import ioservice
 from . import systemInfos
 from pyperf.log import customlogging
 from pyperf.exceptions import PyperfError
 
-logger = None
+logger = logging.getLogger(__name__)
 
 
 class Benchrunner(object):
@@ -25,35 +26,37 @@ class Benchrunner(object):
     a json formatted output file.
     """
 
-    logging_file = 'benchrunner.log'
     results = {'results': {}}
 
-    def main(self, suite, outfile, logconfig="", verbose=False):
-        global logger
-        logger = customlogging.init_logging("[Benchrunner]", configFile=logconfig,
-                                            fileName=self.logging_file)
-        self.sys_infos(verbose)
-        logger.info("Starting")
-        logger.info("Reading the benchsuite '%s'", suite)
+    def main(self, suite, outfile, logconfig="", verbose=False, debug=False):
         try:
-            data = ioservice.loadJSONData(suite)
+            customlogging.init_logging(logconfig, debug)
         except PyperfError as e:
-            logger.error("The Testsuite '%s' could not be loaded. %s" % (suite, e.message))
+            raise
         else:
-            # iterating the suite
-            rc_all = True
-            for bench_key, bench_val in data["suite"].items():
-                if bench_val.get("active", True) is False:
-                    logger.info("Bench '%s' is inactive, skipping", bench_key)
-                    continue
+            self.sys_infos(verbose)
+            logger.info("Starting")
+            logger.info("Reading the benchsuite '%s'", suite)
+            try:
+                data = ioservice.loadJSONData(suite)
+            except PyperfError as e:
+                logger.error("The Testsuite '%s' could not be loaded. %s" % (suite, e.message))
+            else:
+                # iterating the suite
+                rc_all = True
+                for bench_key, bench_val in data["suite"].items():
+                    if bench_val.get("active", True) is False:
+                        logger.info("Bench '%s' is inactive, skipping", bench_key)
+                        continue
 
-                logger.info("Executing bench '%s'", bench_key)
-                rc, results = self.start_bench_script(suite, bench_val["file"],
-                                                      bench_val["className"], bench_val["args"])
-                rc_all &= rc
-                self.results['results'][bench_key] = {'args': bench_val["args"], 'data': results}
-            ioservice.saveJSONData(self.results, outfile)
-            return int(not rc_all)
+                    logger.info("Executing bench '%s'", bench_key)
+                    rc, results = self.start_bench_script(suite, bench_val["file"],
+                                                          bench_val["className"], bench_val["args"])
+                    rc_all &= rc
+                    self.results['results'][bench_key] = {'args': bench_val["args"], 'data': results}
+                if ioservice.saveJSONData(self.results, outfile):
+                    logger.info("Results saved to %s", outfile)
+                return int(not rc_all)
 
     def start_bench_script(self, suitepath, benchpath, class_name, args):
         """This function imports the bench module and creates an instance of the given

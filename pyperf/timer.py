@@ -19,5 +19,4 @@ class Timer(object):
 
     def __exit__(self, *exc):
         self.elapsed = datetime.timedelta(seconds=timeit.default_timer() - self.start)
-        # logger.info(u"elapsed time: %s", self.elapsed)
         return False

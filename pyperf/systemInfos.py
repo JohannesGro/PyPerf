@@ -29,7 +29,7 @@ except ImportError:
     pass
 
 
-logger = logging.getLogger("[Sysinfos]")
+logger = logging.getLogger(__name__)
 
 
 # windows memory information

@@ -16,7 +16,7 @@ setup(name='pyperf',
       version='0.3.10',
       description='This project aims to provide a base for creating standardized benchmarks.',
       long_description=long_description,
-      install_requires=["python-dateutil", "lxml", "psutil", "requests"],
+      install_requires=["python-dateutil", "lxml", "psutil", "requests", "six"],
       url='https://git.contact.de/SD/pyperf',
       author='Timo Stüber',
       author_email='Timo.Stueber@contact-software.com',
@@ -25,6 +25,7 @@ setup(name='pyperf',
       entry_points={
           "console_scripts": ["bench=pyperf.benchmark:main"]
       },
+      package_data={"pyperf": ["log/loggingConf.json"]},
       data_files=[
           ('doc',
            glob(path.join(doxbase, "*.html"))
