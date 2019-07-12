@@ -1,0 +1,94 @@
+History
+=======
+
+
+0.3.11
+------
+* Fix:
+  The exceptions are now Python3 compatible.
+
+
+
+0.3.10
+------
+* Improvement:
+  The upload functionality should be more robust against InfluxDB outages
+  https://git.contact.de/SD/pyperf/issues/27
+
+
+0.3.9
+-----
+* Improvement:
+  Provide an easy method for calling from a debugger/IDE
+  https://de-git01.contact.de/SD/pyperf/issues/19
+
+* Fix:
+  'bench upload' throws a ZeroDevision exception when uploading a report with zero measurements
+  https://de-git01.contact.de/SD/pyperf/issues/6
+
+* Fix:
+  PyPerf's dependencies should be installed automatically
+  https://de-git01.contact.de/SD/pyperf/issues/17
+
+* Improvement:
+  Provide wheels to enable installing via pip
+
+
+0.3.8
+-----
+* Improvement:
+  Port to Py3
+  https://de-git01.contact.de/SD/pyperf/issues/2
+
+0.3.7
+-----
+* Improvement:
+  Include docs in distribution
+  https://de-git01.contact.de/SD/pyperf/issues/1
+
+* Fix:
+  'bench upload' uploads results from other benches
+
+0.3.6
+-----
+* Improvement:
+  Better names for the CLI
+  https://de-git01.contact.de/SD/pyperf/issues/4
+
+0.3.5
+-----
+* Improvement:
+  Passing additional tags to "pyperf upload"
+  https://de-git01.contact.de/SD/pyperf/issues/3
+
+0.3.4
+-----
+* Fix:
+  Fix the InfluxDB upload URL
+
+0.3.3
+-----
+* Fix:
+  Fix a time conversion bug when uploading to InfluxDB
+
+0.3.2
+-----
+* Fix:
+  Improve error handling and setting of exit code
+
+* Improvement:
+  Evaluate the 'active' configuration property
+
+0.3.1
+-----
+* Fix:
+  Pyperf should set the exit code in error cases appropriately
+
+0.3.0
+-----
+* Improvement:
+  Make callable as a module (python -m pyperf)
+
+0.2
+---
+Initial release

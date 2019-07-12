@@ -1,0 +1,13 @@
+{
+    "suite": {
+        "NOP": {
+            "file": "benchmarks/nop_benchmark.py",
+            "className": "NOPBenchmark",
+            "active": true,
+            "args": {
+                "iterations": 1
+            }
+        }
+
+    }
+}

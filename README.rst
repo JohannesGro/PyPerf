@@ -1,104 +1,144 @@
 PyPerf
-=======================
+======
 
 The PyPerf project aims to provide a base for writing standardized benchmarks.
 For this purpose the project offers a runner to execute the
 benchmarks and save the result.
 It is possible to define a suite of benchmarks and run the suite on several systems.
+It also provides the possibility to upload the result to an Influx database for
+visualizing the results in Grafana.
 
-For more information have a look at our documentation.
+
+Installation
+============
+For installing Pyperf and its dependencies we recommend an installation via pip.
+But of course you can install it with the python setuptools instead.
+
+Installation via pip (Python 2 and 3)
+-------------------------------------
+To install PyPerf with pip please download the whl from our packageserver_ that corresponds to your
+Python version.
+
+For Python 2 use:
+
+.. code-block:: Python
+
+    python -m pip install path/to/the/pyperf-py2.whl
+
+or for Python 3 use:
+
+.. code-block:: Python
+
+    python3 -m pip install path/to/the/pyperf-py3.whl
+
+pip now installs PyPerf and its dependencies to your python installation.
 
 
-History
+Installation via setuptools (only Python 2)
+-------------------------------------------
+To install PyPerf with the python setuptools please download the egg from our packageserver_.
+You can install it with:
+
+.. code-block:: Python
+
+    python -m easy_install path/to/the/pyperf-py2.egg
+
+easy_install now installs PyPerf and its dependencies to your python installation.
+
+
+Usage
+=====
+If you just want to run a benchsuite with PyPerf just use:
+
+.. code-block:: Python
+
+    python -m pyperf run -s your/benchsuite.json
+
+To upload a benchsuite with PyPerf to your InfluxDB use:
+
+.. code-block:: Python
+
+    python -m pyperf upload --url http://your-influx-instance.com:8086 your/benchmark/report.json
+
+For further help you can use the `-h` or `--help` flag or look into PyPerf's documentation_.
+
+
+Support
 =======
-
-0.3.11
------
-* Fix:
-  The exceptions are now Python3 compatible.
+If you have an issue with PyPerf feel free to let us know in the `issue tracker`_ or
+contact me at `fabian.hafer@contact-software.com <mailto:fabian.hafer@contact-software.com>`_
 
 
-
-0.3.10
------
-* Improvement:
-  The upload functionality should be more robust against InfluxDB outages
-  https://git.contact.de/SD/pyperf/issues/27
+Contributing
+============
+If you want to help improving PyPerf feel free to do so. But please respect the following points:
 
 
-0.3.9
------
-* Improvement:
-  Provide an easy method for calling from a debugger/IDE
-  https://de-git01.contact.de/SD/pyperf/issues/19
+Prerequisites
+-------------
+To contribute to PyPerf you need to make sure, that you have installed Python 2 and Python 3 and
+the following software:
 
-* Fix:
-  'bench upload' throws a ZeroDevision exception when uploading a report with zero measurements
-  https://de-git01.contact.de/SD/pyperf/issues/6
+- ``make``
+- ``flake8``
+- ``tox``
+- ``nose``
 
-* Fix:
-  PyPerf's dependencies should be installed automatically
-  https://de-git01.contact.de/SD/pyperf/issues/17
+If you are developing on linux, please install ``make`` with your distributions package manager.
+If you develop on a windows machine, you can simply download `make for windows`_ and install it.
 
-* Improvement:
-  Provide wheels to enable installing via pip
+We use ``flake8`` for linting our code. To install it you can use pip:
+
+.. code-block:: Python
+
+    python -m pip install flake8
+
+We use ``tox`` to ensure that PyPerf is compatible with Python 2 *and* Python 3.
+You can install it with pip too:
+
+.. code-block:: Python
+
+    python -m pip install tox
 
 
-0.3.8
------
-* Improvement:
-  Port to Py3
-  https://de-git01.contact.de/SD/pyperf/issues/2
+Always implement tests
+----------------------
+When developing a new feature for PyPerf please also implement tests for it.
+Only by doing this we can ensure the quality of PyPerf in the future.
+For unit testing we use ``nose``.
 
-0.3.7
------
-* Improvement:
-  Include docs in distribution
-  https://de-git01.contact.de/SD/pyperf/issues/1
+To execute the unit tests please run ``tox``. This results in running the unit tests with coverage mode
+against all relevant python versions.
 
-* Fix:
-  'bench upload' uploads results from other benches
+Run ``make preflight`` before commiting
+---------------------------------------
+Before you commit your change run ``make preflight``. This triggers the unit tests via ``tox`` and
+the linting with ``flake8``.
+Make sure, that there are no failing tests when commiting and that the code you have written is free
+from linting issues.
 
-0.3.6
------
-* Improvement:
-  Better names for the CLI
-  https://de-git01.contact.de/SD/pyperf/issues/4
+Submit Merge Requests
+---------------------
+When your feature is done, you can submit a merge request. If you are resolving an issue from the
+`issue tracker`_ please don't forget to mention it in the MR's description and assign someone
+to review your MR.
+Don't forget to check the checkboxes for squashing the commits and for deleting the source branch after
+merging, so that the history stays clean and we don't have too many branches.
 
-0.3.5
------
-* Improvement:
-  Passing additional tags to "pyperf upload"
-  https://de-git01.contact.de/SD/pyperf/issues/3
+Also when merging make sure that the pipeline is green. Or at least as green as the master's pipeline.
 
-0.3.4
------
-* Fix:
-  Fix the InfluxDB upload URL
+Releasing
+---------
+When making a release update the version in the ``setup.py`` and the ``sonar-project-properties``.
 
-0.3.3
------
-* Fix:
-  Fix a time conversion bug when uploading to InfluxDB
+Also add the new features since the last release in the ``CHANGELOG.rst``.
 
-0.3.2
------
-* Fix:
-  Improve error handling and setting of exit code
+Lastly push the tag into the repository.
 
-* Improvement:
-  Evaluate the 'active' configuration property
 
-0.3.1
------
-* Fix:
-  Pyperf should set the exit code in error cases appropriately
+.. Links
 
-0.3.0
------
-* Improvement:
-  Make callable as a module (python -m pyperf)
-
-0.2
----
-Initial release
+.. _packageserver: http://packages.contact.de/tools/misc/pyperf
+.. _issue tracker: https://git.contact.de/SD/pyperf/issues
+.. _make for windows: http://gnuwin32.sourceforge.net/packages/make.htm
+.. _documentation: http://sd.pages.contact.de/pyperf
