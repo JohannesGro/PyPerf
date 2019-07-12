@@ -13,13 +13,15 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyperf',
-      version='0.3.10',
+      version='0.3.11',
       description='This project aims to provide a base for creating standardized benchmarks.',
       long_description=long_description,
       install_requires=["python-dateutil", "lxml", "psutil", "requests", "six"],
       url='https://git.contact.de/SD/pyperf',
       author='Timo Stüber',
       author_email='Timo.Stueber@contact-software.com',
+      maintainer="Fabian Hafer",
+      maintainer_email="Fabian.Hafer@contact-software.com",
       license='',
       packages=find_packages(exclude=["tests"]),
       entry_points={

@@ -13,3 +13,6 @@ dist
 .influxurl
 .tox
 .idea
+*coverage*.xml
+*.scannerwork
+pylint*

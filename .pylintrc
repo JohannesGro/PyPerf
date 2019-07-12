@@ -1,0 +1,390 @@
+[MASTER]
+
+# Add files or directories to the blacklist. They should be base names, not
+# paths.
+ignore=.svn,node_modules
+
+# Pickle collected data for later comparisons.
+persistent=no
+
+# Use multiple processes to speed up Pylint.
+# CON: 0 to use all available cores (it actually works and scales quite good).
+jobs=0
+
+# Allow optimization of some AST trees. This will activate a peephole AST
+# optimizer, which will apply various small optimizations. For instance, it can
+# be used to obtain the result of joining multiple strings with the addition
+# operator. Joining a lot of strings can lead to a maximum recursion error in
+# Pylint and this flag can prevent that. It has one side effect, the resulting
+# AST will be different than the one from reality.
+optimize-ast=no
+
+
+[MESSAGES CONTROL]
+
+# Only show warnings with the listed confidence levels. Leave empty to show
+# all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
+# CON: expecting INFERENCE_FAILURE to generate lots of false positives, so excluding
+confidence=HIGH,INFERENCE,UNDEFINED
+
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once). You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed,
+# use"--disable=all --enable=classes --disable=W"
+
+# CON: We disable lots of rules to make PyLint less verbose and
+#      actually usable.  We do it for different reasons. First, we
+#      dont check PEP8 conformance with PyLint: pycodestyle (former
+#      pep8) does a better job here. Second, we disable all/most of
+#      Py3-related rules, as they're not useful until we've migrated
+#      the trunks to Py3. Third, we dont enforce naming conventions.
+#      Fourth, a couple of rules require an agreed upon style guide
+#      first. Finally, some rules are just bad/too rigid/raise too
+#      many false positives.
+#
+# *PEP8 stuff*
+#
+# bad-continuation (C0330)
+# bad-indentation (W0311)
+# bad-whitespace (C0326)
+# line-too-long (C0301)
+# missing-final-newline (C0304)
+# mixed-indentation (W0312)
+# multiple-imports (C0410)
+# trailing-newlines (C0305)
+# trailing-whitespace (C0303)
+# unidiomatic-typecheck (C0123)
+# wrong-import-position (C0413)
+#
+#
+# *Bad/Too rigid/Generage too many false positives*
+#
+# invalid-characters-in-docstring (C0403)
+# invalid-name (C0103)
+# missing-docstring (C0111)
+# wrong-spelling-in-comment (C0401)
+# wrong-spelling-in-docstring (C0402)
+# no-member (E1101): generates lots of false positives in the ORM code.
+# no-self-use (R0201): not that important but raises many issues.
+# too-few-public-methods (R0903): dont care most of the time...
+# function-redefined (E0102): doesnt understand '@classbody' and 'Forward'.
+# c-extension-no-member (I1101): generates too many false positives.
+# attribute-defined-outside-init (W0201): doesnt fit well with our ORM code.
+# no-name-in-module (E0611): 100 percent false positives so far
+# no-init (W0232): not useful
+# anomalous-unicode-escape-in-string (W1402): false positives only
+# raising-bad-type (E0702)
+# no-self-argument (E0213): conflicts with the pattern used in the StateChange-Classes
+# keyword-arg-before-vararg (W1113): false positives only
+# not-callable (E1102): false positives only
+# not-an-iterable (E1133): false positives only
+# unbalanced-tuple-unpacking (E0632): false positives only
+# access-member-before-defition (E0203): doesnt understand the magic used in our ORM code
+# redefined-outer-name (W0621): not of much use
+# unused-argument (W0613): Too many false positives
+# too-many-public-methods (R0904): Fires on everything derived from cdb.objects.Object.
+# bad-super-call (E1003): Doesnt understand the Forward(class)-semantics, which are used extensively in our code base.
+# superfluous-parens (C0325): Creates a huge number of issues on our code base (11.2017: > 4K)
+# eval-used (W0123): Irrelevant
+# import-error (E0401)
+# no-else-return (R1705): is allowed by PEP8 and is too rigid.
+#
+#
+# *Need a coding style guide first*
+#
+# wrong-import-order (C0411)
+# relative-import (W0403)
+#
+#
+# *Py3-related (reevaluate after migration)*
+#
+# apply-builtin (W1601)
+# bad-python3-import (W1648)
+# basestring-builtin (W1602)
+# buffer-builtin (W1603)
+# cmp-builtin (W1604)
+# cmp-method (W1630)                            yes
+# coerce-builtin (W1605)
+# coerce-method (W1614)                         yes
+# delslice-method (W1615)                       yes
+# deprecated-itertools-function (W1651)
+# deprecated-string-function (W1649)
+# deprecated-str-translate-call (W1650)
+# deprecated-types-field (W1652)
+# dict-items-not-iterating (W1654)
+# dict-iter-method (W1620)
+# dict-keys-not-iterating (W1655)
+# dict-values-not-iterating (W1656)
+# dict-view-method (W1621)
+# div-method (W1642)                            yes
+# eq-without-hash (W1641)
+# exception-message-attribute (W1645)
+# execfile-builtin (W1606)
+# file-builtin (W1607)
+# filter-builtin-not-iterating (W1639)
+# getslice-method (W1616)
+# hex-method (W1628)
+# idiv-method (W1643)
+# indexing-exception (W1624)
+# input-builtin (W1632)
+# intern-builtin (W1634)
+# invalid-str-codec (W1646)
+# long-builtin (W1608)
+# map-builtin-not-iterating (W1636)
+# metaclass-assignment (W1623)
+# next-method-called (W1622)
+# next-method-defined (W1653)
+# no-absolute-import (W1618)
+# nonzero-method (W1629)
+# oct-method (W1627)
+# old-division (W1619)
+# print-statement (E1601)
+# raising-string (W1625)
+# range-builtin-not-iterating (W1638)
+# raw_input-builtin (W1609)
+# rdiv-method (W1644)
+# reduce-builtin (W1610)
+# reload-builtin (W1626)
+# round-builtin (W1633)
+# setslice-method (W1617)
+# standarderror-builtin (W1611)
+# sys-max-int (W1647)
+# unichr-builtin (W1635)
+# unicode-builtin (W1612)
+# using-cmp-argument (W1640)
+# xrange-builtin (W1613)
+# zip-builtin-not-iterating (W1637)
+
+disable=access-member-before-definition, anomalous-unicode-escape-in-string, apply-builtin, attribute-defined-outside-init, bad-continuation, bad-indentation, bad-python3-import, bad-whitespace, basestring-builtin, buffer-builtin, c-extension-no-member, cmp-builtin, cmp-method, coerce-builtin, coerce-method, delslice-method, deprecated-itertools-function, deprecated-string-function, deprecated-str-translate-call, deprecated-types-field, dict-items-not-iterating, dict-iter-method, dict-keys-not-iterating, dict-values-not-iterating, dict-view-method, div-method, eq-without-hash, exception-message-attribute, execfile-builtin, file-builtin, filter-builtin-not-iterating, function-redefined, getslice-method, hex-method, idiv-method, indexing-exception, input-builtin, intern-builtin, invalid-characters-in-docstring, invalid-name, invalid-str-codec, keyword-arg-before-vararg, line-too-long, long-builtin, map-builtin-not-iterating, metaclass-assignment, missing-docstring, missing-final-newline, mixed-indentation, multiple-imports, next-method-called, next-method-defined, no-absolute-import, no-else-return, no-init, no-member, no-name-in-module, nonzero-method, no-self-argument, no-self-use, not-an-iterable, not-callable, oct-method, old-division, print-statement, raising-bad-type, raising-string, range-builtin-not-iterating, raw_input-builtin, rdiv-method, redefined-outer-name, reduce-builtin, relative-import, reload-builtin, round-builtin, setslice-method, standarderror-builtin, sys-max-int, too-few-public-methods, trailing-newlines, trailing-whitespace, unbalanced-tuple-unpacking, unichr-builtin, unicode-builtin, unidiomatic-typecheck, using-cmp-argument, wrong-import-position, wrong-spelling-in-comment, wrong-spelling-in-docstring, xrange-builtin, zip-builtin-not-iterating, unused-argument, too-many-public-methods, bad-super-call, superfluous-parens, eval-used, import-error
+
+
+[REPORTS]
+
+# Set the output format. Available formats are text, parseable, colorized, msvs
+# (visual studio) and html. You can also give a reporter class, eg
+# mypackage.mymodule.MyReporterClass.
+output-format=parseable
+
+# Put messages in a separate file for each module / package specified on the
+# command line instead of printing them on stdout. Reports (if any) will be
+# written in a file name "pylint_global.[txt|html]".
+files-output=no
+
+# Tells whether to display a full report or only the messages
+reports=yes
+
+# Python expression which should return a note less than 10 (10 is the highest
+# note). You have access to the variables errors warning, statement which
+# respectively contain the number of errors / warnings messages and the total
+# number of statements analyzed. This is used by the global evaluation report
+# (RP0004).
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+
+# Template used to display messages. This is a python new-style format string
+# used to format the message information. See doc for all details
+#msg-template=
+
+
+[BASIC]
+
+# List of builtins function names that should not be used, separated by a comma
+bad-functions=
+
+# Good variable names which should always be accepted, separated by a comma
+good-names=i,j,k,ex,Run,_
+
+# Bad variable names which should always be refused, separated by a comma
+bad-names=foo,bar,baz,toto,tutu,tata,lala
+
+
+[ELIF]
+
+# Maximum number of nested blocks for function / method body
+max-nested-blocks=5
+
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=110
+
+# Regexp for a line that is allowed to be longer than the limit.
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+
+# Allow the body of an if to be on the same line as the test if there is no
+# else.
+single-line-if-stmt=no
+
+# List of optional constructs for which whitespace checking is disabled. `dict-
+# separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
+# `trailing-comma` allows a space between comma and closing bracket: (a, ).
+# `empty-line` allows space-only lines.
+no-space-check=trailing-comma,dict-separator
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+# String used as indentation unit. This is usually "    " (4 spaces) or "\t" (1
+# tab).
+indent-string='    '
+
+# Number of spaces of indent required inside a hanging  or continued line.
+indent-after-paren=4
+
+# Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
+expected-line-ending-format=
+
+
+[LOGGING]
+
+# Logging modules to check that the string format arguments are in logging
+# function parameter format
+logging-modules=logging
+
+
+[MISCELLANEOUS]
+
+# List of note tags to take in consideration, separated by a comma.
+notes=FIXME,XXX,TODO,TBD
+
+
+[SIMILARITIES]
+
+# Minimum lines number of a similarity.
+min-similarity-lines=4
+
+# Ignore comments when computing similarities.
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities.
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities.
+ignore-imports=no
+
+
+[TYPECHECK]
+
+# Tells whether missing members accessed in mixin class should be ignored. A
+# mixin class is detected if its name ends with "mixin" (case insensitive).
+ignore-mixin-members=yes
+
+# List of module names for which member attributes should not be checked
+# (useful for modules/projects where namespaces are manipulated during runtime
+# and thus existing member attributes cannot be deduced by static analysis. It
+# supports qualified module names, as well as Unix pattern matching.
+ignored-modules=
+
+# List of classes names for which member attributes should not be checked
+# (useful for classes with attributes dynamically set). This supports can work
+# with qualified names.
+ignored-classes=SQLObject
+
+# List of members which are set dynamically and missed by pylint inference
+# system, and so shouldn't trigger E1101 when accessed. Python regular
+# expressions are accepted.
+generated-members=REQUEST,acl_users,aq_parent
+
+
+[VARIABLES]
+
+# Tells whether we should check for unused import in __init__ files.
+init-import=no
+
+# A regular expression matching the name of dummy variables (i.e. expectedly
+# not used).
+dummy-variables-rgx=_.*$|dummy
+
+# List of additional names supposed to be defined in builtins. Remember that
+# you should avoid to define new builtins when possible.
+additional-builtins=
+
+# List of strings which can identify a callback function by name. A callback
+# name must start or end with one of those strings.
+callbacks=cb_,_cb
+
+
+[CLASSES]
+
+# List of method names used to declare (i.e. assign) instance attributes.
+defining-attr-methods=__init__,__new__,setUp
+
+# List of valid names for the first argument in a class method.
+valid-classmethod-first-arg=cls
+
+# List of valid names for the first argument in a metaclass class method.
+valid-metaclass-classmethod-first-arg=mcs
+
+# List of member names, which should be excluded from the protected access
+# warning.
+exclude-protected=_asdict,_fields,_replace,_source,_make
+
+
+[DESIGN]
+
+# CON: raised some limits, which would otherwise generate
+#      too many issues on our code bases
+
+# Maximum number of arguments for function / method
+max-args=7
+
+# Argument names that match this expression will be ignored. Default to name
+# with leading underscore
+ignored-argument-names=_.*|ctx
+
+# Maximum number of locals for function / method body
+# CON: (orig value: 15)
+max-locals=25
+
+# Maximum number of return / yield for function / method body
+max-returns=6
+
+# Maximum number of branch for function / method body
+max-branches=25
+
+# Maximum number of statements in function / method body
+max-statements=200
+
+# Maximum number of parents for a class (see R0901).
+max-parents=7
+
+# Maximum number of attributes for a class (see R0902).
+max-attributes=20
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods=2
+
+# Maximum number of public methods for a class (see R0904).
+max-public-methods=20
+
+# Maximum number of boolean expressions in a if statement
+max-bool-expr=7
+
+
+[IMPORTS]
+# Deprecated modules which should not be used, separated by a comma
+deprecated-modules=regsub,string,TERMIOS,Bastion,rexec
+
+# Create a graph of every (i.e. internal and external) dependencies in the
+# given file (report RP0402 must not be disabled)
+import-graph=
+
+# Create a graph of external dependencies in the given file (report RP0402 must
+# not be disabled)
+ext-import-graph=
+
+# Create a graph of internal dependencies in the given file (report RP0402 must
+# not be disabled)
+int-import-graph=
+
+
+[EXCEPTIONS]
+
+# Exceptions that will emit a warning when being caught. Defaults to
+# "Exception"
+overgeneral-exceptions=Exception

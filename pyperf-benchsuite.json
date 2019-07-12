@@ -1,0 +1,13 @@
+{
+    "suite": {
+        "pyperf": {
+            "file": "benchmarks/pyperf_benchmark.py",
+            "className": "PyPerfBenchmark",
+            "active": true,
+            "args": {
+                "iterations": 10
+            }
+        }
+
+    }
+}

@@ -48,21 +48,23 @@ help: info
 pack: pyperf setup.py README.rst
 	make -C doc html
 	rm -rf build dist
-	python setup.py bdist_egg
-	python setup.py bdist_wheel
+	python2 setup.py bdist_egg
+	python2 setup.py bdist_wheel
 	python3 setup.py bdist_wheel
 
-upload: pack
+upload:
+	devpi use http://packages.contact.de/tools/misc
+	devpi login tomato --password $(devpi_password)
 ifeq ($(ARMED),True)
-	devpi login wen
-	devpi upload --index tools/misc dist/pyperf-0.?.??-py2.7.egg
-	devpi upload --index tools/misc dist/pyperf-0.?.??-py2-none-any.whl
-	devpi upload --index tools/misc dist/pyperf-0.?.??-py3-none-any.whl
+	devpi upload dist/pyperf-0.?.??-py2.7.egg
+	devpi upload dist/pyperf-0.?.??-py2-none-any.whl
+	devpi upload dist/pyperf-0.?.??-py3-none-any.whl
 else
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py2.7.egg
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py2-none-any.whl
-	devpi upload --index tools/misc --dry-run dist/pyperf-0.?.??-py3-none-any.whl
+	devpi upload --dry-run dist/pyperf-0.?.??-py2.7.egg
+	devpi upload --dry-run dist/pyperf-0.?.??-py2-none-any.whl
+	devpi upload --dry-run dist/pyperf-0.?.??-py3-none-any.whl
 endif
+	devpi logout
 
 clean:
 	git clean -fdx
@@ -90,7 +92,7 @@ testfailed:
 ##
 ## coverage     Run nose coverage and generate reports
 pycoverage:
-	FAKEINFLUX=true COVERAGE_OPTS='-m coverage run' $(NOSE) $(NOSECOVOPTS) $(NOSEOPTS) $(TESTS)
+	FAKEINFLUX=true COVERAGE_OPTS='-m coverage run' $(NOSE) $(NOSECOVOPTS) $(NOSEOPTS) $(CMDOPTS) $(TESTS)
 
 coverage: pycoverage
 

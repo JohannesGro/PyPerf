@@ -1,10 +1,170 @@
-tests_linux:
+stages:
+  - test
+  - egg
+  - test_egg
+  - deploy
+
+variables:
+  SONAR_SCANNER: sonar-scanner -Dsonar.host.url=http:sonar.contact.de:9000
+
+.linux_tox: &linux_tox
   image: "themattrix/tox"
-  script: "tox"
   tags:
     - Docker
 
-tests_windows:
-  script: "tox"
+.windows_tags: &win_tags
   tags:
     - Windows
+
+#------------------------------
+# Test stage
+#------------------------------
+
+.test:
+  script: "tox"
+  stage: test
+  artifacts:
+    when: on_success
+    paths:
+    - ./coverage-py*.xml
+    expire_in: 1 day
+
+linux:
+  <<: *linux_tox
+  extends: .test
+  variables:
+    CI_OS: "linux"
+
+windows:
+  <<: *win_tags
+  extends: .test
+  variables:
+    CI_OS: "windows"
+  allow_failure: true
+
+#------------------------------
+# Egg building stage
+#------------------------------
+build:
+  <<: *linux_tox
+  stage: egg
+  before_script:
+    - apt update && apt install python3-sphinx -y
+    - python2 -m pip install wheel psutil
+    - python3 -m pip install wheel psutil
+  script: "make pack"
+  artifacts:
+    paths:
+      - ./dist/*.egg
+      - ./dist/*.whl
+      - ./doc/pyperf/html/*
+
+.analyze: &analyze
+  stage: egg
+  image: registry.contact.de/gitlab-sonar-scanner
+  tags:
+    - Docker
+  script:
+    - pylint pyperf --rcfile=.pylintrc --disable=similarities --persistent=no -rn -sn > pylint-report.txt || true
+    - $SCAN
+
+analyze_branch:
+  <<: *analyze
+  variables:
+    SCAN: $SONAR_SCANNER -Dsonar.analysis.mode=preview
+  except:
+    - master
+    - tags
+
+analyze:
+  <<: *analyze
+  variables:
+    SCAN: $SONAR_SCANNER -Dsonar.analysis.mode=publish
+  only:
+    - master
+    - tags
+
+#------------------------------
+# Egg testing stage
+#------------------------------
+.test_egg: &test_egg
+  image: alpine
+  stage: test_egg
+  tags:
+    - Docker
+  script:
+    - mkdir reports
+    - $PYTHON -m pyperf run -o pyperf-report.json -s pyperf-benchsuite.json
+    - $PYTHON -m pyperf upload pyperf-report.json --url http://influxdb.contact.de:8086 --tags="Python-Version:$PY_VERSION","installed-from:$INSTALLED_FROM","branch:$CI_COMMIT_REF_NAME"
+
+test_python2_egg:
+  <<: *test_egg
+  variables:
+    PYTHON: python
+    PY_VERSION: 2
+    INSTALLED_FROM: "egg"
+  before_script:
+    - apk add --upgrade python python-dev py-setuptools py-lxml libffi-dev g++ py-lxml
+    - python -m easy_install dist/pyperf-*-py2.7.egg
+
+test_python2_wheel:
+  <<: *test_egg
+  variables:
+    PYTHON: python
+    PY_VERSION: 2
+    INSTALLED_FROM: "whl"
+  before_script:
+    - apk add --upgrade python python-dev py-pip py-lxml g++ linux-headers
+    - python -m pip install dist/pyperf-*-py2-none-any.whl
+
+test_python3_wheel:
+  <<: *test_egg
+  variables:
+    PYTHON: python3
+    PY_VERSION: 3
+    INSTALLED_FROM: "whl"
+  before_script:
+    - apk add --upgrade python3 python3-dev py3-pip py3-lxml g++ linux-headers
+    - python3 -m pip install dist/pyperf-*-py3-none-any.whl
+
+
+#------------------------------
+# Deployment stage
+#------------------------------
+.upload: &upload
+  image: alpine
+  stage: deploy
+  tags:
+    - Docker
+  before_script:
+    - apk add --upgrade make python python-dev py-pip g++ libffi-dev
+    - python -m pip install devpi
+  script:
+    - make upload
+
+dry-run-upload:
+  <<: *upload
+  variables:
+    ARMED: "False"
+  except:
+    - tags
+
+upload:
+  <<: *upload
+  variables:
+    ARMED: "True"
+  only:
+    - tags
+
+pages:
+  image: alpine
+  stage: deploy
+  tags:
+    - Docker
+  script:
+    - mv doc/pyperf/html public
+  artifacts:
+    paths:
+      - public
+  only:
+    - tags
