@@ -26,6 +26,8 @@ import time
 import logging
 
 from .influxmock import InfluxMock
+from .log import customlogging
+from .exceptions import PyperfError
 
 
 __docformat__ = "restructuredtext en"
@@ -150,7 +152,11 @@ def extract_timestamp(sysinfos):
 
 
 def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None,
-                    values=None, add_tags=None):
+                    values=None, add_tags=None, logconfig="", debug=False):
+    try:
+        customlogging.init_logging(logconfig, debug)
+    except PyperfError:
+        raise
     with open(reportpath, "r") as fd:
         try:
             report = json.load(fd)
