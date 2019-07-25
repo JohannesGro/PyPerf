@@ -9,12 +9,12 @@ The uploader loads benchmark run results (currently) into an Influx DB .
 We'll probably make it more generic in the future.
 
 The data mapping is as follows:
+
 * The classname maps to an Influx Measurement
 * Sysinfo (reasonable subset of) maps to Influx Tags
 * Values of type "time series" are aggregated and mapped to Influx Fields:
   "<name>_avg", "<name>_max" and "<name>_min", where <name> is the string
-  coming after "bench_"
-
+  coming after "bench\_"
 """
 
 import requests
@@ -48,7 +48,6 @@ RELEVANT_SYSINFOS = {
     "cpu_cores_logical": "cpu_count",
     "mem_total": "mem_total",
     "os": "os",
-    # "Processor": "CPU",
     "vm": "vm",
     "ce_minor": "ce_version",
     "ce_sl": "ce_sl"
@@ -76,6 +75,21 @@ class ValuesParseError(Exception):
 
 
 def extract_tags(sysinfo):
+    """
+    This function will extract the relevant sysinfo and return it as a new dict to be used as tags.
+    The relevant measures from the sysinfos are:
+
+    * user
+    * cpu_cores_logical
+    * mem_total
+    * os
+    * vm
+    * ce_minor
+    * ce_sl
+
+    :param sysinfo: The sysinfo of a report
+    :return: A dict containing the relevant sysinfo
+    """
     tags = {}
     for info, tag_name in RELEVANT_SYSINFOS.items():
         try:
@@ -87,6 +101,15 @@ def extract_tags(sysinfo):
 
 
 def upload_to_influxdb(lines, influxurl, database, precision):
+    """
+    This function will upload the data into an influxdb by making a post request.
+
+    :param lines: The lines to upload
+    :param influxurl: The URL of the Influx instance
+    :param database: The database of the Influx instance to store the lines
+    :param precision: The precision of the data, may be 's' or 'ms'
+    :return:
+    """
     if os.environ.get("FAKEINFLUX", "false") == "true":
         requests.post = InfluxMock()
 
@@ -106,6 +129,13 @@ def upload_to_influxdb(lines, influxurl, database, precision):
 
 
 def extract_hostname(sysinfo):
+    """
+    This function extracts the hostnames from the sysinfos.
+
+    :param sysinfo: The sysinfos of the report that gets uploaded
+    :return: The hostname that executed the benchmark
+    :raises Exception: when no suitable hostname could be found
+    """
     hostnames = sysinfo["hostnames"]
     for name in hostnames:
         if "." not in name and name != "localhost":
@@ -114,6 +144,12 @@ def extract_hostname(sysinfo):
 
 
 def fieldname(benchname):
+    """
+    This function strips the 'bench_' from a bench-method's name to normalize it.
+
+    :param benchname: The benchname to normalize
+    :return: The normalized method name.
+    """
     parts = benchname.split("bench_")
     if len(parts) < 2:
         raise Exception("Error: the bench name '%s' " % benchname +
@@ -122,6 +158,13 @@ def fieldname(benchname):
 
 
 def aggregate_series(bench, series):
+    """
+    This method calculates the average, minimun and maximum for a series.
+
+    :param bench: The bench of the series to aggregate
+    :param series: The benches time series
+    :return: A dict containing the aggregated values of the series
+    """
     fieldprefix = fieldname(bench)
     return {
         "%s_avr" % fieldprefix: sum(series) / len(series),
@@ -131,6 +174,13 @@ def aggregate_series(bench, series):
 
 
 def parse_additional_values(values):
+    """
+    Parses the additional values and returns them as a dict.
+
+    :param values: The additional values to parse
+    :return: A dict containing the additional values
+    :raises ValuesParseError: when the values could not be identified as key, value pairs
+    """
     res = {}
     for pair in values.split(","):
         parts = pair.split(":")
@@ -143,16 +193,43 @@ def parse_additional_values(values):
 
 
 def convert_to_timestamp(time_iso):
+    """
+    Converts a date in iso-format to an epoch timestamp.
+
+    :param time_iso: The date in iso-format
+    :return: The epoch timestamp representation of the date
+    """
     dt = dateparser.parse(time_iso)
     return "%i" % ((dt - EPOCH).total_seconds())
 
 
 def extract_timestamp(sysinfos):
+    """
+    Extracts the date of a reports sysinfo and returns it as an epoch timestamp
+
+    :param sysinfos: The sysinfo of a report
+    :return: Epoch timestamp of the reports date
+    """
     return convert_to_timestamp(sysinfos["time"])
 
 
 def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None,
                     values=None, add_tags=None, logconfig="", debug=False):
+    """
+        This method uploads a benchmark report to an influx database.
+
+        :param reportpath: The path to the benchmark report to upload
+        :param influxdburl: URL of the Inxlux instance
+        :param database: The database of the Influx instance to upload the data into
+        :param timestamp: The timestamp for uploading into the Influx DB. If :code:`None`,
+            the report's timestamp will be used.
+        :param precision: The precision of the data. May be 's' or 'ms'
+        :param values: Additional values to upload
+        :param add_tags: Additional tags to upload
+        :param logconfig: the config file for the logging, see :ref:`howto_logging`
+        :param debug: whether DEBUG logging shall be enabled or not
+        :raises InvalidReportError: When the report could not be parsed or does not contain sysinfos.
+        """
     try:
         customlogging.init_logging(logconfig, debug)
     except PyperfError:

@@ -46,18 +46,21 @@ windows:
 # Egg building stage
 #------------------------------
 build:
-  <<: *linux_tox
+  image: alpine
+  tags:
+    - Docker
   stage: egg
   before_script:
-    - apt update && apt install python3-sphinx -y
-    - python2 -m pip install wheel psutil
-    - python3 -m pip install wheel psutil
+    - apk add g++ linux-headers make python python-dev py-pip py-sphinx python3 python3-dev
+    - python -m pip install wheel psutil
+    - python3 -m pip install wheel psutil python-dateutil sphinxcontrib-fulltoc
   script: "make pack"
   artifacts:
     paths:
       - ./dist/*.egg
       - ./dist/*.whl
       - ./doc/pyperf/html/*
+    expire_in: 1 day
 
 .analyze: &analyze
   stage: egg

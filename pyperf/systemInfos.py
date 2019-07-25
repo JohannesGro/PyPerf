@@ -4,7 +4,9 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""Provides serveral system information.
+"""
+Provides serveral system information.
+The information gathered are:
 """
 
 import ctypes
@@ -34,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 # windows memory information
 class MEMORYSTATUSEX(ctypes.Structure):
+    """
+    This class is used for retrieving the memory information on Windows.
+    """
     _fields_ = [
         ("dwLength", ctypes.c_ulong),
         ("dwMemoryLoad", ctypes.c_ulong),
@@ -53,6 +58,39 @@ class MEMORYSTATUSEX(ctypes.Structure):
 
 
 def getMemoryInfos(verbose=True):
+    """
+    This method is used to get memory information of the operating system.
+    The information gathered is:
+
+    * mem_total
+    * mem_percent
+
+    When verbose is True these will also be gathered:
+
+    * mem_total_virtual (windows only)
+    * mem_used
+    * mem_free
+    * mem_available
+
+    * mem_active (POSIX only)
+    * mem_inactive (POSIX only)
+
+    * mem_buffers (POSIX and BSD)
+    * mem_shared (POSIX and BSD)
+    * mem_cached (POSIX and BSD)
+
+    * mem_wired (OSX and BSD)
+
+    * swap_total
+    * swap_used
+    * swap_free
+    * swap_percent
+    * swapped_in (not Windows)
+    * swapped_out (not Windows)
+
+    :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
+    :return: dict containing the memory infos
+    """
     # working for windows only
     mb = 1024 * 1024
     res = {}
@@ -93,21 +131,49 @@ def getMemoryInfos(verbose=True):
 
 
 def getMac():
+    """
+    This method gets the MAC address.
+
+    :return: The MAC address
+    """
     from uuid import getnode as get_mac
     # '0x' + 6bytes  = len 14
     return "{0:#0{1}x}".format(get_mac(), 14)
 
 
 def getMacInfo():
+    """
+    This methods gets the information about the MAC address.
+    :return: Dict with the MAC address
+    """
     return {"mac_adress": getMac()}
 
 
 def getAllHostnamesInfo(verbose=True):
+    """
+    This method gets all the information about the systems hostnames.
+
+    :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
+    :return: Dict with the infos about the hostnames
+    """
     hostnames = cdb.uberserver.usutil.gethostnames() if cdb and verbose else [platform.node()]
     return {"hostnames": hostnames}
 
 
 def diskIOCounter():
+    """
+    This method collects the system-wide disk I/O information.
+    These are:
+
+    * io_read_count
+    * io_write_count
+    * io_read_mb
+    * io_write_mb
+    * io_read_time
+    * io_write_time
+
+    :return: Dict containing the the disk I/O information
+    """
     # Disk IO counter: sdiskio(read_count=3919547, write_count=1767118, read_bytes=84891013632L,
     # write_bytes=137526756352L, read_time=355414861L, write_time=260233546L)
     res = {}
@@ -123,6 +189,12 @@ def diskIOCounter():
 
 
 def matchVersion(ver):
+    """
+    This method gets the minor version and the service level of cdb from the version string.
+
+    :param ver: version description a string
+    :return: minor version, service level
+    """
     reg_minor = r"([0-9]+\.[0-9]+) Service Level (dev|[0-9]+).*"
     minor = sl = None
 
@@ -134,7 +206,20 @@ def matchVersion(ver):
 
 
 def getSysInfo():
-    """Get the general infos like time, OS etc.
+    """Get the general system information.
+    These are:
+
+    * time
+    * user
+    * os
+    * os_version
+    * cpu
+
+    When cdb is defined, then these will also be gathered:
+
+    * ce_minor
+    * ce_sl
+    * dbms
 
     :returns: dict with the infos"""
     res = {}
@@ -152,6 +237,28 @@ def getSysInfo():
 
 
 def getCPUInfo(verbose=True):
+    """
+    This method gathers data of the CPU.
+    These fields will be gathered:
+
+    * cpu_cores_logical
+    * cpu_cores_physical
+    * cpu_frequency
+
+    When verbose is True, then these will also be gathered:
+
+    * cpu_user
+    * cpu_system
+    * cpu_idle
+    * cpu_percent
+    * cpu_load_user
+    * cpu_load_system
+    * cpu_load_idle
+
+
+    :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
+    :return: Dict containing info about the CPU
+    """
     res = {}
 
     # 1. CPU utilisation by mode (user, system, idle).
@@ -247,19 +354,19 @@ def isVM():
     It is not completely sure that the running system is vm. These MAC are known
     for being used for VMs.
 
+    * VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69, 0x001c14
+    * Microsoft Hyper-V, Virtual Server, Virtual PC	00-03-FF
+    * Parallells Desktop, Workstation, Server, Virtuozzo	00-1C-42
+    * Virtual Iron 4	00-0F-4B
+    * Red Hat Xen	00-16-3E
+    * Oracle VM	00-16-3E
+    * XenSource	00-16-3E
+    * Novell Xen	00-16-3E
+    * Sun xVM VirtualBox	08-00-27
+
     :returns: True if a MAC was found. Otherwise False.
     """
 
-    # list with macs
-    """ VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69, 0x001c14
-        Microsoft Hyper-V, Virtual Server, Virtual PC	00-03-FF
-        Parallells Desktop, Workstation, Server, Virtuozzo	00-1C-42
-        Virtual Iron 4	00-0F-4B
-        Red Hat Xen	00-16-3E
-        Oracle VM	00-16-3E
-        XenSource	00-16-3E
-        Novell Xen	00-16-3E
-        Sun xVM VirtualBox	08-00-27"""
     prefix = ['0x000569', '0x000c29', '0x001c14', '0x005056', "0x0003ff",
               "0x001c42", "0x000f4b", "0x00163e", "0x080027"]
 
@@ -271,11 +378,17 @@ def isVM():
 
 
 def VMInfo():
+    """
+    This method gets the info whether the executing machine is a VM or not.
+
+    :returns: Dict with the info is the machine is a VM
+    """
     return {"vm": ("Yes" if isVM() else "No")}
 
 
 def msinfo32():
-    """Executes MSINFO32.exe on windows systems and saves the file. Reads the xml and filters useful informations.
+    """
+    Executes MSINFO32.exe on windows systems and saves the file. Reads the xml and filters useful information.
 
     :returns: dict with infos
     """
@@ -302,9 +415,11 @@ def msinfo32():
 
 
 def traceroute(dest):
-    """Executes tracert on windows and traceroute on linux systems.
+    """
+    Executes tracert on windows and traceroute on linux systems.
 
-    :returns: dict with infos."""
+    :returns: dict with infos.
+    """
 
     m = re.search(r"\/\/(.*):", dest)
     if m is None:
@@ -347,10 +462,12 @@ def traceroute(dest):
 
 
 def getAllSysInfos(verbose=True):
-    """Collects all system infos and returns a dict.
+    """
+    Collects all system infos and returns a dict.
 
     :param verbose: 'True' for gathering more/deeper sysinfos, 'False' otherwise.
-    :returns: dict with all system infos."""
+    :returns: dict with all system infos.
+    """
 
     logger.info("Fetching system infos (verbose: %s, CONTACT Elements available: %s)",
                 verbose, cdb is not None)

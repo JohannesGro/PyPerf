@@ -20,7 +20,7 @@ class Benchrunner(object):
     """The benchrunner runs different benchmarks. These benchmarks inherit from the
     abstract class 'Bench'. Several different benches can be collected and defined by a
     benchsuite. A benchsuite describes a list of benches and their call parameters.
-    The suite is stored in json format (Read more: :doc:`benchsuite`).
+    The suite is stored in json format (Read more: :ref:`howto_benchsuite`).
     The benchrunner reads the benchsuite and executes each bench. The benches return
     measurements which will be gathered and stored by the benchrunner as
     a json formatted output file.
@@ -29,6 +29,17 @@ class Benchrunner(object):
     results = {'results': {}}
 
     def main(self, suite, outfile, logconfig="", verbose=False, debug=False):
+        """
+        This method is the entry point for the pyperf run subcommand, but may be called by
+        importing this module too.
+
+        :param suite: the path to the benchsuite to load
+        :param outfile: the path to the file to write the report to
+        :param logconfig: the config file for the logging, see :ref:`howto_logging`
+        :param verbose: whether the collected system info shall be verbose or not
+        :param debug: whether DEBUG logging shall be enabled or not
+        :return: 0 on success, 1 otherwise
+        """
         try:
             customlogging.init_logging(logconfig, debug)
         except PyperfError as e:

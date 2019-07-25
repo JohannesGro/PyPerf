@@ -1,0 +1,9 @@
+{
+    "suite": {
+        "DatabaseBench": {
+            "file": "database_bench.py",
+            "className": "DatabaseBench",
+            "args": {}
+        }
+    }
+}

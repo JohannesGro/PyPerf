@@ -1,0 +1,31 @@
+{
+    "suite": {
+        "Local_Database": {
+            "file": "database_bench.py",
+            "className": "DatabaseBench",
+            "active": true,
+            "args": {
+                "iterations": 100,
+                "db_name": "local-db"
+            }
+        },
+        "QA_Database": {
+            "file": "database_bench.py",
+            "className": "DatabaseBench",
+            "active": true,
+            "args": {
+                "iterations": 10,
+                "db_name": "qa-database"
+            }
+        },
+        "Production_Database": {
+            "file": "database_bench.py",
+            "className": "DatabaseBench",
+            "active": false,
+            "args": {
+                "iterations": 5,
+                "db_name": "prod-database"
+            }
+        }
+    }
+}

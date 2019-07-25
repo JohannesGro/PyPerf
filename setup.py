@@ -33,6 +33,6 @@ setup(name='pyperf',
            glob(path.join(doxbase, "*.html"))
            + glob(path.join(doxbase, "*.js"))),
           (path.join("doc", "_static"), glob(path.join(doxbase, "_static", "*"))),
-          (path.join("doc", "_sources"), glob(path.join(doxbase, "_sources", "*")))
+          (path.join("doc", "_sources"), glob(path.join(doxbase, "_sources", "*", "*")))
       ]
       )
