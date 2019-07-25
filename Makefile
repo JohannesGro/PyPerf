@@ -56,13 +56,13 @@ upload:
 	devpi use http://packages.contact.de/tools/misc
 	devpi login tomato --password $(devpi_password)
 ifeq ($(ARMED),True)
-	devpi upload dist/pyperf-0.?.??-py2.7.egg
-	devpi upload dist/pyperf-0.?.??-py2-none-any.whl
-	devpi upload dist/pyperf-0.?.??-py3-none-any.whl
+	devpi upload dist/pyperf-0.?.*-py2.7.egg
+	devpi upload dist/pyperf-0.?.*-py2-none-any.whl
+	devpi upload dist/pyperf-0.?.*-py3-none-any.whl
 else
-	devpi upload --dry-run dist/pyperf-0.?.??-py2.7.egg
-	devpi upload --dry-run dist/pyperf-0.?.??-py2-none-any.whl
-	devpi upload --dry-run dist/pyperf-0.?.??-py3-none-any.whl
+	devpi upload --dry-run dist/pyperf-0.?.*-py2.7.egg
+	devpi upload --dry-run dist/pyperf-0.?.*-py2-none-any.whl
+	devpi upload --dry-run dist/pyperf-0.?.*-py3-none-any.whl
 endif
 	devpi logout
 
