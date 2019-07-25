@@ -129,7 +129,7 @@ Also when merging make sure that the pipeline is green. Or at least as green as 
 
 Releasing
 ---------
-When making a release update the version in the ``setup.py`` and the ``sonar-project-properties``.
+When making a release update the version in the ``setup.py``, the ``sonar-project-properties``. and the ``doc/conf.py``.
 
 Also add the new features since the last release in the ``CHANGELOG.rst``.
 
