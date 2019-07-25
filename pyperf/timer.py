@@ -9,6 +9,11 @@ import timeit
 
 
 class Timer(object):
+    """
+    This class implements a Timer as a context manager.
+    It stores its time of creation in the field :code:`self.start` and calculates how long it was
+    alive and stores it into the field :code:`self.elapsed`.
+    """
     def __init__(self):
         self.start = None
         self.elapsed = None

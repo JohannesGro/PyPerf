@@ -13,6 +13,7 @@ import re
 
 SUITEFILE_DEFAULT = "benchsuite.json"
 REPORTFILE_DEFAULT = 'benchmarkResults_{}.json'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))
+REPORTFILE_DEFAULT_HELPSTRING = 'benchmarkResults_{}.json'.format("YYYY-mm-dd_HH-MM-SS")
 UPLOADTARGET_DEFAULT = "influx"
 INFLUXURL_DEFAULT = "http://localhost:8086"
 INFLUXDB_DEFAULT = "perf"
@@ -41,27 +42,27 @@ def parse_timestamp_param(timestamp):
 
 def main():
     help_txt = ("Help")
-    parser = argparse.ArgumentParser(description=help_txt)
+    parser = argparse.ArgumentParser(description=help_txt, prog="pyperf")
     subparsers = parser.add_subparsers(dest='subcommand')
 
     runner = subparsers.add_parser("run")
-    helpstr = "A JSON file which contains the benches (default: %s)." % SUITEFILE_DEFAULT
-    runner.add_argument("--suite", "-s", nargs='?', default=SUITEFILE_DEFAULT, help=helpstr)
-    helpstr = "The results will be stored in this file (default: %s)." % REPORTFILE_DEFAULT
-    runner.add_argument("--outfile", "-o", nargs='?', default=REPORTFILE_DEFAULT, help=helpstr)
-    runner.add_argument("--logconfig", "-l", nargs='?', default="",
+    helpstr = "A JSON file which specifies how to run the benches (default: %s)." % SUITEFILE_DEFAULT
+    runner.add_argument("-s", "--suite", nargs='?', default=SUITEFILE_DEFAULT, help=helpstr)
+    helpstr = "The results will be stored in this file (default: %s)." % REPORTFILE_DEFAULT_HELPSTRING
+    runner.add_argument("-o", "--outfile", nargs='?', default=REPORTFILE_DEFAULT, help=helpstr)
+    runner.add_argument("-l", "--logconfig", nargs='?', default="",
                         help="Configuration file for the logger.")
-    runner.add_argument("--debug", "-d", default=False,
+    runner.add_argument("-d", "--debug", default=False,
                         action='store_true', help="Get some more logging.")
-    runner.add_argument("--verbose", "-v", default=False,
+    runner.add_argument("-v", "--verbose", default=False,
                         action='store_true', help="Get more detailled system infos.")
 
     upload_parser = subparsers.add_parser("upload")
     upload_parser.add_argument("filename", help="JSON report to upload.")
     upload_parser.add_argument(
-        "--target", "-t",
-        default=UPLOADTARGET_DEFAULT,
-        help="The target storage to upload to (default: %s)." % UPLOADTARGET_DEFAULT
+         "-t", "--target",
+         default=UPLOADTARGET_DEFAULT,
+         help="The target storage to upload to (default: %s)." % UPLOADTARGET_DEFAULT
     )
     upload_parser.add_argument(
         "--url",
@@ -76,7 +77,7 @@ def main():
     upload_parser.add_argument(
         "--ts",
         metavar="<timestamp><unit>",
-        help="If given, overrides the timestamp given in the report. Valid units are 's' and 'us'."
+        help="If given, overrides the timestamp given in the report. Valid units are 's' and 'ms'."
     )
     upload_parser.add_argument("--values", help="Additional values to upload.")
     upload_parser.add_argument("--tags", help="Additional tags to upload.")

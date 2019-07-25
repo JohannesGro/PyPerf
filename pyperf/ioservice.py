@@ -5,7 +5,7 @@
 # All rights reserved.
 # https://www.contact-software.com/
 
-"""This module is used for i/o operations.
+"""This module is used for I/O operations.
 """
 
 import io
@@ -15,12 +15,14 @@ from pyperf.exceptions import PyperfError
 
 
 def loadJSONData(json_file):
-    """This functions load the json-data and returns it.
+    """
+    This function loads the json_file and returns it as a json object.
 
     :param fileName: name of the destination file
     :param json_file: the file in json format
     :returns: json object
-    :raises: ValueError: the file content could not be decoded as JSON
+    :raises PyperfError: when the file content could not be decoded as JSON or when the file could
+        not be opened
     """
     try:
         with io.open(json_file, encoding="UTF-8") as data_file:
@@ -32,14 +34,15 @@ def loadJSONData(json_file):
 
 
 def saveJSONData(data, fileName="benchmarkResults.json"):
-    """This functions dumps json data into a file. The name of the output file
-    is determined by parameter. The default output file is 'benchmarkResults.json'.
+    """
+    This functions dumps json data into a file. The name of the output file
+    is determined by the parameter. The default output file is 'benchmarkResults.json'.
 
     :param data: json data which will be saved to file
     :param fileName: the name of the file where the data will be saved
-    :raises TypeError: when data could not be converted to JSON
-    :raises IOError: when the JSON-data could not be written to fileName
-    :returns True when data could be written to fileName
+    :raises PyperfError: when data could not be converted to JSON or
+        when the JSON-data could not be written to fileName
+    :returns: True when data could be written to fileName
     """
     try:
         if PY2:
@@ -58,10 +61,12 @@ def saveJSONData(data, fileName="benchmarkResults.json"):
 
 
 def readFile(fileName):
-    """Reads a file and return the content
+    """
+    Reads a file and return the content
 
     :param fileName: name of the file
-    :returns content of the file as string
+    :returns: content of the file as string
+    :raises PyperfError: when the file could not be opened
     """
     try:
         with io.open(fileName, 'r') as f:
@@ -72,12 +77,13 @@ def readFile(fileName):
 
 
 def writeToFile(data, outfile):
-    """This functions dumps json data into a file.
+    """
+    This functions writes data into a file.
 
-    :param data: json data
+    :param data: data to write
     :param outfile: name of the output file
-    :raises IOError: when the data could not be written to outfile
-    :returns True when the data has been written to outfile
+    :raises PyperfError: when the data could not be written to outfile
+    :returns: True when the data has been written to outfile
     """
     try:
         with io.open(outfile, 'w', encoding="UTF-8") as out:
