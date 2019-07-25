@@ -1,12 +1,47 @@
 History
 =======
+0.4.0
+-----
+* Improvement:
+  Rework the user documentation
+  https://git.contact.de/SD/pyperf/issues/35
 
+* Improvement:
+  Now using a Release Pipeline
+  https://git.contact.de/SD/pyperf/issues/34
+
+* Fix:
+  Reworked the logging
+  https://git.contact.de/SD/pyperf/issues/8
+
+* Fix:
+  Install dependencies fixed
+  https://git.contact.de/SD/pyperf/merge_requests/18
+
+* Feature dropped:
+  Renderer is not part of PyPerf anymore
+  https://git.contact.de/SD/pyperf/issues/23
+
+* Fix:
+  The DBMS is now part of the collected metadata
+  https://git.contact.de/SD/pyperf/issues/15
+
+* Improvement:
+  Code coverage raised
+  https://git.contact.de/SD/pyperf/issues/24
+
+* Improvement:
+  Python 3 combatibility ensured
+  https://git.contact.de/SD/pyperf/issues/29
+
+* Fix:
+  Upload cancels if one benchmark doenst have results
+  https://git.contact.de/SD/pyperf/issues/30
 
 0.3.11
 ------
 * Fix:
   The exceptions are now Python3 compatible.
-
 
 
 0.3.10
