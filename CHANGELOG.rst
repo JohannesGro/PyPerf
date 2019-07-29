@@ -1,5 +1,11 @@
 History
 =======
+0.4.1
+-----
+* Fix:
+  RuntimeError occured when collecting the DBMS of cdb, when not DBMS is specified.
+  https://git.contact.de/SD/pyperf/merge_requests/24
+
 0.4.0
 -----
 * Improvement:
