@@ -236,8 +236,7 @@ def getSysInfo():
             dbms = dbms_information()
         except RuntimeError:
             logger.debug("Found cdb but no dbms is specified.")
-            dbms["driver"] = ""
-            dbms["dbms_version"] = ""
+            dbms = {"driver": "", "dbms_version": ""}
         finally:
             res["dbms_driver"] = dbms["driver"]
             res["dbms_version"] = dbms["dbms_version"]
