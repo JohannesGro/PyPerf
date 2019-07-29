@@ -219,7 +219,8 @@ def getSysInfo():
 
     * ce_minor
     * ce_sl
-    * dbms
+    * dbms_driver
+    * dbms_version
 
     :returns: dict with the infos"""
     res = {}
@@ -231,8 +232,15 @@ def getSysInfo():
     if cdb:
         ver = cdb.version.getVersionDescription()
         res["ce_minor"], res["ce_sl"] = matchVersion(ver)
-        dbms = dbms_information()
-        res["dbms"] = [dbms["driver"], dbms["dbms_version"]]
+        try:
+            dbms = dbms_information()
+        except RuntimeError:
+            logger.debug("Found cdb but no dbms is specified.")
+            dbms["driver"] = ""
+            dbms["dbms_version"] = ""
+        finally:
+            res["dbms_driver"] = dbms["driver"]
+            res["dbms_version"] = dbms["dbms_version"]
     return res
 
 
