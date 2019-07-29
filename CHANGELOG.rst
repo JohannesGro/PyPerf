@@ -1,5 +1,10 @@
 History
 =======
+0.4.2
+-----
+* Hotfix:
+  Still occuring RuntimeError when collecting the DBMS of cdb, when not DBMS is specified.
+
 0.4.1
 -----
 * Fix:
