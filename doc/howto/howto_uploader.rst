@@ -30,6 +30,38 @@ database :emphasis:`perf`.
 You can to this by using the :code:`--db` flag of the upload command, followed by the name of the
 database.
 
+Specifying the set of system infos
+==================================
+When uploading your benchmark results usually a fixed set of system infos will be used as tags
+in Influx.
+These are:
+
+    * :emphasis:`user`
+    * :emphasis:`cpu_cores_logical` as :emphasis:`cpu_count`
+    * :emphasis:`mem_total`
+    * :emphasis:`os`
+    * :emphasis:`vm`
+
+If cdb can be imported, then these will also be added to the relevant sysinfos:
+
+    * :emphasis:`ce_minor`
+    * :emphasis:`ce_sl`
+    * :emphasis:`dbms_driver`
+    * :emphasis:`dbms_version`
+
+When running the uploader with the :code:`--uploadconfig` followed by the filename of the config file
+you can override this set of system infos and only those you specified in the config file will be used.
+
+The file has to be a JSON file containing a dictionary, where every key corresponds to the system info
+in your benchmark report file and every value corresponds to the name the tag will have in your
+Influx DB.
+
+For example, the content of the standard set with the additional system info :emphasis:`cpu` as the
+influx tag :emphasis:`cpu_info` would look like this:
+
+.. literalinclude:: ../examples/uploadconfig.json
+    :language: json
+
 Additional Information
 ======================
 Sometimes the measured data and the system infos of a benchmark result are not enough and you want

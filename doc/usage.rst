@@ -95,8 +95,10 @@ pyperf upload
 .. code-block:: console
 
     python -m pyperf upload [-h] [-t TARGET] [--url URL] [--db DB]
-                  [--ts <timestamp><unit>] [--values VALUES] [--tags TAGS]
-                  filename
+                            [--ts <timestamp><unit>] [--uploadconfig [UPLOADCONFIG]]
+                            [--values VALUES] [--tags TAGS] [--logconfig [LOGCONFIG]]
+                            [--debug]
+                            filename
 
 
 Description
@@ -106,18 +108,25 @@ PyPerf upload is used for uploading a reportfile created by PyPerf run to an Inf
 
 Options
 :::::::
+-d, --debug
+    Get some more logging.
 
--h, --help
-    show this help message and exit
-
--t <TARGET>, --target <TARGET>
-    The target storage to upload to (default: influx)
+    This parameter enables the DEBUG loglevel.
 
 --db <DB>
     The database to upload the results into (default: perf)
 
---url <URL>
-    The URL of the Influx DBMS to upload onto (default: http://localhost:8086)
+-h, --help
+    show this help message and exit
+
+-l <LOGCONFIG>, --logconfig <LOGCONFIG>
+    Configuration file for the logger.
+
+    The configuration file has to be a valid JSON file. For more information about the logconfig,
+    visit :ref:`howto_logging`.
+
+-t <TARGET>, --target <TARGET>
+    The target storage to upload to (default: influx)
 
 --tags <TAGS>
     Additional tags to upload.
@@ -125,8 +134,18 @@ Options
 --ts <(timestamp)(unit)>
     If given, overrides the timestamp given in the report. Valid units are 's' and 'ms'.
 
+-u <UPLOADCONFIG>, --uploadconfig <UPLOADCONFIG>
+    A file containing mappings from system metadata to Influx tags to upload.
+
+    The configuration file has to be a valid JSON file. For more information about this,
+    visit :ref:`howto_uploader`
+
+--url <URL>
+    The URL of the Influx DBMS to upload onto (default: http://localhost:8086)
+
 --values <VALUES>
     Additional values to upload.
+
 
 Examples
 ::::::::

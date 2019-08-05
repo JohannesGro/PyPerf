@@ -79,6 +79,8 @@ def main():
         metavar="<timestamp><unit>",
         help="If given, overrides the timestamp given in the report. Valid units are 's' and 'ms'."
     )
+    upload_parser.add_argument("--uploadconfig", "-u", nargs="?", default="",
+                               help="A file containing mappings from system metadata to Influx tags to upload.")
     upload_parser.add_argument("--values", help="Additional values to upload.")
     upload_parser.add_argument("--tags", help="Additional tags to upload.")
     upload_parser.add_argument("--logconfig", "-l", nargs='?', default="",
@@ -97,7 +99,7 @@ def main():
             try:
                 ts, unit = parse_timestamp_param(args.ts) if args.ts else (None, None)
                 from .uploader import upload_2_influx
-                return upload_2_influx(args.filename, args.url, args.db, ts, unit,
+                return upload_2_influx(args.filename, args.url, args.db, ts, unit, args.uploadconfig,
                                        args.values, args.tags, args.logconfig, args.debug)
             except BadTimestampError as tse:
                 sys.stderr.write("%s %s: %s\n" %

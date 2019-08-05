@@ -28,6 +28,7 @@ import logging
 from .influxmock import InfluxMock
 from .log import customlogging
 from .exceptions import PyperfError
+from .ioservice import loadJSONData
 
 
 __docformat__ = "restructuredtext en"
@@ -39,19 +40,6 @@ __all__ = ["upload_2_influx", "InvalidReportError"]
 
 # <measurement>[,<tag_key>=<tag_value>[,...]] <field_key>=<field_value>[,...] [<timestamp>]
 MSG_TMPL = "%s,%s %s %s"
-
-# Contains stuff, which is useful as metadata and doesnt have much variability in values
-# https://docs.influxdata.com/influxdb/v1.4/concepts/schema_and_data_layout/
-#
-RELEVANT_SYSINFOS = {
-    "user": "user",
-    "cpu_cores_logical": "cpu_count",
-    "mem_total": "mem_total",
-    "os": "os",
-    "vm": "vm",
-    "ce_minor": "ce_version",
-    "ce_sl": "ce_sl"
-}
 
 
 EPOCH = datetime.datetime(1970, 1, 1)
@@ -74,9 +62,12 @@ class ValuesParseError(Exception):
         return "Additional values '%s' cannot be parsed" % self.values
 
 
-def extract_tags(sysinfo):
+def extract_tags(sysinfo, config):
     """
-    This function will extract the relevant sysinfo and return it as a new dict to be used as tags.
+    This function will either extract the relevant sysinfo,
+    or extract the sysinfos that are specified in the config file
+    and return it as a new dict to be used as tags
+
     The relevant measures from the sysinfos are:
 
     * user
@@ -84,18 +75,47 @@ def extract_tags(sysinfo):
     * mem_total
     * os
     * vm
+
+    If cdb can be imported, then these will also be added to the relevant sysinfos:
+
     * ce_minor
     * ce_sl
+    * dbms_driver
+    * dbms_version
 
     :param sysinfo: The sysinfo of a report
+    :param config: The config file containing the mapping from sysInfos to influx tags
     :return: A dict containing the relevant sysinfo
     """
+    # Contains stuff, which is useful as metadata and doesnt have much variability in values
+    # https://docs.influxdata.com/influxdb/v1.4/concepts/schema_and_data_layout/
+    #
     tags = {}
-    for info, tag_name in RELEVANT_SYSINFOS.items():
+    if config:
+        infos_to_upload = loadJSONData(config)
+    else:
+        infos_to_upload = {"user": "user",
+                           "cpu_cores_logical": "cpu_count",
+                           "mem_total": "mem_total",
+                           "os": "os",
+                           "vm": "vm"}
+        try:
+            import cdb
+            if cdb:
+                infos_to_upload.update({"ce_minor": "ce_version",
+                                        "ce_sl": "ce_sl",
+                                        "dbms_driver": "dbms_driver",
+                                        "dbms_version": "dbms_version"})
+        except ImportError:
+            # We can just ignore this error since we only want to know here weather the
+            # cdb relevant data could be gathered or not.
+            pass
+
+    for info, tag_name in infos_to_upload.items():
         try:
             tags[tag_name] = sysinfo[info]
-        except KeyError as ke:
-            # TODO: log the error
+        except KeyError:
+            logger.info("Couldn't find %s in the systemInfos of the report file. It will be skipped.", info)
             continue
     return tags
 
@@ -213,7 +233,7 @@ def extract_timestamp(sysinfos):
     return convert_to_timestamp(sysinfos["time"])
 
 
-def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None,
+def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision=None, uploadconfig=None,
                     values=None, add_tags=None, logconfig="", debug=False):
     """
         This method uploads a benchmark report to an influx database.
@@ -224,6 +244,7 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
         :param timestamp: The timestamp for uploading into the Influx DB. If :code:`None`,
             the report's timestamp will be used.
         :param precision: The precision of the data. May be 's' or 'ms'
+        :param uploadconfig: The configfile containing a dictionary of systemInfos to be used as Tags in Influx
         :param values: Additional values to upload
         :param add_tags: Additional tags to upload
         :param logconfig: the config file for the logging, see :ref:`howto_logging`
@@ -248,7 +269,7 @@ def upload_2_influx(reportpath, influxdburl, database, timestamp=None, precision
             precision = "s"
         time_epoch = timestamp or extract_timestamp(sysinfos)
 
-        tags = extract_tags(sysinfos)
+        tags = extract_tags(sysinfos, uploadconfig)
         tags["hostname"] = extract_hostname(sysinfos)
         if add_tags:
             tags.update(parse_additional_values(add_tags))
