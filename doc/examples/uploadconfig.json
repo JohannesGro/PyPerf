@@ -1,0 +1,12 @@
+{
+  "user": "user",
+  "cpu_cores_logical": "cpu_count",
+  "mem_total": "mem_total",
+  "os": "os",
+  "vm": "vm",
+  "ce_minor": "ce_version",
+  "ce_sl": "ce_sl",
+  "dbms_driver": "dbms_driver",
+  "dbms_version": "dbms_version",
+  "cpu": "cpu_info"
+}

@@ -12,6 +12,7 @@ from mock import patch
 
 from pyperf import uploader
 from pyperf.influxmock import InfluxMock
+from pyperf.exceptions import PyperfError
 
 
 class TestInfluxdbUploader(unittest.TestCase):
@@ -29,9 +30,17 @@ class TestInfluxdbUploader(unittest.TestCase):
             cls.orig_env = None
 
     @classmethod
-    def teardDownClass(cls):
+    def tearDownClass(cls):
         if cls.orig_env:
             os.environ = cls.orig_env
+        try:
+            os.remove(".influxdata")
+        except OSError:
+            pass
+        try:
+            os.remove(".influxurl")
+        except OSError:
+            pass
 
     def setUp(self):
         self.influxmock = InfluxMock()
@@ -135,6 +144,29 @@ class TestInfluxdbUploader(unittest.TestCase):
             assert benchmark.find("a2_avr=6") != -1
 
             assert url.find("precision=s") != -1
+
+    def test_upload_with_uploadconfig(self):
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
+                                     self.influxdburl,
+                                     self.database,
+                                     uploadconfig=os.path.join(self.testdata, "uploadconfig.json"))
+            data = self.influxmock.data_last
+            assert "cpu=x86_64" in data
+
+    @raises(PyperfError)
+    def test_upload_with_broken_uploadconfig(self):
+        uploader.upload_2_influx(os.path.join(self.testdata, "report.json"), self.influxdburl, self.database,
+                                 uploadconfig=os.path.join(self.testdata, "uploadconfig_broken.json"))
+
+    def test_upload_with_uploadconfig_with_broken_tag(self):
+        with patch('pyperf.uploader.requests.post', new=self.influxmock):
+            uploader.upload_2_influx(os.path.join(self.testdata, "report.json"),
+                                     self.influxdburl,
+                                     self.database,
+                                     uploadconfig=os.path.join(self.testdata, "uploadconfig_invalid_sysinfo.json"))
+            data = self.influxmock.data_last
+            assert "foo=bar" not in data
 
 
 def test_convert_to_timestamp():
