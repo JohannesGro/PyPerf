@@ -361,15 +361,15 @@ def isVM():
     It is not completely sure that the running system is vm. These MAC are known
     for being used for VMs.
 
-    * VMware ESX 3, Server, Workstation, Player	00-50-56, 00-0C-29, 00-05-69, 0x001c14
-    * Microsoft Hyper-V, Virtual Server, Virtual PC	00-03-FF
-    * Parallells Desktop, Workstation, Server, Virtuozzo	00-1C-42
-    * Virtual Iron 4	00-0F-4B
-    * Red Hat Xen	00-16-3E
-    * Oracle VM	00-16-3E
-    * XenSource	00-16-3E
-    * Novell Xen	00-16-3E
-    * Sun xVM VirtualBox	08-00-27
+    * VMware ESX 3, Server, Workstation, Player 00-50-56, 00-0C-29, 00-05-69, 0x001c14
+    * Microsoft Hyper-V, Virtual Server, Virtual PC 00-03-FF
+    * Parallells Desktop, Workstation, Server, Virtuozzo 00-1C-42
+    * Virtual Iron 4    00-0F-4B
+    * Red Hat Xen       00-16-3E
+    * Oracle VM         00-16-3E
+    * XenSource         00-16-3E
+    * Novell Xen        00-16-3E
+    * Sun xVM VirtualBox    08-00-27
 
     :returns: True if a MAC was found. Otherwise False.
     """
