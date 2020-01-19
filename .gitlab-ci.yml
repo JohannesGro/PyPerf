@@ -16,6 +16,21 @@ variables:
   tags:
     - Windows
 
+.python2: &python2-alpine
+  image: python:2.7-alpine
+  tags:
+    - Docker
+
+.python2: &python2
+  image: python:2.7
+  tags:
+    - Docker
+
+.python3: &python3
+  image: python:3.5
+  tags:
+    - Docker
+
 #------------------------------
 # Test stage
 #------------------------------
@@ -46,12 +61,10 @@ windows:
 # Egg building stage
 #------------------------------
 build:
-  image: alpine
-  tags:
-    - Docker
+  <<: *python2-alpine
   stage: egg
   before_script:
-    - apk add g++ linux-headers make python python-dev py-pip py-sphinx python3 python3-dev
+    - apk add g++ linux-headers make python3 python3-dev py3-sphinx
     - python -m pip install wheel psutil
     - python3 -m pip install wheel psutil python-dateutil sphinxcontrib-fulltoc
   script: "make pack"
@@ -91,43 +104,40 @@ analyze:
 # Egg testing stage
 #------------------------------
 .test_egg: &test_egg
-  image: alpine
   stage: test_egg
-  tags:
-    - Docker
   script:
     - mkdir reports
     - $PYTHON -m pyperf run -o pyperf-report.json -s pyperf-benchsuite.json
     - $PYTHON -m pyperf upload pyperf-report.json --url http://influxdb.contact.de:8086 --tags="Python-Version:$PY_VERSION","installed-from:$INSTALLED_FROM","branch:$CI_COMMIT_REF_NAME"
 
 test_python2_egg:
+  <<: *python2
   <<: *test_egg
   variables:
     PYTHON: python
     PY_VERSION: 2
     INSTALLED_FROM: "egg"
   before_script:
-    - apk add --upgrade python python-dev py-setuptools py-lxml libffi-dev g++ py-lxml
     - python -m easy_install dist/pyperf-*-py2.7.egg
 
 test_python2_wheel:
+  <<: *python2
   <<: *test_egg
   variables:
     PYTHON: python
     PY_VERSION: 2
     INSTALLED_FROM: "whl"
   before_script:
-    - apk add --upgrade python python-dev py-pip py-lxml g++ linux-headers
     - python -m pip install dist/pyperf-*-py2-none-any.whl
 
 test_python3_wheel:
+  <<: *python3
   <<: *test_egg
   variables:
     PYTHON: python3
     PY_VERSION: 3
     INSTALLED_FROM: "whl"
   before_script:
-    - apk add --upgrade python3 python3-dev py3-pip py3-lxml g++ linux-headers
     - python3 -m pip install dist/pyperf-*-py3-none-any.whl
 
 
@@ -135,10 +145,8 @@ test_python3_wheel:
 # Deployment stage
 #------------------------------
 .upload: &upload
-  image: alpine
+  <<: *python2-alpine
   stage: deploy
-  tags:
-    - Docker
   before_script:
     - apk add --upgrade make python python-dev py-pip g++ libffi-dev
     - python -m pip install devpi
