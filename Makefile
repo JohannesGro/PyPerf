@@ -53,8 +53,8 @@ pack: pyperf setup.py README.rst
 	python3 setup.py bdist_wheel
 
 upload:
-	devpi use http://packages.contact.de/tools/misc
-	devpi login tomato --password $(devpi_password)
+	devpi use https://packages.contact.de/tools/misc
+	devpi login buildbot --password $(devpi_password)
 ifeq ($(ARMED),True)
 	devpi upload dist/pyperf-0.?.*-py2.7.egg
 	devpi upload dist/pyperf-0.?.*-py2-none-any.whl
