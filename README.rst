@@ -65,8 +65,7 @@ For further help you can use the `-h` or `--help` flag or look into PyPerf's doc
 
 Support
 =======
-If you have an issue with PyPerf feel free to let us know in the `issue tracker`_ or
-contact me at `fabian.hafer@contact-software.com <mailto:fabian.hafer@contact-software.com>`_
+If you have an issue with PyPerf feel free to let us know in the `issue tracker`_
 
 
 Contributing
